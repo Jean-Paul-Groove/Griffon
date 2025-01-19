@@ -194,6 +194,7 @@ function redoAction() {
   border-image-source: url('../../assets/background/runes-4.png');
   border-image-repeat: repeat;
   border-image-slice: 200;
+  border-image-outset: -10px;
   border-width: 20px;
   width: 100%;
   height: 400px;
