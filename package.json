@@ -7,5 +7,9 @@
   "private": true,
   "workspaces": [
     "apps/*"
-  ]
+  ],
+  "scripts": {
+    "dev": "yarn workspaces foreach -A --parallel --interlaced run dev"
+  },
+  "packageManager": "yarn@4.6.0"
 }
