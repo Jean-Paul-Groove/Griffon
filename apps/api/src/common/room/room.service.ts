@@ -1,16 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Room } from './classes/Room'
 import { RoomOptions } from './types/room/RoomOptions'
-import { User } from '../user/types/User'
+import { User } from '../../users/types/User'
 import { Message } from '../message/types/Message'
-
+import { v4 as uuidv4 } from 'uuid'
 @Injectable()
 export class RoomService {
   private readonly rooms: Map<string, Room> = new Map()
-  private readonly logger = new Logger(RoomService.name, { timestamp: true });
-  createRoom(id: string, options?: RoomOptions): Room {
+  private readonly logger = new Logger(RoomService.name, { timestamp: true })
+  createRoom(id?: string, options?: RoomOptions): Room {
     try {
-      const room = new Room(id, options)
+      const roomId = id ?? uuidv4()
+      const room = new Room(roomId, options)
       this.rooms.set(id, room)
       return room
     } catch (error) {
@@ -40,30 +41,33 @@ export class RoomService {
       this.logger.error(`An error occured while fetching room ${id}`, error)
     }
   }
-  addUserToRoom(roomId:string, user:User):User{
-    try{
+  addUserToRoom(roomId: string, user: User): User {
+    try {
       const room = this.getRoom(roomId)
       room.addUser(user)
       return user
-    }catch(error){
+    } catch (error) {
       this.logger.error(error)
     }
   }
-  removeUserFromRoom(roomId:string,userId:string):void{
-    try{
+  removeUserFromRoom(roomId: string, userId: string): void {
+    try {
       const room = this.getRoom(roomId)
       room.removeUser(userId)
-    }catch(error){
+    } catch (error) {
       this.logger.error(error)
     }
   }
-  addMessageToRoom(roomId:string, message:Message):Message{
-    try{
+  addMessageToRoom(roomId: string, message: Message): Message {
+    try {
       const room = this.getRoom(roomId)
       room.addMessage(message)
       return message
-    }catch(error){
+    } catch (error) {
       this.logger.error(error)
     }
+  }
+  hasRoom(roomId: string): boolean {
+    return this.rooms.has(roomId)
   }
 }

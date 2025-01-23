@@ -1,4 +1,4 @@
-import { User } from 'src/common/user/types/User'
+import { User } from 'src/users/types/User'
 
 export interface Message {
   sender: User['id']

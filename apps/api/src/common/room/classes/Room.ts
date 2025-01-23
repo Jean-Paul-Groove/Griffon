@@ -1,12 +1,12 @@
-import { User } from 'src/common/user/types/User'
+import { User } from 'src/users/types/User'
 import { RoomOptions } from '../types/room/RoomOptions'
 import { Message } from 'src/common/message/types/Message'
 import { Logger } from '@nestjs/common'
 export class Room {
   constructor(id: string, options?: RoomOptions) {
     this.id = id
-    this.logger =  new Logger(`Room-${this.id}`, {timestamp:true})
-    if (options.maxNumPlayer && Number.isInteger(options.maxNumPlayer)) {
+    this.logger = new Logger(`Room-${this.id}`, { timestamp: true })
+    if (options?.maxNumPlayer && Number.isInteger(options?.maxNumPlayer)) {
       this.maxNumPlayer = options.maxNumPlayer
     }
   }
@@ -49,13 +49,13 @@ export class Room {
       this.logger.error(`An error occured while removing user ${id} from room ${this.id}`, error)
     }
   }
-  getMessages():Message[]{
+  getMessages(): Message[] {
     return [...this.messages]
   }
-  addMessage(message:Message):void{
+  addMessage(message: Message): void {
     this.messages.push(message)
   }
-  hasUser(id:string):boolean{
+  hasUser(id: string): boolean {
     return this.users.has(id)
   }
 }
