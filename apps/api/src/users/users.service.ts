@@ -8,14 +8,14 @@ import { v4 as uuidv4 } from 'uuid'
 export class UsersService {
   private readonly users: User[] = []
 
-  createUser(username: string, avatar?: string): User {
-    if (username.trim() != null) {
-      const user = { username, avatar, id: uuidv4() }
+  createUser(name: string, avatar?: string): User {
+    if (name.trim() != null) {
+      const user = { name, avatar, id: uuidv4() }
       this.users.push(user)
       return user
     }
   }
-  async get(id: string): Promise<User | undefined> {
+  get(id: string): User | undefined {
     return this.users.find((user) => user.id === id)
   }
 }

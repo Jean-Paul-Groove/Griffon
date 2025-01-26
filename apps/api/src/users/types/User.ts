@@ -1,6 +1,10 @@
 interface BaseUser {
   id: string
-  username: string
+  name: string
+  room?: {
+    roomId: string
+    connected: boolean
+  }
 }
 
 export interface LoggedUser extends BaseUser {

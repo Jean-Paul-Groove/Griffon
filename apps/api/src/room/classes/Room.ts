@@ -10,7 +10,7 @@ export class Room {
       this.maxNumPlayer = options.maxNumPlayer
     }
   }
-  private id: string
+  readonly id: string
   private readonly users: Map<string, User> = new Map()
   private maxNumPlayer: number = 8
   private readonly messages: Message[] = []
@@ -19,14 +19,11 @@ export class Room {
     return [...this.users.values()]
   }
   addUser(user: User): void {
-    try {
-      if (this.users.has(user.id)) {
-        throw new Error(`User ${user.id} is already in the room ${this.id}`)
-      }
-      this.users.set(user.id, user)
-    } catch (error: unknown) {
-      this.logger.error(`An error occured while adding user ${user.id}`, error)
+    if (this.users.has(user.id)) {
+      this.logger.warn(`User ${user.id} is already in the room ${this.id}`)
+      return
     }
+    this.users.set(user.id, user)
   }
   getUser(id: string): User {
     try {

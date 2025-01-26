@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common'
-import { RoomService } from './room/room.service'
+import { HttpModule } from '@nestjs/axios'
 
-@Module({ providers: [RoomService], exports: [RoomService] })
+@Module({
+  exports: [],
+  imports: [HttpModule],
+})
 export class CommonModule {}

@@ -1,22 +1,21 @@
 import { Test } from '@nestjs/testing'
-import { GameGateway } from './game.gateway'
 import { INestApplication } from '@nestjs/common'
 import { io, Socket } from 'socket.io-client'
 import { CommonModule } from '../common/common.module'
-import { UsersModule } from '../users/users.module'
-import { AuthModule } from '../auth/auth.module'
-import { HttpModule, HttpService } from '@nestjs/axios'
-import { GameModule } from './game.module'
+import { HttpService } from '@nestjs/axios'
+import { RoomModule } from './room.module'
+import { RoomGateway } from './room.gateway'
+import { SocketEventsEnum as WSE } from './events/SocketEvents.enum'
 async function createNestApp(): Promise<INestApplication> {
   const testingModule = await Test.createTestingModule({
-    imports: [GameModule, CommonModule, UsersModule, AuthModule, HttpModule],
+    imports: [RoomModule, CommonModule],
     providers: [],
   }).compile()
   return testingModule.createNestApplication()
 }
 
-describe('GameGateway ', () => {
-  let gateway: GameGateway
+describe('RoomGateway ', () => {
+  let gateway: RoomGateway
   let app: INestApplication
   let ioClient: Socket
   let http: HttpService
@@ -24,7 +23,7 @@ describe('GameGateway ', () => {
     // Instantiate the app
     app = await createNestApp()
     // Get the gateway instance from the app instance
-    gateway = app.get<GameGateway>(GameGateway)
+    gateway = app.get<RoomGateway>(RoomGateway)
     http = new HttpService()
     // Create a new client that will interact with the gateway
     const res = await http.axiosRef.post('http://localhost:3000/auth/guest', {
@@ -55,7 +54,7 @@ describe('GameGateway ', () => {
       expect(data).toBe('Hello world!ddd')
     })
     await new Promise((resolve) =>
-      ioClient.on('yo', (data: any) => {
+      ioClient.on(WSE.USER_JOINED_ROOM_SUCCESS, (data: any) => {
         resolve(data)
       }),
     )
@@ -69,7 +68,7 @@ describe('GameGateway ', () => {
       expect(data).toBe('Hello world!ddd')
     })
     await new Promise((resolve) =>
-      ioClient.on('yo', (data: any) => {
+      ioClient.on(WSE.USER_JOINED_ROOM_SUCCESS, (data: any) => {
         resolve(data)
       }),
     )

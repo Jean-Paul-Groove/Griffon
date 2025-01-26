@@ -9,8 +9,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('guest')
   signInAsGuest(@Body() signInAsGuestDto: Record<string, any>): Promise<Token> {
-    console.log('TRIGGER')
-    console.log(process.env.JWT_SECRET)
     return this.authService.signInAsGuest(signInAsGuestDto.username)
   }
 }

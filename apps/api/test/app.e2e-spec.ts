@@ -3,13 +3,15 @@ import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 import { AppModule } from '../src/app.module'
 import { JwtModule } from '@nestjs/jwt'
+import { CommonModule } from '../src/common/common.module'
+import { HttpModule } from '@nestjs/axios'
 
 describe('AppController (e2e)', () => {
   let app: INestApplication
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule, JwtModule],
+      imports: [AppModule, JwtModule, CommonModule, HttpModule],
     }).compile()
 
     app = moduleFixture.createNestApplication()
