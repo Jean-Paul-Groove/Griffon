@@ -7,7 +7,7 @@
       @mouseleave="toggleThickRange(false)"
     >
       <div v-if="thickRangeOpen" class="toolbox_thickness_range">
-        <input type="range" :min="1" :max="61" :step="10" v-model="lineThickness" />
+        <input v-model="lineThickness" type="range" :min="1" :max="61" :step="10" />
       </div>
       <div
         class="toolbox_thickness_preview"

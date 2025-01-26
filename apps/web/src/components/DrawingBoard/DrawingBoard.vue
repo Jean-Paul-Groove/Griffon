@@ -1,7 +1,7 @@
 <template>
   <div :class="'cursor-' + tool">
     <div class="canvas_container">
-      <canvas class="canvas" ref="canvas" />
+      <canvas ref="canvas" class="canvas" />
     </div>
     <DrawingToolBox
       :color="strokeStyle"
@@ -52,7 +52,7 @@ onMounted(() => {
 })
 
 // Functions
-function initCanvas() {
+function initCanvas(): void {
   if (!canvas.value || !ctx.value) return
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
@@ -60,21 +60,21 @@ function initCanvas() {
   ctx.value.lineWidth = lineWidth.value
   ctx.value.lineCap = 'round'
 }
-function resizeCanvas() {
+function resizeCanvas(): void {
   if (!canvas.value || !ctx.value) return
   const { height, width } = canvas.value.getBoundingClientRect()
   ctx.value.canvas.width = width
   ctx.value.canvas.height = height
   redraw()
 }
-function watchForMouseDown() {
+function watchForMouseDown(): void {
   canvas.value?.addEventListener('mousedown', startDrawingOnMouseDown)
 }
-function stopWatchMouseDown() {
+function stopWatchMouseDown(): void {
   canvas.value?.removeEventListener('mousedown', startDrawingOnMouseDown)
   stopDraw()
 }
-function startDrawingOnMouseDown(event: MouseEvent) {
+function startDrawingOnMouseDown(event: MouseEvent): void {
   event.preventDefault()
   if (!canvas.value || !ctx.value) {
     return
@@ -111,7 +111,7 @@ function startDrawingOnMouseDown(event: MouseEvent) {
   canvas.value.addEventListener('mousemove', draw)
   canvas.value.addEventListener('mouseup', stopDraw)
 }
-function draw(event: MouseEvent) {
+function draw(event: MouseEvent): void {
   if (!canvas.value || !ctx.value) {
     return
   }
@@ -123,7 +123,7 @@ function draw(event: MouseEvent) {
   ctx.value.lineTo(x, y)
   ctx.value.stroke()
 }
-function stopDraw() {
+function stopDraw(): void {
   if (!canvas.value || !ctx.value) return
   ctx.value.closePath()
   if (currentPath.value.points.length > 0) {
@@ -135,7 +135,7 @@ function stopDraw() {
   canvas.value?.removeEventListener('mousemove', draw)
   canvas.value?.removeEventListener('mouseup', stopDraw)
 }
-function redraw() {
+function redraw(): void {
   if (!canvas.value || !ctx.value) {
     return
   }
@@ -166,22 +166,22 @@ function redraw() {
     }
   }
 }
-function selectColor(color: string) {
+function selectColor(color: string): void {
   strokeStyle.value = color
 }
-function setLineSize(size: number) {
+function setLineSize(size: number): void {
   lineWidth.value = size
 }
-function setTool(newTool: DrawingTool) {
+function setTool(newTool: DrawingTool): void {
   tool.value = newTool
 }
-function undoAction() {
+function undoAction(): void {
   if (currentIndex.value > -1) {
     currentIndex.value--
   }
   redraw()
 }
-function redoAction() {
+function redoAction(): void {
   if (currentIndex.value < drawingHistory.value.length - 1) {
     currentIndex.value++
   }

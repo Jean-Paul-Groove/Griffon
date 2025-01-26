@@ -1,8 +1,8 @@
 <template>
   <div class="color-picker">
     <button
-      :key="color"
       v-for="color of colors"
+      :key="color"
       class="color-picker_color"
       :style="{ backgroundColor: color }"
       @click="emit('selected-color', color)"

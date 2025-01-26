@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import DrawingBoard from './components/DrawingBoard/DrawingBoard.vue';
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-<DrawingBoard/>
+  <RouterView />
 </template>
-
