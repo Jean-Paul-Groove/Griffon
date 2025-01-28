@@ -8,7 +8,7 @@ import { Server, Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
 import { UsersService } from '../users/users.service'
 import { WsResponse } from '@nestjs/websockets'
-import { SocketEventsEnum as WSE } from './events/SocketEvents.enum'
+import { WSE } from 'wse'
 @Injectable()
 export class RoomService {
   constructor(
@@ -79,7 +79,7 @@ export class RoomService {
     client.data.roomId = roomId
   }
   // Handlers
-  onUserJoinRoom(user: User, roomId: string, client: Socket): WsResponse {
+  onUserJoinRoom(user: User, roomId: string, client: Socket): WsResponse<string[]> {
     try {
       const roomExists = this.hasRoom(roomId)
       // TO CHANGE
@@ -93,9 +93,10 @@ export class RoomService {
       this.joinSocketToRoom(client, roomId)
 
       const { id, name } = user
+
       this.io.to(roomId).emit(WSE.USER_JOINED_ROOM, { id, name })
 
-      return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: roomId }
+      return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: undefined }
     } catch (error) {
       this.logger.error(error)
     }
@@ -103,7 +104,7 @@ export class RoomService {
   onDisconnectedClient(client: Socket): void {
     this.logger.log(`Cliend id:${client.data.userId} disconnected`)
     const user = this.authService.getUserFromSocket(client)
-    if (user.room) {
+    if (user?.room) {
       const room = this.getRoom(user.room.roomId)
       if (room) {
         const { id, name } = user
@@ -118,12 +119,12 @@ export class RoomService {
       if (user.room) {
         const room = this.getRoom(user.room.roomId)
         if (room.hasUser(user.id)) {
+          this.logger.debug('ROOM HAS USER')
           this.joinSocketToRoom(client, room.id)
 
           user.room.connected = true
           const { id, name } = user
           this.logger.debug(room.id)
-          this.logger.debug(this.io.to)
           this.io.to(room.id).emit(WSE.USER_RECONNECTED, { id, name })
         }
       }

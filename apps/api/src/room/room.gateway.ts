@@ -14,7 +14,8 @@ import {
 import { AuthService } from '../auth/auth.service'
 import { Server, Socket } from 'socket.io'
 import { RoomService } from './room.service'
-import { SocketEventsEnum as WSE } from './events/SocketEvents.enum'
+import { WSE } from 'wse'
+
 @WebSocketGateway()
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
@@ -32,8 +33,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       const user = this.authService.getUserFromSocket(client)
       this.logger.debug('UserRoom')
-      this.logger.debug(user.room)
-
+      this.logger.debug(user?.room)
       if (user && user.room) {
         this.logger.debug('ROOM DETECTED FOR USER ', user.name)
         this.roomService.reconnectUser(user, client)
