@@ -1,0 +1,6 @@
+{
+  "name": "socket-events",
+  "packageManager": "yarn@4.6.0",
+  "main": "./src/socket-events.enum.js",
+  "types":"./src/socket-events.enum.d.ts"
+}
