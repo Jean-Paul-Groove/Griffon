@@ -1,6 +1,6 @@
 <template>
-  <div :class="'cursor-' + tool">
-    <div class="canvas_container">
+  <div class="drawing-board">
+    <div class="canvas_container" :class="'cursor-' + tool">
       <canvas ref="canvas" class="canvas" />
     </div>
     <DrawingToolBox
@@ -190,6 +190,9 @@ function redoAction(): void {
 </script>
 
 <style lang="scss" scoped>
+.drawing-board {
+  width: 100%;
+}
 .canvas {
   border-image-source: url('../../assets/background/runes-4.png');
   border-image-repeat: repeat;
