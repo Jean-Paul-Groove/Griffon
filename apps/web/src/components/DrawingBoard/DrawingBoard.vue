@@ -22,7 +22,9 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import type { DrawingTool, DrawingPath } from './types'
 import DrawingToolBox from './DrawingToolBox.vue'
-
+import { useSocketStore } from '../../stores'
+import debounce from 'debounce'
+import { WSE } from 'wse'
 // Constants
 const EMPTY_PATH: DrawingPath = {
   strokeStyle: 'black',
@@ -30,6 +32,9 @@ const EMPTY_PATH: DrawingPath = {
   points: [],
   tool: 'brush',
 }
+
+// Stores
+const { socket } = useSocketStore()
 
 // TempalteRef
 const canvas = useTemplateRef('canvas')
@@ -43,7 +48,6 @@ const lineWidth = ref<number>(21)
 const currentIndex = ref<number>(-1)
 // Computeds
 const ctx = computed<CanvasRenderingContext2D | null>(() => canvas.value?.getContext('2d') || null)
-
 // Hooks
 onMounted(() => {
   canvas.value?.addEventListener('mouseenter', watchForMouseDown)
@@ -122,6 +126,7 @@ function draw(event: MouseEvent): void {
 
   ctx.value.lineTo(x, y)
   ctx.value.stroke()
+  debouncedSendDrawing()
 }
 function stopDraw(): void {
   if (!canvas.value || !ctx.value) return
@@ -142,6 +147,7 @@ function redraw(): void {
   ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
   ctx.value.lineCap = 'round'
   if (currentIndex.value < 0) {
+    debouncedSendDrawing()
     return
   }
   for (const path of drawingHistory.value) {
@@ -165,6 +171,7 @@ function redraw(): void {
       break
     }
   }
+  debouncedSendDrawing()
 }
 function selectColor(color: string): void {
   strokeStyle.value = color
@@ -187,6 +194,16 @@ function redoAction(): void {
   }
   redraw()
 }
+function sendDrawing(): void {
+  if (canvas.value && socket !== null) {
+    canvas.value.toBlob((blob) => {
+      if (socket !== null) {
+        socket.emit(WSE.UPLOAD_DRAWING, { drawing: blob })
+      }
+    }, 'image/webp')
+  }
+}
+const debouncedSendDrawing = debounce(sendDrawing, 6, { immediate: true })
 </script>
 
 <style lang="scss" scoped>

@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <main class="layout">
     <HeaderLayout class="layout_header" />
     <main class="layout_main">
       <RouterView />
     </main>
     <FooterLayout class="layout_footer" />
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -15,19 +15,30 @@ import FooterLayout from './FooterLayout.vue'
 </script>
 
 <style scoped lang="scss">
+$scrolls-height: calc(100vw / 20);
 .layout {
-  overflow-y: auto;
+  height: calc(100vh - $scrolls-height);
+  margin-top: $scrolls-height/2;
+  margin-bottom: $scrolls-height/2;
+  background: url('../../assets/background/body-scroll.webp');
+  background-size: 100vw 100vh;
+  position: relative;
   &_header {
-    margin-bottom: -2%;
-    position: relative;
+    position: absolute;
+    top: -$scrolls-height/2;
+    left: 0;
+    right: 0;
   }
   &_footer {
-    margin-top: -2%;
-    position: relative;
+    position: absolute;
+    bottom: -$scrolls-height/2;
+    left: 0;
+    right: 0;
   }
   &_main {
-    background: url('../../assets/background/body-scroll.webp') center/cover no-repeat;
-    padding: calc(100vw / 20 * 0.8) 10%;
+    overflow-y: auto;
+    padding: $scrolls-height/2 7vw;
+    max-height: 100%;
   }
 }
 </style>

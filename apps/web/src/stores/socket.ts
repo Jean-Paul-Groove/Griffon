@@ -9,6 +9,8 @@ export const useSocketStore = defineStore('socket', () => {
   const { token, resetToken } = useAuthStore()
 
   const socket = ref<Socket | null>(null)
+  const gameSpace = ref<Socket | null>(null)
+  const chatSpace = ref<Socket | null>(null)
   const isConnected = computed<boolean>(() => {
     return socket.value?.connected ?? false
   })
@@ -21,8 +23,10 @@ export const useSocketStore = defineStore('socket', () => {
     if (!token) {
       if (isConnected.value && socket.value) {
         socket.value.disconnect()
-        socket.value = null
       }
+      socket.value = null
+      gameSpace.value = null
+      chatSpace.value = null
       console.log('TOKEN NULL')
       return
     }
@@ -36,12 +40,27 @@ export const useSocketStore = defineStore('socket', () => {
           token: `bearer ${token}`,
         },
       })
+      console.log('INIT OF LISTENERS')
       socket.value.on(WSE.INVALID_TOKEN, resetToken)
+      gameSpace.value = io(import.meta.env.VITE_API_ADDRESS + '/game', {
+        autoConnect: true,
+        transports: ['websocket', 'polling'],
+        auth: {
+          token: `bearer ${token}`,
+        },
+      })
+      chatSpace.value = io(import.meta.env.VITE_API_ADDRESS + '/chat', {
+        autoConnect: true,
+        transports: ['websocket', 'polling'],
+        auth: {
+          token: `bearer ${token}`,
+        },
+      })
     }
     if (!isConnected.value && socket.value != null) {
       socket.value.connect()
       console.log('SOCKET CONNECTED')
     }
   }
-  return { socket }
+  return { socket, gameSpace }
 })

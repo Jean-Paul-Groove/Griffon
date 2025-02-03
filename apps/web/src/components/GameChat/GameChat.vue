@@ -13,6 +13,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useSocketStore } from '../../stores'
+import { WSE } from 'wse'
 // Types
 interface Message {
   content: string
@@ -30,9 +31,11 @@ watch(
   () => socket,
   () => {
     if (socket) {
+      socket.on(WSE.INVALID_TOKEN, () => console.log('INVALID TOOOOKEN GAME CHAT'))
+
       socket.onAny((events, args) => {
-        console.log(events)
-        console.log(args)
+        console.log('event', events)
+        console.log('args', args)
       })
     }
   },

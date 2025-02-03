@@ -1,5 +1,7 @@
 <template>
-  <div class="game-page"><DrawingBoard /><GameChat :messages="messages" /></div>
+  <div>
+    <div class="game-page"><DrawingBoard /> <GameChat /></div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -8,6 +10,7 @@ import GameChat from '../components/GameChat/GameChat.vue'
 import { onMounted, ref } from 'vue'
 import { useSocketStore } from '../stores'
 import { WSE } from 'wse'
+import DrawingRender from '../components/DrawingRender/DrawingRender.vue'
 // Composables
 const { socket } = useSocketStore()
 // Constants
