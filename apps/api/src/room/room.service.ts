@@ -4,72 +4,51 @@ import { RoomOptions } from './types/room/RoomOptions'
 import { User } from '../users/types/User'
 import { Message } from '../common/message/types/Message'
 import { v4 as uuidv4 } from 'uuid'
-import { Server, Socket } from 'socket.io'
+import { Namespace, Server, Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
 import { UsersService } from '../users/users.service'
 import { WsResponse } from '@nestjs/websockets'
 import { WSE } from 'wse'
+
 @Injectable()
 export class RoomService {
   constructor(
     private usersService: UsersService,
     private authService: AuthService,
   ) {}
-  public io: Server
+  public io: Server | Namespace
   private readonly logger = new Logger(RoomService.name, { timestamp: true })
   private readonly rooms: Map<string, Room> = new Map()
 
   // Private methods
   private createRoom(id?: string, options?: RoomOptions): Room {
-    try {
-      const roomId = id ?? uuidv4()
-      const room = new Room(roomId, options)
-      this.rooms.set(id, room)
-      return room
-    } catch (error) {
-      if (error) {
-        this.logger.error(`An error occured while creating the room ${id}`, error)
-      }
-    }
+    const roomId = id ?? uuidv4()
+    const room = new Room(roomId, options)
+    this.rooms.set(id, room)
+    return room
   }
   private deleteRoom(id: string): void {
-    try {
-      const isDeleted = this.rooms.delete(id)
-      if (!isDeleted) {
-        throw new Error(`Couldn't find room ${id}`)
-      }
-    } catch (error: unknown) {
-      this.logger.error(`An error occured while deleting room ${id}`, error)
+    const isDeleted = this.rooms.delete(id)
+    if (!isDeleted) {
+      throw new Error(`Couldn't find room ${id}`)
     }
   }
   private getRoom(id: string): Room {
     return this.rooms.get(id)
   }
   private addUserToRoom(roomId: string, user: User): User {
-    try {
-      const room = this.getRoom(roomId)
-      room.addUser(user)
-      return user
-    } catch (error) {
-      this.logger.error(error)
-    }
+    const room = this.getRoom(roomId)
+    room.addUser(user)
+    return user
   }
   private removeUserFromRoom(roomId: string, userId: string): void {
-    try {
-      const room = this.getRoom(roomId)
-      room.removeUser(userId)
-    } catch (error) {
-      this.logger.error(error)
-    }
+    const room = this.getRoom(roomId)
+    room.removeUser(userId)
   }
   private addMessageToRoom(roomId: string, message: Message): Message {
-    try {
-      const room = this.getRoom(roomId)
-      room.addMessage(message)
-      return message
-    } catch (error) {
-      this.logger.error(error)
-    }
+    const room = this.getRoom(roomId)
+    room.addMessage(message)
+    return message
   }
   private hasRoom(roomId: string): boolean {
     return this.rooms.has(roomId)
@@ -102,15 +81,21 @@ export class RoomService {
     }
   }
   onDisconnectedClient(client: Socket): void {
-    this.logger.log(`Cliend id:${client.data.userId} disconnected`)
-    const user = this.authService.getUserFromSocket(client)
-    if (user?.room) {
-      const room = this.getRoom(user.room.roomId)
-      if (room) {
-        const { id, name } = user
-        this.io.to(room.id).emit(WSE.USER_DISCONNECTED, { id, name })
+    try {
+      this.logger.log(`Cliend id:${client.data.userId} disconnected`)
+      const user = this.authService.getUserFromSocket(client)
+      if (user?.room) {
+        const room = this.getRoom(user.room.roomId)
+        if (room) {
+          const { id, name } = user
+          this.io.to(room.id).emit(WSE.USER_DISCONNECTED, { id, name })
+        }
+        user.room.connected = false
       }
-      user.room.connected = false
+    } catch (error) {
+      if (error) {
+        this.logger.error(error)
+      }
     }
   }
   // Services
@@ -130,6 +115,22 @@ export class RoomService {
       }
     } catch (error) {
       this.logger.error(error)
+    }
+  }
+  getSocketFromUser(userId: string): Socket | undefined {
+    let sockets
+    if (this.io instanceof Server) {
+      sockets = this.io.sockets.sockets
+    } else {
+      sockets = this.io.sockets
+    }
+    return (Array.from(sockets.values()) as Socket[]).find(
+      (socket) => socket.data.userId === userId,
+    )
+  }
+  getRoomFromUser(user: User): Room | undefined {
+    if (user.room) {
+      return this.getRoom(user.room.roomId)
     }
   }
 }

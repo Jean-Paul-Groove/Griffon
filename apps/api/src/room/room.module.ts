@@ -4,5 +4,9 @@ import { RoomGateway } from './room.gateway'
 import { AuthModule } from '../auth/auth.module'
 import { UsersModule } from '../users/users.module'
 
-@Module({ providers: [RoomService, RoomGateway], imports: [AuthModule, UsersModule] })
+@Module({
+  providers: [RoomService, RoomGateway],
+  imports: [AuthModule, UsersModule],
+  exports: [RoomService],
+})
 export class RoomModule {}

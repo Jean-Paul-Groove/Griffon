@@ -6,7 +6,6 @@ import { HttpService } from '@nestjs/axios'
 import { RoomModule } from './room.module'
 import { RoomGateway } from './room.gateway'
 import { WSE } from 'wse'
-
 async function createNestApp(): Promise<INestApplication> {
   const testingModule = await Test.createTestingModule({
     imports: [RoomModule, CommonModule],
