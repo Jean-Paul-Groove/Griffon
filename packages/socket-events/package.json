@@ -1,6 +1,12 @@
 {
-  "name": "socket-events",
+  "name": "wse",
   "packageManager": "yarn@4.6.0",
-  "main": "./src/socket-events.enum.js",
-  "types":"./src/socket-events.enum.d.ts"
+  "main": "./src/wse.js",
+  "types": "./src/wse.d.ts",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "scripts": {
+    "build": "tsc --build"
+  }
 }

@@ -6,10 +6,12 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspaces foreach -A --parallel --interlaced run dev"
+    "dev": "yarn workspaces foreach -A --parallel --interlaced run dev",
+    "build:types": "yarn workspace wse run build && yarn install"
   },
   "packageManager": "yarn@4.6.0"
 }
