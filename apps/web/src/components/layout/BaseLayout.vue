@@ -2,7 +2,7 @@
   <main class="layout">
     <HeaderLayout class="layout_header" />
     <main class="layout_main">
-      <RouterView />
+      <RouterView class="layout_main_router" />
     </main>
     <FooterLayout class="layout_footer" />
   </main>
@@ -36,9 +36,14 @@ $scrolls-height: calc(100vw / 20);
     right: 0;
   }
   &_main {
-    overflow-y: auto;
     padding: $scrolls-height/2 7vw;
     max-height: 100%;
+    height: 100%;
+    &_router {
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
   }
 }
 </style>

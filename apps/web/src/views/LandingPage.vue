@@ -15,13 +15,10 @@ import { useAuthStore } from '@/stores'
 const { setToken } = useAuthStore()
 
 // Hooks
-console.log('INSIDE LANDING')
 const apiUrl = import.meta.env.VITE_API_ADDRESS
-console.log(apiUrl)
 const username = ref<string>('')
 const $router = useRouter()
 async function joinRoom(): Promise<void> {
-  console.log(apiUrl + '/auth/guest')
   const response = await axios.post(apiUrl + '/auth/guest', { username: username.value })
   const jwt = response?.data?.access_token
   if (jwt) {
