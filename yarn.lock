@@ -11224,15 +11224,15 @@ __metadata:
 
 "wse@file:../../packages/socket-events::locator=api%40workspace%3Aapps%2Fapi":
   version: 0.0.0
-  resolution: "wse@file:../../packages/socket-events#../../packages/socket-events::hash=077d34&locator=api%40workspace%3Aapps%2Fapi"
-  checksum: 10c0/f3764126909760ec7f5e103d3a9873c4b0a3d7770f0afda02ac3eeab28cc120587fc25429f4ee7380f2041bbe1d27215bfe6e7a415c2e467e25193ee56a61910
+  resolution: "wse@file:../../packages/socket-events#../../packages/socket-events::hash=f897c3&locator=api%40workspace%3Aapps%2Fapi"
+  checksum: 10c0/3d9466b2cd4a9e31689a0fa17c29bca1967f814f42dd02104a976e98e8a7f859b9bf727106b6a0020c4692411d22833625b2ddcaaba05551ecae7e494bd3becb
   languageName: node
   linkType: hard
 
 "wse@file:../../packages/socket-events::locator=web%40workspace%3Aapps%2Fweb":
   version: 0.0.0
-  resolution: "wse@file:../../packages/socket-events#../../packages/socket-events::hash=077d34&locator=web%40workspace%3Aapps%2Fweb"
-  checksum: 10c0/f3764126909760ec7f5e103d3a9873c4b0a3d7770f0afda02ac3eeab28cc120587fc25429f4ee7380f2041bbe1d27215bfe6e7a415c2e467e25193ee56a61910
+  resolution: "wse@file:../../packages/socket-events#../../packages/socket-events::hash=f897c3&locator=web%40workspace%3Aapps%2Fweb"
+  checksum: 10c0/3d9466b2cd4a9e31689a0fa17c29bca1967f814f42dd02104a976e98e8a7f859b9bf727106b6a0020c4692411d22833625b2ddcaaba05551ecae7e494bd3becb
   languageName: node
   linkType: hard
 
