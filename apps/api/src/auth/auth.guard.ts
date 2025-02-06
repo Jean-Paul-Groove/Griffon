@@ -1,31 +1,21 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { FastifyRequest } from 'fastify'
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common'
+import { Socket } from 'socket.io'
+import { AuthService } from './auth.service'
+import { WsException } from '@nestjs/websockets'
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private authService: AuthService) {}
+  private readonly logger = new Logger(AuthGuard.name)
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest()
-    const token = this.extractTokenFromHeader(request)
-    if (!token) {
-      throw new UnauthorizedException()
-    }
+    this.logger.debug('AUTH GUARD')
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
-      })
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
-      request['user'] = payload
-    } catch {
-      throw new UnauthorizedException()
+      const client: Socket = context.switchToWs().getClient()
+      const hasToken = this.authService.validateWsConnexion(client)
+      return hasToken
+    } catch (error) {
+      this.logger.debug('ERROR IN GUARD')
+      throw new WsException({ status: 401, message: error?.message || 'No valid Token' })
     }
-    return true
-  }
-
-  private extractTokenFromHeader(request: FastifyRequest): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? []
-    return type === 'Bearer' ? token : undefined
   }
 }

@@ -1,7 +1,7 @@
-import { User } from 'src/users/types/User'
+import { User } from 'src/user/types/User'
 
 export interface Message {
-  sender: User['id']
+  sender: User
   content: string
   sent_at: number
 }

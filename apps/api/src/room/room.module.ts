@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common'
 import { RoomService } from './room.service'
 import { RoomGateway } from './room.gateway'
 import { AuthModule } from '../auth/auth.module'
-import { UsersModule } from '../users/users.module'
+import { UserModule } from '../user/user.module'
+import { CommonModule } from '../common/common.module'
 
 @Module({
   providers: [RoomService, RoomGateway],
-  imports: [AuthModule, UsersModule],
+  imports: [AuthModule, UserModule, CommonModule],
   exports: [RoomService],
 })
 export class RoomModule {}

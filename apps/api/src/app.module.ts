@@ -4,9 +4,10 @@ import { AppService } from './app.service'
 import { CommonModule } from './common/common.module'
 import { GameModule } from './game/game.module'
 import { AuthModule } from './auth/auth.module'
-import { UsersModule } from './users/users.module'
+import { UserModule } from './user/user.module'
 import { ConfigModule } from '@nestjs/config'
 import { RoomModule } from './room/room.module'
+import { ChatModule } from './chat/chat.module';
 import jwtConfig from './config/jwt.config'
 
 @Module({
@@ -15,8 +16,9 @@ import jwtConfig from './config/jwt.config'
     CommonModule,
     GameModule,
     AuthModule,
-    UsersModule,
+    UserModule,
     RoomModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

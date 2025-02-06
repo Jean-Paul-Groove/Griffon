@@ -1,20 +1,18 @@
-import { Logger } from '@nestjs/common'
-import {
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets'
-import { AuthService } from '../auth/auth.service'
+import { Logger, UseFilters, UseGuards } from '@nestjs/common'
+import { OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
 import { RoomService } from '../room/room.service'
-import { Namespace, Socket } from 'socket.io'
+import { Namespace } from 'socket.io'
+import { UserService } from '../user/user.service'
+import { AuthGuard } from '../auth/auth.guard'
+import { WsFilter } from '../common/ws/ws.filter'
 
+@UseGuards(AuthGuard)
+@UseFilters(WsFilter)
 @WebSocketGateway({ namespace: 'game' })
-export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway implements OnGatewayInit {
   constructor(
-    private authService: AuthService,
     private roomService: RoomService,
+    private userService: UserService,
   ) {}
   private readonly logger = new Logger(GameGateway.name)
 
@@ -22,17 +20,5 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   afterInit(): void {
     this.logger.log('Game gateway initialized')
-  }
-
-  handleConnection(client: Socket): void {
-    try {
-      this.logger.debug(client.data)
-    } catch (error) {
-      this.logger.error(error)
-    }
-  }
-
-  handleDisconnect(client: Socket): void {
-    this.roomService.onDisconnectedClient(client)
   }
 }

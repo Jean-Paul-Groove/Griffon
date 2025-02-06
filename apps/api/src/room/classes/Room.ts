@@ -1,4 +1,4 @@
-import { User } from 'src/users/types/User'
+import { User } from 'src/user/types/User'
 import { RoomOptions } from '../types/room/RoomOptions'
 import { Message } from 'src/common/message/types/Message'
 import { Logger } from '@nestjs/common'
@@ -12,7 +12,7 @@ export class Room {
   }
   readonly id: string
   private readonly users: Map<string, User> = new Map()
-  private maxNumPlayer: number = 8
+  readonly maxNumPlayer: number = 8
   private readonly messages: Message[] = []
   private readonly logger
   getUsers(): User[] {
@@ -26,24 +26,16 @@ export class Room {
     this.users.set(user.id, user)
   }
   getUser(id: string): User {
-    try {
-      const user = this.users.get(id)
-      if (!user) {
-        throw new Error(`User ${id} was not found in room ${this.id}`)
-      }
-      return user
-    } catch (error: unknown) {
-      this.logger.error(`An error occured while getting user ${id}`, error)
+    const user = this.users.get(id)
+    if (!user) {
+      throw new Error(`User ${id} was not found in room ${this.id}`)
     }
+    return user
   }
   removeUser(id: string): void {
-    try {
-      const isDeleted = this.users.delete(id)
-      if (!isDeleted) {
-        throw new Error(`User ${id} was not found`)
-      }
-    } catch (error: unknown) {
-      this.logger.error(`An error occured while removing user ${id} from room ${this.id}`, error)
+    const isDeleted = this.users.delete(id)
+    if (!isDeleted) {
+      throw new Error(`User ${id} was not found`)
     }
   }
   getMessages(): Message[] {

@@ -2,14 +2,15 @@ interface BaseUser {
   id: string
   name: string
   room?: {
-    roomId: string
+    id: string
     connected: boolean
   }
+  avatar?: string
 }
 
-export interface LoggedUser extends BaseUser {
+type LoggedUser = BaseUser & {
   avatar: string
 }
-export type Guest = BaseUser
+export type Guest = BaseUser & {}
 
 export type User = LoggedUser | Guest
