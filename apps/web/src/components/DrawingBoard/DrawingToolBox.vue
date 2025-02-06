@@ -110,6 +110,7 @@ function setTool(newTool: DrawingTool): void {
 .toolbox {
   display: flex;
   align-items: center;
+  height: fit-content;
   &_tools {
     display: flex;
     flex-direction: column;
