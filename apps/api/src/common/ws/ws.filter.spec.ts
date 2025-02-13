@@ -1,7 +1,7 @@
-import { WsFilter } from './ws.filter';
+import { WsFilter } from './ws.filter'
 
 describe('WsFilter', () => {
   it('should be defined', () => {
-    expect(new WsFilter()).toBeDefined();
-  });
-});
+    expect(new WsFilter()).toBeDefined()
+  })
+})

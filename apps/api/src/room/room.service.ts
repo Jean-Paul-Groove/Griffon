@@ -6,7 +6,7 @@ import { Message } from '../common/message/types/Message'
 import { v4 as uuidv4 } from 'uuid'
 import { Namespace, Server, Socket } from 'socket.io'
 import { UserService } from '../user/user.service'
-import { WsResponse } from '@nestjs/websockets'
+import { WsException, WsResponse } from '@nestjs/websockets'
 import { WSE } from 'wse'
 import { RoomInfoDto } from './dto/RoomInfoDto'
 
@@ -18,9 +18,13 @@ export class RoomService {
   private readonly rooms: Map<string, Room> = new Map()
 
   // Private methods
-  private createRoom(id?: string, options?: RoomOptions): Room {
-    const roomId = id ?? uuidv4()
-    const room = new Room(roomId, options)
+  private createRoom(options?: RoomOptions & { roomId?: string }): Room {
+    const { roomId, ...config } = options
+    const id = roomId ?? uuidv4()
+    if (this.rooms.has(id)) {
+      throw new Error('ROOM ALREADY EXISTS')
+    }
+    const room = new Room(id, config)
     this.rooms.set(id, room)
     return room
   }
@@ -57,16 +61,47 @@ export class RoomService {
     }
   }
   // Handlers
+  onCreateRoom(user: User, client: Socket): WsResponse<RoomInfoDto> {
+    try {
+      const room = this.createRoom({ owner: user })
+      // Remove user from previous room if any
+      if (user.room?.id && user.room.id !== room.id) {
+        this.removeUserFromRoom(user.room.id, user.id)
+        client.leave(user.room.id)
+        user.room = undefined
+      }
+      // Join socket to room
+      user.room = { id: room.id, connected: true, isDrawing: false }
+      this.joinSocketToRoom(client, room.id)
+
+      const roomInfo = (): RoomInfoDto => ({
+        id: room.id,
+        owner: room.owner,
+        users: room.getUsers(),
+        messages: room.getMessages(),
+        maxNumPlayer: room.maxNumPlayer,
+      })
+      this.logger.debug('ROOM CREATED')
+      this.logger.debug(roomInfo())
+      return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: roomInfo() }
+    } catch (error) {
+      this.logger.error(error)
+      throw new WsException(error)
+    }
+  }
   onUserJoinRoom(user: User, roomId: string, client: Socket): WsResponse<RoomInfoDto> {
     // Check if room exists
-    const roomExists = this.hasRoom(roomId)
-    // TO CHANGE
-    if (!roomExists) {
-      this.createRoom(roomId)
-    }
+    this.logger.debug('JOINING ROOM')
+    this.logger.debug(user.name)
+    this.logger.debug('In room' + roomId)
     const room = this.get(roomId)
+    if (!room) {
+      throw new WsException("Room doesn't exists")
+    }
+
     const roomInfo = (): RoomInfoDto => ({
       id: room.id,
+      owner: room.owner,
       users: room.getUsers(),
       messages: room.getMessages(),
       maxNumPlayer: room.maxNumPlayer,
@@ -87,7 +122,7 @@ export class RoomService {
       }
     }
     this.addUserToRoom(roomId, user)
-    user.room = { id: roomId, connected: true }
+    user.room = { id: roomId, connected: true, isDrawing: false }
 
     this.joinSocketToRoom(client, roomId)
 
@@ -108,6 +143,28 @@ export class RoomService {
       }
       user.room.connected = false
     }
+  }
+  onNewMessage(message: string, client: Socket): void {
+    const user = this.userService.get(client.data.userId)
+    const room = this.getRoomFromUser(user)
+    const newMessage: Omit<Message, 'id'> = { sender: user, content: message, sent_at: Date.now() }
+    room.addMessage(newMessage)
+    if (room.canGuess()) {
+      room.makeGuess(newMessage.content, user)
+    }
+    this.io.in(room.id).emit(WSE.NEW_MESSAGE, newMessage)
+  }
+  onDrawingUpload(client: Socket, drawing: Blob): WsResponse {
+    this.logger.debug('DRAWING SHARED')
+    const user = this.userService.get(client.data.userId)
+    const { id, name } = user
+    const room = this.getRoomFromUser(user)
+    if (room.canUserDraw(user)) {
+      this.io.in(room.id).emit(WSE.UPLOAD_DRAWING, { drawing, user: { id, name } })
+      const remainingTime = room.getRemainingDrawingTime()
+      return { event: 'SUCCESS', data: remainingTime }
+    }
+    return { event: WSE.STOP_DRAW, data: undefined }
   }
   // Services
   getSocketFromUser(userId: string): Socket | undefined {

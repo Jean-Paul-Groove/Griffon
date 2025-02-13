@@ -4,6 +4,7 @@ interface BaseUser {
   room?: {
     id: string
     connected: boolean
+    isDrawing: boolean
   }
   avatar?: string
 }

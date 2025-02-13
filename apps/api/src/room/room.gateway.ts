@@ -18,10 +18,17 @@ import { UserInfoDto } from '../user/dto/UserInfoDto'
 import { WsFilter } from '../common/ws/ws.filter'
 import { AuthGuard } from '../auth/auth.guard'
 import { UserService } from '../user/user.service'
+import { RoomGuard } from './room.guard'
 
 @UseGuards(AuthGuard)
 @UseFilters(WsFilter)
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['my-custom-header'],
+  },
+})
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private roomService: RoomService,
@@ -29,7 +36,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {}
   private readonly logger = new Logger(RoomGateway.name)
 
-  @WebSocketServer() io: Server
+  @WebSocketServer()
+  io: Server
 
   afterInit(): void {
     this.roomService.io = this.io
@@ -63,6 +71,13 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.logger.warn('HANDLE DISCONNECT', err)
     }
   }
+  // ROOM HANDLERS
+  @SubscribeMessage(WSE.ASK_CREATE_ROOM)
+  async handleCreateRoom(@ConnectedSocket() client: Socket): Promise<WsResponse> {
+    this.logger.debug('ASK CREATE ROOM')
+    const user = this.userService.get(client.data.userId)
+    return this.roomService.onCreateRoom(user, client)
+  }
 
   @SubscribeMessage(WSE.ASK_JOIN_ROOM)
   async handleJoinRoom(
@@ -73,18 +88,24 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return this.roomService.onUserJoinRoom(user, roomId, client)
   }
 
+  // CHAT HANDLERS
+
+  @UseGuards(RoomGuard)
+  @SubscribeMessage(WSE.NEW_MESSAGE)
+  handleNewMessage(
+    @MessageBody('message') message: string,
+    @ConnectedSocket() client: Socket,
+  ): void {
+    this.roomService.onNewMessage(message, client)
+  }
+
+  // GAME HANDLERS
+  @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.UPLOAD_DRAWING)
   async handledawingUpload(
     @ConnectedSocket() client: Socket,
     @MessageBody('drawing') drawing: Blob,
   ): Promise<WsResponse> {
-    this.logger.debug('DRAWING SHARED')
-    const rooms = Array.from(client.rooms.values())
-    this.logger.debug(rooms)
-    const user = this.userService.get(client.data.userId)
-    const { id, name } = user
-    const room = this.roomService.getRoomFromUser(user)
-    this.io.in(room.id).emit(WSE.UPLOAD_DRAWING, { drawing, user: { id, name } })
-    return { event: 'SUCCESS', data: undefined }
+    return this.roomService.onDrawingUpload(client, drawing)
   }
 }
