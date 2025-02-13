@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "dev": "yarn workspaces foreach -A --parallel --interlaced run dev",
+    "lint": "yarn workspaces foreach -A --parallel --interlaced run lint",
     "build:events": "yarn workspace wse run build && yarn install"
   },
   "packageManager": "yarn@4.6.0"

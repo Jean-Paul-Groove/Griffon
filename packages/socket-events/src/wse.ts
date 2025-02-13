@@ -3,11 +3,21 @@ export enum WSE {
         USER_JOINED_ROOM= 'user-joined-room',
         USER_JOINED_ROOM_SUCCESS= 'user-joined-room-successfully',
         ASK_JOIN_ROOM= 'ask-join-room',
+        ASK_CREATE_ROOM= 'ask-create-room',
         USER_LEFT_ROOM= 'user-left-room',
         USER_DISCONNECTED= 'user-disconnected',
         USER_RECONNECTED= 'user-reconnected',
         UPLOAD_DRAWING='upload-drawing',
         NEW_MESSAGE='new-message',
         CONNECTION_SUCCESS='user-connected-successfully',
-        DISCONNECTION="disconnect"
+        DISCONNECTION="disconnect",
+        CAN_DRAW="user-can-draw",
+        STOP_DRAW="stop-draw",
+        NEW_ARTIST="new-artist",
+        PLAYER_SCORED="player-scored",
+        WORD_TO_DRAW="word-to-draw",
+        GUESS_WORD="guess-word",
+        STOP_GUESS="stop-guess",
+        ASK_START_GRIFFONARY="ask-start-griffonary",
+        START_GAME_GRIFFONARY="start-game-griffonary"
 }
