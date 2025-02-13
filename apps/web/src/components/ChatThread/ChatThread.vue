@@ -1,17 +1,12 @@
 <template>
-  <div v-if="messages && user" class="game-chat">
-    <div class="game-chat_thread">
-      <div
+  <div v-if="messages && user?.id" class="game-chat">
+    <div ref="thread" class="game-chat_thread">
+      <ChatMessage
         v-for="(message, index) in messages"
         :key="'message-' + index"
-        class="game-chat_thread_message"
-        :class="user.id === message.sender.id ? 'isSender' : ''"
-      >
-        <p class="game-chat_thread_message-sender">
-          {{ message.sender.name }} ∙ {{ new Date(message.sent_at).toLocaleTimeString() }}
-        </p>
-        <p class="game-chat_thread_message-content">{{ message.content }}</p>
-      </div>
+        :message="message"
+        :user-id="user.id"
+      />
     </div>
     <form class="game-chat_form" @submit="(e) => sendMessage(e)">
       <textarea
@@ -21,31 +16,42 @@
         name="chat-message"
         @keydown="sendOnEnter"
       ></textarea>
-      <button class="game-chat_form_submit">Envoyer</button>
+      <button class="game-chat_form_submit" title="Envoyer">✉️</button>
     </form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore, useRoomstore, useSocketStore } from '../../stores'
+import { nextTick, ref, useTemplateRef, watch } from 'vue'
+import { useAuthStore, useSocketStore } from '../../stores'
 import { WSE } from 'wse'
 import { storeToRefs } from 'pinia'
+import ChatMessage from './ChatMessage.vue'
+
 // Stores
-const roomStore = useRoomstore()
 const socketStore = useSocketStore()
 const authStore = useAuthStore()
 // Refs
+const thread = useTemplateRef('thread')
 const chatMessage = ref<string>('')
-const { messages } = storeToRefs(roomStore)
-const { chatSpace } = storeToRefs(socketStore)
+const { socket, messages } = storeToRefs(socketStore)
 const { user } = storeToRefs(authStore)
 
+// Watchers
+watch(
+  () => messages.value,
+  async () => {
+    await nextTick()
+    if (!thread.value) return
+    thread.value.scrollTop = thread.value?.scrollHeight
+  },
+  { immediate: true, deep: true },
+)
 // Functions
 function sendMessage(e: Event | KeyboardEvent): void {
   e.preventDefault()
-  if (chatMessage.value.trim() !== '' && chatSpace.value !== null) {
-    chatSpace.value.emit(WSE.NEW_MESSAGE, { message: chatMessage.value })
+  if (chatMessage.value.trim() !== '' && socket.value !== null) {
+    socket.value.emit(WSE.NEW_MESSAGE, { message: chatMessage.value })
     chatMessage.value = ''
   }
 }
@@ -69,45 +75,42 @@ function sendOnEnter(e: KeyboardEvent): void {
   justify-content: space-between;
   padding: 5px;
   max-height: 100%;
+  min-height: 0;
   &_thread {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     padding: 5px;
     gap: 5px;
-    &_message {
-      padding: 5px;
-      border-radius: 10px;
-      background-color: rgba(245, 245, 220, 0.415);
-      width: 70%;
-      margin-left: auto;
-      + .isSender {
-        margin-left: 0;
-        margin-right: auto;
-      }
-      &-sender {
-        font-size: x-small;
-      }
-    }
+    max-height: 100%;
   }
   &_form {
     width: 100%;
     display: flex;
-    flex-direction: column;
     gap: 5px;
     &_textarea {
-      height: 100px;
+      height: 50px;
       max-width: 100%;
       width: 100%;
-      max-height: 100px;
       resize: none;
       background-color: rgba(255, 255, 255, 0.386);
       border: none;
       box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.134);
       padding: 5px;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
       &:focus {
-        outline: solid 1px coral;
+        outline: ridge 3px var(--secondary-color);
       }
+    }
+    &_submit {
+      cursor: pointer;
+      padding: 5px 20px;
+      font-size: large;
+      border: none;
+      background-color: var(--main-color);
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
   }
 }

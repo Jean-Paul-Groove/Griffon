@@ -29,10 +29,10 @@
       </button>
     </div>
     <div class="toolbox_history">
-      <button v-if="canUndo" class="toolbox_action" @click="emit('undo')">
+      <button :disabled="!canUndo" class="toolbox_action" @click="emit('undo')">
         <img class="toolbox_action_svg" :src="undo" alt="undo" />
       </button>
-      <button v-if="canRedo" class="toolbox_action" @click="emit('redo')">
+      <button :disabled="!canRedo" class="toolbox_action" @click="emit('redo')">
         <img class="toolbox_action_svg" :src="redo" alt="redo" />
       </button>
     </div>
@@ -74,14 +74,12 @@ const tool = ref<DrawingTool>(props.tool)
 watch(
   () => color.value,
   () => {
-    console.log('COLOR CHANGED')
     emit('change:color', color.value)
   },
 )
 watch(
   () => lineThickness.value,
   () => {
-    console.log('Thickness changed')
     emit('change:size', lineThickness.value)
   },
 )
@@ -111,6 +109,9 @@ function setTool(newTool: DrawingTool): void {
   display: flex;
   align-items: center;
   height: fit-content;
+  width: 100%;
+  justify-content: center;
+  gap: 5px;
   &_tools {
     display: flex;
     flex-direction: column;
@@ -140,6 +141,9 @@ function setTool(newTool: DrawingTool): void {
     background: none;
     border: none;
     cursor: pointer;
+    &:disabled {
+      opacity: 0.2;
+    }
     &_svg {
       width: 40px;
     }

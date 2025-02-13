@@ -43,7 +43,7 @@ const currentPath = ref<DrawingPath>(EMPTY_PATH)
 const drawingHistory = ref<DrawingPath[]>([])
 const tool = ref<DrawingTool>('brush')
 const strokeStyle = ref<string>('black')
-const lineWidth = ref<number>(21)
+const lineWidth = ref<number>(11)
 const currentIndex = ref<number>(-1)
 const canvas = ref<HTMLCanvasElement>()
 const previousCanvasSize = ref<{ width: number; height: number } | null>(null)
@@ -231,31 +231,28 @@ const debouncedSendDrawing = debounce(sendDrawing, 6, { immediate: true })
   max-width: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 5px;
   align-items: center;
-  //   border-image-source: url('../../assets/background/runes-4.png');
-  //   border-image-repeat: repeat;
-  //   border-image-slice: 200;
-  //   border-image-outset: 0;
-  //   border-image-width: 20px;
-  //
+  min-height: 0;
 }
 .canvas_container {
   box-sizing: border-box;
   overflow: hidden;
   aspect-ratio: 1.4;
-  object-fit: contain;
+  background-color: var(--light-bg);
+  box-shadow: var(--inside-shadow);
 }
 
 .cursor {
   &-eraser {
     cursor:
-      url('../../assets/icons/eraser.png') 0 0,
+      url('../../assets/icons/eraser.png') 0 20,
       auto;
   }
   &-brush {
     cursor:
-      url('../../assets/icons/brush.png') 0 0,
+      url('../../assets/icons/brush.png') 0 20,
       auto;
   }
 }

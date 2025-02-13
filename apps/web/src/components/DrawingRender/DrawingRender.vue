@@ -1,7 +1,9 @@
 <template>
   <div class="drawing-render">
     <p v-if="artist.trim() != ''">{{ artist }}</p>
-    <img class="drawing-render_img" :src="image" alt="drawing" base64 />
+    <div v-if="image" class="drawing-render_contaienr">
+      <img class="drawing-render_container_img" :src="image" alt="drawing" base64 />
+    </div>
   </div>
 </template>
 
@@ -9,9 +11,11 @@
 import { ref, watch } from 'vue'
 import { useSocketStore } from '../../stores'
 import { WSE } from 'wse'
+import { storeToRefs } from 'pinia'
 
 // Stores
-const { socket } = useSocketStore()
+const socketStore = useSocketStore()
+const { socket } = storeToRefs(socketStore)
 
 // Refs
 const image = ref<string>('')
@@ -20,9 +24,8 @@ const artist = ref<string>('')
 watch(
   () => socket,
   () => {
-    console.log('bababa')
-    if (socket != null) {
-      socket.on(WSE.UPLOAD_DRAWING, (body) => {
+    if (socket.value != null) {
+      socket.value.on(WSE.UPLOAD_DRAWING, (body) => {
         try {
           artist.value = body?.user?.name
           const buffer = body.drawing
@@ -30,9 +33,6 @@ watch(
             const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)))
             image.value = 'data:image/jpeg;base64,' + base64String
           }
-
-          console.log(image.value)
-          console.log(body)
         } catch (error) {
           console.error(error)
         }
@@ -47,10 +47,28 @@ watch(
 .drawing-render {
   width: 100%;
   height: 100%;
-  &_img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+  max-height: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  align-items: center;
+  min-height: 0;
+  &_container {
+    box-sizing: border-box;
+    overflow: hidden;
+    aspect-ratio: 1.4;
+    background-color: var(--light-bg);
+    box-shadow: var(--inside-shadow);
+    &_img {
+      background-color: var(--light-bg);
+      box-shadow: var(--inside-shadow);
+      display: block;
+      height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
   }
 }
 </style>

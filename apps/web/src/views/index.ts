@@ -1,2 +1,3 @@
-export { default as GamePage } from './GamePage.vue'
-export { default as LandingPage } from './LandingPage.vue'
+export { default as GameView } from './GameView.vue'
+export { default as LandingView } from './LandingView.vue'
+export { default as LobbyView } from './LobbyView.vue'

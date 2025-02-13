@@ -8,6 +8,7 @@ export interface Room {
 }
 
 export interface Message {
+  index: number
   content: string
   sent_at: number
   sender: User

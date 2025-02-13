@@ -26,17 +26,18 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error('INVALID TOKEN')
     }
   }
-  function setUserId(userInfo: User): void {
+  function setUserInfo(userInfo: User): void {
     if (userInfo != null) {
       user.value = userInfo
     }
   }
   function resetToken(): void {
+    console.log('RESET TOKEN')
     token.value = null
     localStorage.removeItem(TOKEN_KEY)
 
     user.value = null
   }
 
-  return { token, user, setToken, resetToken, setUserId }
+  return { token, user, setToken, resetToken, setUserInfo }
 })

@@ -1,10 +1,11 @@
-import { ref, computed, watch } from 'vue'
-import { defineStore } from 'pinia'
+import { ref, watch } from 'vue'
+import { defineStore, storeToRefs } from 'pinia'
 import type { Socket } from 'socket.io-client'
 import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
 import { WSE } from 'wse'
 import type { User } from '../types/User'
+import type { Message, Room } from '../types/Room'
 
 type ListenerRecord = {
   [key in WSE]?: (arg: any) => void
@@ -12,23 +13,17 @@ type ListenerRecord = {
 
 export const useSocketStore = defineStore('socket', () => {
   // Composables
-  const { token, resetToken, setUserId } = useAuthStore()
+  const authStore = useAuthStore()
+  const { resetToken, setUserInfo } = authStore
+  const { token } = storeToRefs(authStore)
   const socket = ref<Socket | null>(null)
-  const gameSpace = ref<Socket | null>(null)
-  const chatSpace = ref<Socket | null>(null)
-  const isConnected = computed<boolean>(() => {
-    if (socket.value) {
-      return socket.value.connected
-    }
-    return false
-  })
 
   // Constants
   const genericListeners: ListenerRecord = {
     [WSE.INVALID_TOKEN]: resetToken,
     [WSE.CONNECTION_SUCCESS]: (data: User) => {
       if (data) {
-        setUserId(data)
+        setUserInfo(data)
       }
     },
     [WSE.DISCONNECTION]: (reason) => {
@@ -37,77 +32,95 @@ export const useSocketStore = defineStore('socket', () => {
         resetToken()
       }
     },
+    [WSE.NEW_MESSAGE]: (data: Message): void => {
+      if (data) {
+        console.log('NEW MESSAGE RECEIVED')
+        console.log(data)
+        addMessage(data)
+      }
+    },
+    [WSE.USER_JOINED_ROOM_SUCCESS]: (data: Room): void => {
+      if (data) {
+        console.log('NEW ROOM')
+        setRoomInfo(data)
+      }
+    },
   }
 
-  // Watchers
-  watch(() => token, handleConnection, { immediate: true })
+  // Refs
+  const room = ref<Room | null>(null)
+  const messages = ref<Message[]>([])
 
+  // Watchers
+  watch(() => token.value, handleConnection, { immediate: true })
+  watch(
+    () => socket.value?.connected,
+    () => {
+      console.log('SOCKETS HAVE CHANGED')
+      handleConnection()
+    },
+  )
   // Functions
   function handleConnection(): void {
-    if (!token) {
-      if (isConnected.value && socket.value) {
-        socket.value.disconnect()
-      }
-      socket.value = null
-      gameSpace.value = null
-      chatSpace.value = null
+    console.log('INIT CONNECTION')
+    if (!token.value) {
+      removeSocket()
       return
     }
-    if (!socket.value) {
+    connectSocket()
+    setListeners(genericListeners)
+  }
+  function connectSocket(): void {
+    if (token.value === null) {
+      return
+    }
+    if (socket.value == null) {
       socket.value = io(import.meta.env.VITE_API_ADDRESS, {
         autoConnect: true,
         transports: ['websocket', 'polling'],
         auth: {
-          token: `bearer ${token}`,
+          token: `bearer ${token.value}`,
         },
         reconnectionAttempts: 5,
       })
-      connectNamespaces()
     }
-    if (!isConnected.value && socket.value != null) {
+    if (socket.value && socket.value.connected === false) {
       socket.value.connect()
     }
-    setUpListeners(genericListeners)
   }
-  function connectNamespaces(): void {
-    gameSpace.value = io(import.meta.env.VITE_API_ADDRESS + '/game', {
-      auth: {
-        token: `bearer ${token}`,
-      },
-    })
-
-    chatSpace.value = io(import.meta.env.VITE_API_ADDRESS + '/chat', {
-      auth: {
-        token: `bearer ${token}`,
-      },
-    })
-  }
-  function setUpListeners(
-    record: ListenerRecord,
-    space: 'GLOBAL' | 'GAME' | 'CHAT' = 'GLOBAL',
-  ): void {
-    switch (space) {
-      case 'GAME':
-        assignListeners(gameSpace.value as Socket, record)
-        break
-      case 'CHAT':
-        assignListeners(chatSpace.value as Socket, record)
-
-        break
-      default:
-        assignListeners(socket.value as Socket, record)
-    }
-  }
-  function assignListeners(space: Socket | null, record: ListenerRecord): void {
-    if (space && space.on) {
+  function setListeners(record: ListenerRecord): void {
+    if (socket.value) {
       for (const key of Object.keys(record) as WSE[]) {
         const handler = record[key]
 
-        if (handler != null && !space.listeners(key).includes(handler)) {
-          space.on(key, handler)
+        if (handler != null && !socket.value.listeners(key).includes(handler)) {
+          socket.value.on(key, handler)
+        } else {
+          console.log("Couldn't add listener for " + key)
         }
       }
     }
   }
-  return { socket, gameSpace, chatSpace, setUpListeners }
+  function removeSocket(): void {
+    if (socket.value?.connected) {
+      socket.value.close()
+    }
+    socket.value = null
+  }
+  function setRoomInfo(newRoom: Room): void {
+    room.value = JSON.parse(JSON.stringify(newRoom))
+    messages.value = [...newRoom.messages]
+  }
+  // function setUsers(users: User[]): void {
+  //   if (room.value) {
+  //     room.value = { ...room.value, users }
+  //   }
+  // }
+  function addMessage(message: Message): void {
+    if (room.value) {
+      room.value.messages.push(message)
+      messages.value.push(message)
+    }
+  }
+  return { socket, room, messages, setListeners, handleConnection }
 })
