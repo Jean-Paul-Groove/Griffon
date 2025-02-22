@@ -3,7 +3,7 @@ import { UserService } from '../user/user.service'
 import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
 import { WsException } from '@nestjs/websockets'
-import { CreateUserDto } from '../user/dto/CreateUserDto'
+import { CreateUserDto } from 'dto'
 @Injectable()
 export class AuthService {
   constructor(

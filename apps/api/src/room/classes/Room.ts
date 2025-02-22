@@ -1,11 +1,10 @@
-import { User } from 'src/user/types/User'
 import { RoomOptions } from '../types/room/RoomOptions'
 import { Message } from 'src/common/message/types/Message'
 import { Logger } from '@nestjs/common'
 import { Game } from './Game'
-import { Score, ScoreMap } from '../types/room/Score'
 import { Griffonary } from './games/Griffonary'
 import { RoomService } from '../room.service'
+import { GameName, Player, User } from 'dto'
 export class Room {
   constructor(id: string, options?: RoomOptions) {
     this.id = id
@@ -15,45 +14,50 @@ export class Room {
     }
     if (options?.owner) {
       this.owner = options.owner.id
-      this.addUser(options.owner)
+      this.addPlayer(options.owner)
     }
   }
   readonly id: string
-  private readonly users: Map<string, User> = new Map()
+  private readonly players: Map<string, Player> = new Map()
   readonly maxNumPlayer: number = 8
   readonly owner: string | null = null
   private readonly messages: Message[] = []
   private readonly logger
   private messageId = 0
   private currentGame: Game | null = null
-  private totalScores: ScoreMap = new Map()
 
-  getUsers(): User[] {
-    return [...this.users.values()]
+  // PLAYERS
+  getPlayers(): Player[] {
+    return [...this.players.values()]
   }
-  addUser(user: User): void {
-    if (this.users.has(user.id)) {
+  addPlayer(user: User): void {
+    if (this.players.has(user.id)) {
       this.logger.warn(`User ${user.id} is already in the room ${this.id}`)
       return
     }
-    if (this.users.size >= this.maxNumPlayer) {
+    if (this.players.size >= this.maxNumPlayer) {
       throw new Error(`Room is full with  ${this.maxNumPlayer} users`)
     }
-    this.users.set(user.id, user)
+    this.players.set(user.id, { ...user, points: 0, isDrawing: false })
   }
-  getUser(id: string): User {
-    const user = this.users.get(id)
+  getPlayer(id: string): Player {
+    const user = this.players.get(id)
     if (!user) {
       throw new Error(`User ${id} was not found in room ${this.id}`)
     }
     return user
   }
-  removeUser(id: string): void {
-    const isDeleted = this.users.delete(id)
+  removePlayer(id: string): void {
+    const isDeleted = this.players.delete(id)
     if (!isDeleted) {
       throw new Error(`User ${id} was not found`)
     }
   }
+  hasPlayer(id: string): boolean {
+    return this.players.has(id)
+  }
+
+  // MESSAGES
   getMessages(): Message[] {
     return [...this.messages]
   }
@@ -61,54 +65,57 @@ export class Room {
     this.messages.push({ ...message, id: this.messageId })
     this.messageId++
   }
-  hasUser(id: string): boolean {
-    return this.users.has(id)
-  }
-  updateGlobalScores(gameScores: Score[]): void {
-    for (const score of gameScores) {
-      this.totalScores.set(score[0], (this.totalScores.get(score[0]) ?? 0) + score[1])
+
+  // GAME
+  setGame(name: GameName, roomService: RoomService): void {
+    switch (name) {
+      case 'Griffonary':
+        this.currentGame = new Griffonary(this, roomService)
+        break
     }
-  }
-  allowuserToDraw(userId: User['id']): void {
-    const user = this.getUser(userId)
-    user.room.isDrawing = true
+    this.logger.debug('GAME SET TO ' + name)
   }
   resetDrawingRights(): void {
-    this.getUsers().forEach((user) => (user.room.isDrawing = false))
+    this.getPlayers().forEach((user) => (user.isDrawing = false))
   }
   startGame(): void {
     if (this.currentGame !== null) {
       this.currentGame.start()
     }
   }
+  getGame(): GameName | null {
+    if (!this.currentGame) {
+      return null
+    }
+    return this.currentGame.name
+  }
   endGame(): void {}
+  allowPlayerToDraw(userId: User['id']): void {
+    const player = this.getPlayer(userId)
+    player.isDrawing = true
+  }
   canGuess(): boolean {
     if (this.currentGame && this.currentGame.canMakeGuess) {
       return true
     }
     return false
   }
-  makeGuess(guess: string, user: User): void {
+  makeGuess(guess: string, userId: User['id']): void {
     if (this.currentGame && this.currentGame instanceof Griffonary) {
-      this.currentGame.guessWord(guess, user)
+      const player = this.getPlayer(userId)
+      this.currentGame.guessWord(guess, player)
     }
   }
-  setGame(name: 'Griffonary', roomService: RoomService): void {
-    switch (name) {
-      case 'Griffonary':
-        this.currentGame = new Griffonary(this, roomService)
-        break
-    }
-  }
-  canUserDraw(user: User): boolean {
-    if (user.room.isDrawing && this.currentGame?.shareDrawing) {
+  canPlayerDraw(user: User): boolean {
+    const player = this.getPlayer(user.id)
+    if (player.isDrawing && this.currentGame?.shareDrawing) {
       return true
     }
     return false
   }
-  getRemainingDrawingTime(): number {
+  getDrawingTimeLimit(): number {
     if (this.currentGame) {
-      return this.currentGame.getRemainingDrawingTime()
+      return this.currentGame.drawingEndTime
     }
     return 0
   }

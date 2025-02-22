@@ -1,4 +1,4 @@
-import { User } from 'src/user/types/User'
+import { User } from 'dto'
 
 export interface Message {
   id: number

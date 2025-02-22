@@ -14,11 +14,11 @@ import {
 import { Server, Socket } from 'socket.io'
 import { RoomService } from './room.service'
 import { WSE } from 'wse'
-import { UserInfoDto } from '../user/dto/UserInfoDto'
 import { WsFilter } from '../common/ws/ws.filter'
 import { AuthGuard } from '../auth/auth.guard'
 import { UserService } from '../user/user.service'
 import { RoomGuard } from './room.guard'
+import { GameName, UserInfoDto } from 'dto'
 
 @UseGuards(AuthGuard)
 @UseFilters(WsFilter)
@@ -105,7 +105,16 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async handledawingUpload(
     @ConnectedSocket() client: Socket,
     @MessageBody('drawing') drawing: Blob,
-  ): Promise<WsResponse> {
+  ): Promise<WsResponse | void> {
     return this.roomService.onDrawingUpload(client, drawing)
+  }
+
+  @UseGuards(RoomGuard)
+  @SubscribeMessage(WSE.ASK_START_GAME)
+  async handleAskStartGame(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('game') game: GameName,
+  ): Promise<void> {
+    this.roomService.onAskStartGame(client, game)
   }
 }

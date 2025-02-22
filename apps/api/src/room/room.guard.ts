@@ -13,8 +13,6 @@ export class RoomGuard implements CanActivate {
   private readonly logger = new Logger(RoomGuard.name)
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    this.logger.debug('ROOm GUARD')
-
     try {
       // Check user has a room
       const client: Socket = context.switchToWs().getClient()
@@ -24,7 +22,7 @@ export class RoomGuard implements CanActivate {
       }
       // Check Room exists and has the user registered in
       const room = this.roomService.get(user.room.id)
-      if (!room || !room.hasUser(user.id)) {
+      if (!room || !room.hasPlayer(user.id)) {
         user.room = undefined
         client.data.roomId = undefined
         throw new Error('Users room is not valid')

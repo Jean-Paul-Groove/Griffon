@@ -1,10 +1,9 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
-import { User } from './types/User'
 import { v4 as uuidv4 } from 'uuid'
-import { CreateUserDto } from './dto/CreateUserDto'
 import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
 import { WsException } from '@nestjs/websockets'
+import { CreateUserDto, User } from 'dto'
 
 // This should be a real class/interface representing a user entity
 

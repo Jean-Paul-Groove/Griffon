@@ -1,4 +1,4 @@
-import { User } from '../../../user/types/User'
+import { User } from 'dto'
 
 export interface RoomOptions {
   maxNumPlayer?: number

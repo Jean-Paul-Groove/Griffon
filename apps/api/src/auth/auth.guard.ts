@@ -8,7 +8,6 @@ export class AuthGuard implements CanActivate {
   private readonly logger = new Logger(AuthGuard.name)
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    this.logger.debug('AUTH GUARD')
     try {
       const client: Socket = context.switchToWs().getClient()
       const hasToken = this.authService.validateWsConnexion(client)

@@ -1,14 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Room } from './classes/Room'
 import { RoomOptions } from './types/room/RoomOptions'
-import { User } from '../user/types/User'
 import { Message } from '../common/message/types/Message'
 import { v4 as uuidv4 } from 'uuid'
 import { Namespace, Server, Socket } from 'socket.io'
 import { UserService } from '../user/user.service'
 import { WsException, WsResponse } from '@nestjs/websockets'
 import { WSE } from 'wse'
-import { RoomInfoDto } from './dto/RoomInfoDto'
+import { GameName, RoomInfoDto, User } from 'dto'
 
 @Injectable()
 export class RoomService {
@@ -39,12 +38,12 @@ export class RoomService {
   }
   private addUserToRoom(roomId: string, user: User): User {
     const room = this.get(roomId)
-    room.addUser(user)
+    room.addPlayer(user)
     return user
   }
   private removeUserFromRoom(roomId: string, userId: string): void {
     const room = this.get(roomId)
-    room.removeUser(userId)
+    room.removePlayer(userId)
   }
   private addMessageToRoom(roomId: string, message: Message): Message {
     const room = this.get(roomId)
@@ -71,15 +70,16 @@ export class RoomService {
         user.room = undefined
       }
       // Join socket to room
-      user.room = { id: room.id, connected: true, isDrawing: false }
+      user.room = { id: room.id, connected: true }
       this.joinSocketToRoom(client, room.id)
 
       const roomInfo = (): RoomInfoDto => ({
         id: room.id,
         owner: room.owner,
-        users: room.getUsers(),
+        players: room.getPlayers(),
         messages: room.getMessages(),
         maxNumPlayer: room.maxNumPlayer,
+        currentGame: room.getGame(),
       })
       this.logger.debug('ROOM CREATED')
       this.logger.debug(roomInfo())
@@ -102,15 +102,16 @@ export class RoomService {
     const roomInfo = (): RoomInfoDto => ({
       id: room.id,
       owner: room.owner,
-      users: room.getUsers(),
+      players: room.getPlayers(),
       messages: room.getMessages(),
       maxNumPlayer: room.maxNumPlayer,
+      currentGame: room.getGame(),
     })
     // Check if user already has a room
     if (user.room) {
       // If it's the same room, treat as reconnexion
       if (user.room.id === roomId) {
-        if (room.hasUser(user.id)) {
+        if (room.hasPlayer(user.id)) {
           this.joinSocketToRoom(client, room.id)
           user.room.connected = true
           this.io.to(room.id).emit(WSE.USER_RECONNECTED, { user })
@@ -122,7 +123,7 @@ export class RoomService {
       }
     }
     this.addUserToRoom(roomId, user)
-    user.room = { id: roomId, connected: true, isDrawing: false }
+    user.room = { id: roomId, connected: true }
 
     this.joinSocketToRoom(client, roomId)
 
@@ -150,21 +151,35 @@ export class RoomService {
     const newMessage: Omit<Message, 'id'> = { sender: user, content: message, sent_at: Date.now() }
     room.addMessage(newMessage)
     if (room.canGuess()) {
-      room.makeGuess(newMessage.content, user)
+      room.makeGuess(newMessage.content, user.id)
     }
     this.io.in(room.id).emit(WSE.NEW_MESSAGE, newMessage)
   }
-  onDrawingUpload(client: Socket, drawing: Blob): WsResponse {
+  onDrawingUpload(client: Socket, drawing: Blob): void | WsResponse {
     this.logger.debug('DRAWING SHARED')
     const user = this.userService.get(client.data.userId)
     const { id, name } = user
     const room = this.getRoomFromUser(user)
-    if (room.canUserDraw(user)) {
+    if (room.canPlayerDraw(user)) {
       this.io.in(room.id).emit(WSE.UPLOAD_DRAWING, { drawing, user: { id, name } })
-      const remainingTime = room.getRemainingDrawingTime()
-      return { event: 'SUCCESS', data: remainingTime }
+    } else {
+      return { event: WSE.STOP_DRAW, data: undefined }
     }
-    return { event: WSE.STOP_DRAW, data: undefined }
+  }
+  onAskStartGame(client: Socket, gameName: GameName): void {
+    const user = this.userService.getUserFromSocket(client)
+    const room = this.getRoomFromUser(user)
+    this.logger.debug('ASK START GAME')
+    this.logger.debug(user.id)
+    this.logger.debug(room.owner)
+
+    if (user.id === room.owner) {
+      room.setGame(gameName, this)
+      room.startGame()
+      return
+    } else {
+      throw new Error('Unauthorized')
+    }
   }
   // Services
   getSocketFromUser(userId: string): Socket | undefined {
