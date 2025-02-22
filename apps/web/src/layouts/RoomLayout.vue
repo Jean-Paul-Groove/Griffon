@@ -1,8 +1,8 @@
 <template>
-  <DefaultLayout>
+  <DefaultLayout :transition="false">
     <div class="room-layout">
+      <PlayerList />
       <RouterView class="room-layout_router" />
-      <hr class="room-page_separator" />
       <ChatThread />
     </div>
   </DefaultLayout>
@@ -11,13 +11,13 @@
 <script setup lang="ts">
 import DefaultLayout from './components/DefaultLayout.vue'
 import { RouterView } from 'vue-router'
-import { ChatThread } from '@/components'
+import { ChatThread, PlayerList } from '@/components'
 </script>
 
 <style lang="scss" scoped>
 .room-layout {
-  gap: 5px;
-  padding: 10px;
+  gap: 0.2rem;
+  padding: 0.4rem;
   max-height: 100%;
   height: 100%;
   &_separator {
@@ -34,10 +34,11 @@ import { ChatThread } from '@/components'
 @media (orientation: landscape) {
   .room-layout {
     display: grid;
-    grid-template-columns: (calc(70% - 16px) 1px 30%);
+    grid-template-columns: (20% 60% 20%);
     grid-template-rows: 1fr;
-    &_separator {
-      border-left: solid 1px rgb(255, 157, 0);
+    &_router {
+      border-left: solid 0.2rem var(--main-color);
+      border-right: solid 0.2rem var(--main-color);
     }
   }
 }
@@ -45,9 +46,10 @@ import { ChatThread } from '@/components'
   .room-layout {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: (calc(70% - 20px) 1px 30%);
-    &_separator {
-      border-top: solid 1px rgb(255, 157, 0);
+    grid-template-rows: (20% 60% 20%);
+    &_router {
+      border-top: solid 0.1rem var(--main-color);
+      border-bottom: solid 0.1rem var(--main-color);
     }
   }
 }

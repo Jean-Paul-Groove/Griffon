@@ -73,44 +73,44 @@ function sendOnEnter(e: KeyboardEvent): void {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 5px;
+  padding: 0.2rem;
   max-height: 100%;
   min-height: 0;
   &_thread {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding: 5px;
-    gap: 5px;
+    padding: 0.2rem;
+    gap: 0.2rem;
     max-height: 100%;
   }
   &_form {
     width: 100%;
     display: flex;
-    gap: 5px;
+    gap: 0.2rem;
     &_textarea {
-      height: 50px;
+      height: 2rem;
       max-width: 100%;
       width: 100%;
       resize: none;
       background-color: rgba(255, 255, 255, 0.386);
       border: none;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.134);
-      padding: 5px;
-      border-top-left-radius: 10px;
-      border-bottom-left-radius: 10px;
+      box-shadow: 0 0 0 0.05rem rgba(0, 0, 0, 0.134);
+      padding: 0.2rem;
+      border-top-left-radius: 0.4rem;
+      border-bottom-left-radius: 0.4rem;
       &:focus {
-        outline: ridge 3px var(--secondary-color);
+        outline: ridge 0.1rem var(--secondary-color);
       }
     }
     &_submit {
       cursor: pointer;
-      padding: 5px 20px;
+      padding: 0.2rem 0.6rem;
       font-size: large;
       border: none;
       background-color: var(--main-color);
-      border-top-right-radius: 10px;
-      border-bottom-right-radius: 10px;
+      border-top-right-radius: 0.4rem;
+      border-bottom-right-radius: 0.4rem;
     }
   }
 }

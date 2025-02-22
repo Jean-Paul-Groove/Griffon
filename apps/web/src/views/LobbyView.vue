@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1>Lobby</h1>
+    <button v-if="isAdmin" @click="requestGameOfGriffonary">Ask for griffon</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useSocketStore } from '../stores'
+import { useAuthStore, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { WSE } from 'wse'
 import { useRoute, useRouter } from 'vue-router'
@@ -15,7 +15,7 @@ import { useRoute, useRouter } from 'vue-router'
 const socketStore = useSocketStore()
 const { handleConnection } = socketStore
 const { socket, room } = storeToRefs(socketStore)
-
+const { isAdmin } = storeToRefs(useAuthStore())
 // Composables
 const $route = useRoute()
 const $router = useRouter()
@@ -34,6 +34,11 @@ onMounted(() => {
       socket.value.emit(WSE.ASK_JOIN_ROOM, { roomId })
   }
 })
+
+// Functions
+function requestGameOfGriffonary(): void {
+  socket.value?.emit(WSE.ASK_START_GAME, { game: 'Griffonary' })
+}
 </script>
 
 <style scoped></style>

@@ -9,7 +9,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Message } from '../../types/Room'
+import { useSocketStore } from '@/stores'
+import type { Message } from 'dto'
+
+const { SYSTEM_ID } = useSocketStore()
 
 interface ChatMessageProps {
   message: Message
@@ -19,27 +22,39 @@ const props = defineProps<ChatMessageProps>()
 
 // Computed
 const messageClass = computed<string>(() => {
-  return props.message.sender.id === props.userId ? 'chat-message isSender' : 'chat-message'
+  let newClass = 'chat-message'
+  if (props.message.sender.id === props.userId) {
+    newClass += ' isSender'
+  } else if (props.message.id === SYSTEM_ID) {
+    newClass += ' isSystem'
+  }
+  return newClass
 })
 </script>
 
 <style lang="scss" scoped>
 .chat-message {
-  padding: 5px;
-  border-radius: 10px;
+  padding: 0.2rem;
+  border-radius: 0.4rem;
   background-color: rgba(245, 245, 220, 0.415);
-  width: 55%;
+  width: 80%;
   margin-left: auto;
   &.isSender {
     margin-left: 0;
     margin-right: auto;
     background-color: rgba(245, 233, 220, 0.415);
   }
+  &.isSystem {
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgba(220, 245, 228, 0.415);
+    width: 100%;
+  }
   &_sender {
     font-size: x-small;
   }
   &_content {
-    padding-left: 10px;
+    padding-left: 0.3rem;
   }
 }
 </style>

@@ -8,4 +8,4 @@ interface PathPoint {
   x: number
   y: number
 }
-export type DrawingTool = 'brush' | 'eraser'
+export type DrawingTool = 'pen' | 'eraser'

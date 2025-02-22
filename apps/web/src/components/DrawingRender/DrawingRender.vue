@@ -52,7 +52,7 @@ watch(
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: 0.2rem;
   align-items: center;
   min-height: 0;
   &_container {

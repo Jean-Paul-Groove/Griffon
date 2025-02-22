@@ -35,6 +35,9 @@ const router = createRouter({
       path: '/:roomId',
       name: 'Room',
       component: RoomLayout,
+      redirect: (to) => ({
+        name: 'Lobby',
+      }),
       children: [
         {
           path: 'lobby',
@@ -42,8 +45,8 @@ const router = createRouter({
           component: LobbyView,
         },
         {
-          path: 'game',
-          name: 'Game',
+          name: 'Griffonary',
+          path: 'griffonary',
           component: GameView,
         },
       ],

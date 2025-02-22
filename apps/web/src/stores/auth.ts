@@ -1,12 +1,13 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
-import type { User } from '../types/User'
+import type { Player, User } from 'dto'
 
 export const useAuthStore = defineStore('auth', () => {
   const TOKEN_KEY = 'JWT'
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  const user = ref<User | null>(null)
+  const user = ref<User | Player | null>(null)
+  const isAdmin = ref<boolean>(false)
   // Composables
   const $router = useRouter()
   // Watchers
@@ -38,6 +39,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     user.value = null
   }
+  function setIsAdmin(bool: boolean): void {
+    isAdmin.value = bool
+  }
 
-  return { token, user, setToken, resetToken, setUserInfo }
+  return { token, user, isAdmin, setToken, setIsAdmin, resetToken, setUserInfo }
 })

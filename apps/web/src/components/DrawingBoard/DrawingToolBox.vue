@@ -6,23 +6,25 @@
       @mouseenter="toggleThickRange(true)"
       @mouseleave="toggleThickRange(false)"
     >
-      <div v-if="thickRangeOpen" class="toolbox_thickness_range">
+      <div v-if="thickRangeOpen" class="toolbox_thickness_picker">
         <input v-model="lineThickness" type="range" :min="1" :max="61" :step="10" />
       </div>
-      <div
-        class="toolbox_thickness_preview"
-        :style="{
-          borderRadius: '100%',
-          border: '.5px solid',
-          backgroundColor: tool === 'brush' ? color : '',
-          width: lineThickness + 'px',
-          height: lineThickness + 'px',
-        }"
-      />
+      <div class="toolbox_thickness_preview_container">
+        <div
+          class="toolbox_thickness_preview"
+          :style="{
+            borderRadius: '100%',
+            border: tool === 'eraser' ? '0.01rem solid' : 'none',
+            backgroundColor: tool === 'pen' ? color : '',
+            width: lineThickness + 'px',
+            height: lineThickness + 'px',
+          }"
+        />
+      </div>
     </div>
     <div class="toolbox_tools">
-      <button class="toolbox_action toolbox_action_tool" @click="setTool('brush')">
-        <img :src="brush" alt="brush" />
+      <button class="toolbox_action toolbox_action_tool" @click="setTool('pen')">
+        <img :src="pen" alt="pen" />
       </button>
       <button class="toolbox_action toolbox_action_tool" @click="setTool('eraser')">
         <img :src="eraser" alt="eraser" />
@@ -44,7 +46,7 @@ import { ref, watch } from 'vue'
 import ColorPicker from './ColorPicker.vue'
 import type { DrawingTool } from './types'
 import eraser from '../../assets/icons/eraser.png'
-import brush from '../../assets/icons/brush.png'
+import pen from '../../assets/icons/pen.png'
 import undo from '../../assets/svg/undo.svg'
 import redo from '../../assets/svg/redo.svg'
 // Props
@@ -94,7 +96,7 @@ watch(
 // Functions
 function selectColor(newColor: string): void {
   color.value = newColor
-  tool.value = 'brush'
+  tool.value = 'pen'
 }
 function toggleThickRange(bool: boolean): void {
   thickRangeOpen.value = bool
@@ -111,7 +113,7 @@ function setTool(newTool: DrawingTool): void {
   height: fit-content;
   width: 100%;
   justify-content: center;
-  gap: 5px;
+  gap: 0.2rem;
   &_tools {
     display: flex;
     flex-direction: column;
@@ -125,15 +127,29 @@ function setTool(newTool: DrawingTool): void {
     position: relative;
     width: 70px;
     height: 70px;
-    &_range {
+    &_picker {
       position: absolute;
-      top: 70px;
-      background-color: white;
-      padding: 5px;
-      border-radius: 20px;
-      box-shadow: 1px 1px 20px black;
+      bottom: -15px;
+      background-color: rgba(255, 255, 255, 0.805);
+      padding: 0.2rem;
+      border-radius: 0.8rem;
+      box-shadow: 0.05rem 0.05rem 0.8rem black;
       input {
+        margin: auto;
         cursor: pointer;
+        color: red;
+      }
+    }
+    &_preview {
+      &_container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 100%;
+        border: 0.1px solid;
+        background-color: rgba(195, 195, 195, 0.358);
+        width: 61px;
+        height: 61px;
       }
     }
   }
@@ -145,7 +161,7 @@ function setTool(newTool: DrawingTool): void {
       opacity: 0.2;
     }
     &_svg {
-      width: 40px;
+      width: 2rem;
     }
   }
 }

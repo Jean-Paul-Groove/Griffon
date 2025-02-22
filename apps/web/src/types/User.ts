@@ -1,7 +1,0 @@
-export interface User {
-  id: string
-  name: string
-  avatar?: string
-  room?: { isConnected: boolean }
-  canDraw: boolean
-}

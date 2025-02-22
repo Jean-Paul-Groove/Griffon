@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h1>LANDING</h1>
     <template v-if="user">
       <label for="">room id</label>
       <input v-model="roomId" type="text" />
@@ -44,7 +43,6 @@ watch(
   () => room.value?.id,
   (roomId) => {
     if (roomId) {
-      console.log('REDIRECT')
       $router.push({ name: 'Lobby', params: { roomId } })
     }
   },
@@ -59,8 +57,6 @@ async function signIn(): Promise<void> {
 }
 
 function joinRoom(): void {
-  console.log(room.value)
-
   if (roomId.value === '') {
     return
   }
@@ -69,7 +65,6 @@ function joinRoom(): void {
   }
 }
 function createNewRoom(): void {
-  console.log(room.value)
   if (socket.value) {
     socket.value.emit(WSE.ASK_CREATE_ROOM)
   }

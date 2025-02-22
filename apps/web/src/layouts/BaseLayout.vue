@@ -1,5 +1,5 @@
 <template>
-  <DefaultLayout>
+  <DefaultLayout :transition="true">
     <RouterView class="base-layout_router" />
   </DefaultLayout>
 </template>

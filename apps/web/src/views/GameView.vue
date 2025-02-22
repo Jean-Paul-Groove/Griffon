@@ -1,26 +1,27 @@
 <template>
   <div class="game-page">
-    <h1>GAME</h1>
-    <DrawingBoard v-if="user && user.canDraw" />
-    <DrawingRender v-else />
+    <DrawingBoard />
+    <!-- <DrawingRender v-else /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import DrawingBoard from '../components/DrawingBoard/DrawingBoard.vue'
-import { onMounted } from 'vue'
-import { useAuthStore, useSocketStore } from '../stores'
+import { computed, onMounted } from 'vue'
+import { useSocketStore } from '../stores'
 import { WSE } from 'wse'
 import { storeToRefs } from 'pinia'
-import DrawingRender from '../components/DrawingRender/DrawingRender.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { DrawingBoard } from '@/components'
 // Composables
 const socketStore = useSocketStore()
-const authStore = useAuthStore()
-const { socket, room } = storeToRefs(socketStore)
-const { user } = storeToRefs(authStore)
+const { socket, room, player } = storeToRefs(socketStore)
 const $route = useRoute()
 const $router = useRouter()
+
+// Computeds
+const canDraw = computed<boolean>(() => {
+  return player.value?.isDrawing ?? false
+})
 // Hooks
 onMounted(() => {
   const { roomId } = $route.params
