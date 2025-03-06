@@ -1,6 +1,6 @@
-import { User } from 'dto'
+import { Player } from '../../../player/entities/player.entity'
 
 export interface RoomOptions {
   maxNumPlayer?: number
-  owner?: User
+  owner?: Player
 }

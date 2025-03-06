@@ -9,10 +9,10 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('guest')
-  signInAsGuest(@Body() signInAsGuestDto: Record<string, any>): Promise<Token> {
-    this.logger.debug(signInAsGuestDto.username)
-    if (!signInAsGuestDto.username) {
-      //error
+  signInAsGuest(@Body() signInAsGuestDto: Record<string, string>): Promise<Token> {
+    this.logger.debug(signInAsGuestDto)
+    if (!signInAsGuestDto.username || typeof signInAsGuestDto.username !== 'string') {
+      throw new Error('Bad Request')
     }
     return this.authService.signInAsGuest(signInAsGuestDto.username)
   }

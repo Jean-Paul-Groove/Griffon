@@ -13,12 +13,13 @@ import {
 
 import { Server, Socket } from 'socket.io'
 import { RoomService } from './room.service'
-import { WSE } from 'wse'
 import { WsFilter } from '../common/ws/ws.filter'
 import { AuthGuard } from '../auth/auth.guard'
-import { UserService } from '../user/user.service'
+import { PlayerService } from '../player/player.service'
+import { GameName, PlayerConnectionSuccessDto, WSE } from 'shared'
+import { GameService } from '../game/game.service'
 import { RoomGuard } from './room.guard'
-import { GameName, UserInfoDto } from 'dto'
+import { ChatService } from '../chat/chat.service'
 
 @UseGuards(AuthGuard)
 @UseFilters(WsFilter)
@@ -28,11 +29,14 @@ import { GameName, UserInfoDto } from 'dto'
     methods: ['GET', 'POST'],
     allowedHeaders: ['my-custom-header'],
   },
+  pingTimeout: 60000,
 })
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private roomService: RoomService,
-    private userService: UserService,
+    private playerService: PlayerService,
+    private gameService: GameService,
+    private chatService: ChatService,
   ) {}
   private readonly logger = new Logger(RoomGateway.name)
 
@@ -44,18 +48,17 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.io.disconnectSockets()
     this.logger.log('Room gateway initialized')
   }
-  handleConnection(client: Socket): void {
+  async handleConnection(client: Socket): Promise<void> {
     try {
-      // Chek that user is known
+      // Chek that player is known
       this.logger.debug('HANDLE CONNECT', client.data)
-      const user = this.userService.getUserFromSocket(client)
-      const userInfoDto = new UserInfoDto()
-      userInfoDto.id = user.id
-      userInfoDto.name = user.name
-      if (user.avatar !== undefined) {
-        userInfoDto.avatar = user.avatar
+      const player = await this.playerService.getPlayerFromSocket(client)
+      const playerInfo = this.playerService.generatePlauyerInfoDto(player)
+      const data: PlayerConnectionSuccessDto = {
+        event: WSE.CONNECTION_SUCCESS,
+        arguments: { player: playerInfo },
       }
-      client.emit(WSE.CONNECTION_SUCCESS, userInfoDto)
+      this.roomService.emitToPlayer(player, data)
     } catch (error) {
       this.logger.debug('HANDLE CONNECT ')
       this.logger.error(error)
@@ -63,7 +66,6 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.disconnect()
     }
   }
-
   handleDisconnect(client: Socket): void {
     try {
       this.roomService.onDisconnectedClient(client)
@@ -75,8 +77,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage(WSE.ASK_CREATE_ROOM)
   async handleCreateRoom(@ConnectedSocket() client: Socket): Promise<WsResponse> {
     this.logger.debug('ASK CREATE ROOM')
-    const user = this.userService.get(client.data.userId)
-    return this.roomService.onCreateRoom(user, client)
+    const player = await this.playerService.get(client.data.playerId)
+    return this.roomService.onCreateRoom(player, client)
   }
 
   @SubscribeMessage(WSE.ASK_JOIN_ROOM)
@@ -84,8 +86,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<WsResponse> {
-    const user = this.userService.get(client.data.userId)
-    return this.roomService.onUserJoinRoom(user, roomId, client)
+    const player = await this.playerService.get(client.data.playerId)
+    return this.roomService.onPlayerJoinRoom(player, roomId, client)
   }
 
   // CHAT HANDLERS
@@ -96,7 +98,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody('message') message: string,
     @ConnectedSocket() client: Socket,
   ): void {
-    this.roomService.onNewMessage(message, client)
+    this.chatService.onNewChatMessage(message, client)
   }
 
   // GAME HANDLERS
@@ -106,7 +108,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody('drawing') drawing: Blob,
   ): Promise<WsResponse | void> {
-    return this.roomService.onDrawingUpload(client, drawing)
+    return this.gameService.onDrawingUpload(client, drawing)
   }
 
   @UseGuards(RoomGuard)
@@ -115,6 +117,6 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody('game') game: GameName,
   ): Promise<void> {
-    this.roomService.onAskStartGame(client, game)
+    this.gameService.onAskStartGame(client, game)
   }
 }

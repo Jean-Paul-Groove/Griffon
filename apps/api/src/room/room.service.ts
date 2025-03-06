@@ -1,201 +1,258 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { Room } from './classes/Room'
 import { RoomOptions } from './types/room/RoomOptions'
-import { Message } from '../common/message/types/Message'
-import { v4 as uuidv4 } from 'uuid'
-import { Namespace, Server, Socket } from 'socket.io'
-import { UserService } from '../user/user.service'
+import { Server, Socket } from 'socket.io'
+import { PlayerService } from '../player/player.service'
 import { WsException, WsResponse } from '@nestjs/websockets'
-import { WSE } from 'wse'
-import { GameName, RoomInfoDto, User } from 'dto'
+import {
+  WSE,
+  SocketDto,
+  RoomInfoDto,
+  PlayerJoinedRoomSuccessDto,
+  PlayerReconnectedDto,
+  PlayerJoinedRoomDto,
+} from 'shared'
+import { Repository } from 'typeorm'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Room } from './entities/room.entity'
+import { Player } from '../player/entities/player.entity'
+import { ChatService } from '../chat/chat.service'
+import { GameService } from '../game/game.service'
 
 @Injectable()
 export class RoomService {
-  constructor(private userService: UserService) {}
-  public io: Server | Namespace
+  constructor(
+    private playerService: PlayerService,
+    private gameService: GameService,
+    private chatService: ChatService,
+    @InjectRepository(Room)
+    private roomRepository: Repository<Room>,
+    @InjectRepository(Player)
+    private playerRepository: Repository<Player>,
+  ) {}
+  public io: Server
   private readonly logger = new Logger(RoomService.name, { timestamp: true })
-  private readonly rooms: Map<string, Room> = new Map()
 
   // Private methods
-  private createRoom(options?: RoomOptions & { roomId?: string }): Room {
-    const { roomId, ...config } = options
-    const id = roomId ?? uuidv4()
-    if (this.rooms.has(id)) {
-      throw new Error('ROOM ALREADY EXISTS')
-    }
-    const room = new Room(id, config)
-    this.rooms.set(id, room)
+  private async create(options?: RoomOptions): Promise<Room> {
+    this.logger.debug('ATTEMPTING TO CREATE A ROOM')
+    this.logger.debug({
+      limit: options?.maxNumPlayer,
+      admin: options?.owner,
+      players: options?.owner ? [options?.owner] : [],
+    })
+    const roomEntity = this.roomRepository.create({
+      limit: options?.maxNumPlayer,
+      admin: options?.owner,
+      players: options?.owner ? [options?.owner] : [],
+    })
+    const room = await this.roomRepository.save(roomEntity)
     return room
   }
-  private deleteRoom(id: string): void {
-    const isDeleted = this.rooms.delete(id)
-    if (!isDeleted) {
-      throw new Error(`Couldn't find room ${id}`)
+  private async deleteRoom(id: string): Promise<void> {
+    const room = new Room()
+    room.id = id
+    await this.roomRepository.remove(room)
+  }
+  async get(id: string): Promise<Room> {
+    const room = await this.roomRepository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        players: true,
+        chatMessages: true,
+        currentGame: { specs: true },
+        scores: true,
+        admin: true,
+      },
+    })
+    this.logger.debug('GETTING ROOM')
+    return room
+  }
+  hasPlayer(room: Room, playerId: string): boolean {
+    this.logger.debug(room.players)
+    if (!room.players) {
+      return false
     }
+    return room.players.map((player) => player.id).includes(playerId)
   }
-  get(id: string): Room {
-    return this.rooms.get(id)
+  private async addPlayerToRoom(roomId: string, player: Player): Promise<Player> {
+    const room = await this.get(roomId)
+    if (this.hasPlayer(room, player.id)) {
+      this.logger.warn('Player already in Room')
+      return player
+    }
+    if (room.players) {
+      room.players.push(player)
+    } else {
+      room.players = [player]
+    }
+    this.roomRepository.save(room)
+    return player
   }
-  private addUserToRoom(roomId: string, user: User): User {
-    const room = this.get(roomId)
-    room.addPlayer(user)
-    return user
-  }
-  private removeUserFromRoom(roomId: string, userId: string): void {
-    const room = this.get(roomId)
-    room.removePlayer(userId)
-  }
-  private addMessageToRoom(roomId: string, message: Message): Message {
-    const room = this.get(roomId)
-    room.addMessage(message)
-    return message
-  }
-  private hasRoom(roomId: string): boolean {
-    return this.rooms.has(roomId)
+  private async removePlayerFromRoom(room: Room, playerId: string): Promise<void> {
+    this.logger.debug('REMOVING USER FROM ROOM')
+    if (room.players) {
+      room.players = room.players.filter((player) => player.id !== playerId)
+      await this.roomRepository.save(room)
+    }
   }
   private joinSocketToRoom(client: Socket, roomId: string): void {
     client.join(roomId)
     if (client.data.roomId !== roomId) {
       client.data.roomId = roomId
     }
+    this.logger.debug('PLAYER JOINED SOCKET')
   }
   // Handlers
-  onCreateRoom(user: User, client: Socket): WsResponse<RoomInfoDto> {
+  async onCreateRoom(
+    player: Player,
+    client: Socket,
+  ): Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>> {
     try {
-      const room = this.createRoom({ owner: user })
-      // Remove user from previous room if any
-      if (user.room?.id && user.room.id !== room.id) {
-        this.removeUserFromRoom(user.room.id, user.id)
-        client.leave(user.room.id)
-        user.room = undefined
-      }
+      const room = await this.create({ owner: player })
+      // Remove player from previous rooms
+      this.logger.debug(room)
       // Join socket to room
-      user.room = { id: room.id, connected: true }
       this.joinSocketToRoom(client, room.id)
 
-      const roomInfo = (): RoomInfoDto => ({
-        id: room.id,
-        owner: room.owner,
-        players: room.getPlayers(),
-        messages: room.getMessages(),
-        maxNumPlayer: room.maxNumPlayer,
-        currentGame: room.getGame(),
-      })
       this.logger.debug('ROOM CREATED')
-      this.logger.debug(roomInfo())
-      return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: roomInfo() }
+      return {
+        event: WSE.USER_JOINED_ROOM_SUCCESS,
+        data: { room: this.generateRoomInfoDto(room) },
+      }
     } catch (error) {
       this.logger.error(error)
       throw new WsException(error)
     }
   }
-  onUserJoinRoom(user: User, roomId: string, client: Socket): WsResponse<RoomInfoDto> {
+
+  async onPlayerJoinRoom(
+    player: Player,
+    roomId: string,
+    client: Socket,
+  ): Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>> {
     // Check if room exists
     this.logger.debug('JOINING ROOM')
-    this.logger.debug(user.name)
+    this.logger.debug(player.name)
     this.logger.debug('In room' + roomId)
-    const room = this.get(roomId)
+    const room = await this.get(roomId)
     if (!room) {
       throw new WsException("Room doesn't exists")
     }
-
-    const roomInfo = (): RoomInfoDto => ({
-      id: room.id,
-      owner: room.owner,
-      players: room.getPlayers(),
-      messages: room.getMessages(),
-      maxNumPlayer: room.maxNumPlayer,
-      currentGame: room.getGame(),
-    })
-    // Check if user already has a room
-    if (user.room) {
+    this.logger.debug('FATCHED ROOM')
+    const playerInfo = this.playerService.generatePlauyerInfoDto(player)
+    // Check if player already has a room
+    if (player.room) {
+      this.logger.debug('PLAYER HAS ROOM')
       // If it's the same room, treat as reconnexion
-      if (user.room.id === roomId) {
-        if (room.hasPlayer(user.id)) {
+      if (player.room.id === roomId) {
+        this.logger.debug('PLAYER ROOM ID === ROOM ID')
+        this.logger.debug(JSON.stringify(room.players))
+        if (room.players.find((player) => player.id === player.id)) {
           this.joinSocketToRoom(client, room.id)
-          user.room.connected = true
-          this.io.to(room.id).emit(WSE.USER_RECONNECTED, { user })
-          return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: roomInfo() }
+          this.logger.debug(room.admin)
+          const reconnexionData: PlayerReconnectedDto = {
+            event: WSE.USER_RECONNECTED,
+            arguments: { player: playerInfo },
+          }
+          this.emitToRoom(room.id, reconnexionData)
+        }
+
+        return {
+          event: WSE.USER_JOINED_ROOM_SUCCESS,
+          data: { room: this.generateRoomInfoDto(room) },
         }
       }
-      if (user.room.id !== roomId) {
-        this.removeUserFromRoom(user.room.id, user.id)
-      }
+      this.logger.debug('PASSED CONDITION')
     }
-    this.addUserToRoom(roomId, user)
-    user.room = { id: roomId, connected: true }
+
+    this.addPlayerToRoom(roomId, player)
 
     this.joinSocketToRoom(client, roomId)
 
-    const { id, name } = user
-
-    this.io.to(roomId).emit(WSE.USER_JOINED_ROOM, { id, name })
-
-    return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: roomInfo() }
-  }
-  onDisconnectedClient(client: Socket): void {
-    this.logger.log(`Cliend id:${client.data.userId} disconnected`)
-    const user = this.userService.getUserFromSocket(client)
-    if (user?.room) {
-      const room = this.get(user.room.id)
-      if (room) {
-        const { id, name } = user
-        this.io.to(room.id).emit(WSE.USER_DISCONNECTED, { id, name })
-      }
-      user.room.connected = false
+    const userJoinedData: PlayerJoinedRoomDto = {
+      event: WSE.USER_JOINED_ROOM,
+      arguments: { player: playerInfo },
     }
-  }
-  onNewMessage(message: string, client: Socket): void {
-    const user = this.userService.get(client.data.userId)
-    const room = this.getRoomFromUser(user)
-    const newMessage: Omit<Message, 'id'> = { sender: user, content: message, sent_at: Date.now() }
-    room.addMessage(newMessage)
-    if (room.canGuess()) {
-      room.makeGuess(newMessage.content, user.id)
-    }
-    this.io.in(room.id).emit(WSE.NEW_MESSAGE, newMessage)
-  }
-  onDrawingUpload(client: Socket, drawing: Blob): void | WsResponse {
-    this.logger.debug('DRAWING SHARED')
-    const user = this.userService.get(client.data.userId)
-    const { id, name } = user
-    const room = this.getRoomFromUser(user)
-    if (room.canPlayerDraw(user)) {
-      this.io.in(room.id).emit(WSE.UPLOAD_DRAWING, { drawing, user: { id, name } })
-    } else {
-      return { event: WSE.STOP_DRAW, data: undefined }
-    }
-  }
-  onAskStartGame(client: Socket, gameName: GameName): void {
-    const user = this.userService.getUserFromSocket(client)
-    const room = this.getRoomFromUser(user)
-    this.logger.debug('ASK START GAME')
-    this.logger.debug(user.id)
-    this.logger.debug(room.owner)
 
-    if (user.id === room.owner) {
-      room.setGame(gameName, this)
-      room.startGame()
+    this.emitToRoom(room.id, userJoinedData)
+
+    return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: { room: this.generateRoomInfoDto(room) } }
+  }
+  async onDisconnectedClient(client: Socket): Promise<void> {
+    this.logger.log(`Cliend id:${client.data.playerId} disconnected`)
+    const player = await this.playerService.getPlayerFromSocket(client)
+    const room = await this.getRoomFromPlayer(player)
+    this.logger.debug('ON DISCONNECT')
+    if (!room) {
+      this.logger.debug('NO ROOM')
+
       return
+    }
+    if (room.admin?.id === player.id) {
+      this.logger.debug('USER WAS ADMIN')
+
+      room.admin = null
+      await this.roomRepository.save(room)
+      player.room = null
+      await this.playerRepository.save(player)
+      await this.setNewAdminOrDelete(room.id)
     } else {
-      throw new Error('Unauthorized')
+      await this.removePlayerFromRoom(room, player.id)
     }
   }
+
   // Services
-  getSocketFromUser(userId: string): Socket | undefined {
-    let sockets
-    if (this.io instanceof Server) {
-      sockets = this.io.sockets.sockets
-    } else {
-      sockets = this.io.sockets
-    }
+  getSocketFromPlayer(playerId: string): Socket | undefined {
+    const sockets = this.io.sockets.sockets
+
     return (Array.from(sockets.values()) as Socket[]).find(
-      (socket) => socket.data.userId === userId,
+      (socket) => socket.data.playerId === playerId,
     )
   }
-  getRoomFromUser(user: User): Room | undefined {
-    if (user.room) {
-      return this.get(user.room.id)
+  generateRoomInfoDto(room: Room): RoomInfoDto {
+    return new RoomInfoDto({
+      id: room.id,
+      admin: room.admin.id,
+      players: room.players.map((player) => this.playerService.generatePlauyerInfoDto(player)),
+      chatMessages: room.chatMessages.map((chat) => this.chatService.generateChatMessageDto(chat)),
+      limit: room.limit,
+      currentGame: this.gameService.generateGameInfoDto(room.currentGame),
+      scores: room.scores.map((score) => ({
+        id: score.id,
+        player: score.player.id,
+        points: score.points,
+        room: room.id,
+      })),
+    })
+  }
+  async getRoomFromPlayer(player: Player): Promise<Room | undefined> {
+    if (player.room) {
+      return await this.get(player.room.id)
     }
+  }
+  async setNewAdminOrDelete(roomId: string): Promise<void> {
+    this.logger.debug('SETTING NEW ADMIN OR DELETE')
+
+    const room = await this.get(roomId)
+    if (room.players.length === 0) {
+      await this.deleteRoom(roomId)
+      return
+    } else {
+      room.admin = room.players[0]
+      await this.roomRepository.save(room)
+    }
+  }
+  emitToRoom(roomId: string, data: SocketDto): void {
+    this.io.in(roomId).emit(data.event, data.arguments)
+  }
+
+  emitToPlayer(player: Player, data: SocketDto): void {
+    const client = this.getSocketFromPlayer(player.id)
+    if (!client) {
+      throw new Error(`Socket not found for ${player.name}`)
+    }
+    client.emit(data.event, data.arguments)
   }
 }
