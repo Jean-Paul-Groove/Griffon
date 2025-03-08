@@ -17,10 +17,10 @@ export class Round {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @ManyToOne(() => Game, { cascade: ['remove', 'soft-remove', 'recover'] })
+  @ManyToOne(() => Game, { onDelete: 'CASCADE' })
   game: Game
 
-  @ManyToOne(() => Word)
+  @ManyToOne(() => Word, { onDelete: 'SET NULL' })
   word: Word
 
   @ManyToMany(() => Player)

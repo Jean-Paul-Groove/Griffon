@@ -12,8 +12,8 @@ import { ChatModule } from '../chat/chat.module'
 @Module({
   imports: [
     AuthModule,
-    PlayerModule,
     CommonModule,
+    PlayerModule,
     forwardRef(() => GameModule),
     forwardRef(() => ChatModule),
     TypeOrmModule.forFeature([Room]),

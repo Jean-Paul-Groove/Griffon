@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
-import { WsException } from '@nestjs/websockets'
 import { CreateGuestDto, PlayerInfoDto } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -15,52 +14,44 @@ export class PlayerService {
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
     @InjectRepository(Player)
-    private userRepository: Repository<Player>,
+    private playerRepository: Repository<Player>,
   ) {}
   private logger = new Logger(PlayerService.name)
 
   async createGuest(createGuestDto: CreateGuestDto): Promise<Player> {
     if (createGuestDto.name.trim() != '') {
-      const userEntity = this.userRepository.create({
+      const userEntity = this.playerRepository.create({
         name: createGuestDto.name,
         isGuest: true,
       })
-      const user = await this.userRepository.save(userEntity)
+      const user = await this.playerRepository.save(userEntity)
       this.logger.log('GUEST CREATED')
-
       return user
     }
   }
 
-  async get(id: string): Promise<Player> {
-    try {
-      const guest = await this.userRepository.findOne({
-        where: {
-          id,
-        },
-        relations: { room: true },
-      })
-      if (!guest) {
-        throw new Error('Guest not found.')
-      }
-      this.logger.debug(JSON.stringify(guest))
-      return guest
-    } catch (error) {
-      throw new WsException({ message: error?.message || 'Guest not found.', status: 404 })
-    }
+  async get(playerId: string): Promise<Player | undefined> {
+    const guest = await this.playerRepository.findOne({
+      where: {
+        id: playerId,
+      },
+      relations: { room: true },
+    })
+    return guest
   }
-  async getPlayerFromSocket(client: Socket): Promise<Player> {
+  async getPlayerFromSocket(client: Socket): Promise<Player | undefined> {
     this.authService.validateWsConnexion(client)
-    const user = await this.get(client.data.userId)
-    return user
+    const player = await this.get(client.data.playerId)
+    return player
   }
-  generatePlauyerInfoDto(player: Player): PlayerInfoDto {
+  generatePlayerInfoDto(player: Player, artists: string[]): PlayerInfoDto {
     return new PlayerInfoDto({
       id: player.id,
       name: player.name,
       avatar: player.avatar,
-      isArtist: true,
+      isArtist: artists.includes(player.id),
       isGuest: player.isGuest,
+      room: player.room?.id,
     })
   }
 }

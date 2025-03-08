@@ -15,8 +15,8 @@ import { Score } from './entities/score.entity'
   providers: [GameService, GriffonaryService],
   imports: [
     forwardRef(() => RoomModule),
-    CommonModule,
     PlayerModule,
+    CommonModule,
     TypeOrmModule.forFeature([Game, GameSpecs, Round, Word, Score]),
   ],
   exports: [GameService, GriffonaryService, TypeOrmModule],

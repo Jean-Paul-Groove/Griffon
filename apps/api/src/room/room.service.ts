@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomOptions } from './types/room/RoomOptions'
 import { Server, Socket } from 'socket.io'
 import { PlayerService } from '../player/player.service'
@@ -10,6 +10,7 @@ import {
   PlayerJoinedRoomSuccessDto,
   PlayerReconnectedDto,
   PlayerJoinedRoomDto,
+  FailJoinRoomDto,
 } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -17,11 +18,13 @@ import { Room } from './entities/room.entity'
 import { Player } from '../player/entities/player.entity'
 import { ChatService } from '../chat/chat.service'
 import { GameService } from '../game/game.service'
+import { Round } from '../game/entities/round.entity'
 
 @Injectable()
 export class RoomService {
   constructor(
     private playerService: PlayerService,
+    @Inject(forwardRef(() => GameService))
     private gameService: GameService,
     private chatService: ChatService,
     @InjectRepository(Room)
@@ -35,11 +38,6 @@ export class RoomService {
   // Private methods
   private async create(options?: RoomOptions): Promise<Room> {
     this.logger.debug('ATTEMPTING TO CREATE A ROOM')
-    this.logger.debug({
-      limit: options?.maxNumPlayer,
-      admin: options?.owner,
-      players: options?.owner ? [options?.owner] : [],
-    })
     const roomEntity = this.roomRepository.create({
       limit: options?.maxNumPlayer,
       admin: options?.owner,
@@ -56,13 +54,13 @@ export class RoomService {
   async get(id: string): Promise<Room> {
     const room = await this.roomRepository.findOne({
       where: {
-        id,
+        id: id,
       },
       relations: {
         players: true,
-        chatMessages: true,
+        chatMessages: { sender: true },
         currentGame: { specs: true },
-        scores: true,
+        scores: { player: true },
         admin: true,
       },
     })
@@ -70,7 +68,6 @@ export class RoomService {
     return room
   }
   hasPlayer(room: Room, playerId: string): boolean {
-    this.logger.debug(room.players)
     if (!room.players) {
       return false
     }
@@ -97,13 +94,17 @@ export class RoomService {
       await this.roomRepository.save(room)
     }
   }
-  private joinSocketToRoom(client: Socket, roomId: string): void {
-    client.join(roomId)
-    if (client.data.roomId !== roomId) {
-      client.data.roomId = roomId
+  private joinSocketToRoom(client: Socket, newRoomId: string): void {
+    // Leave previous socket room if any
+    if (client.data.roomId !== newRoomId) {
+      client.leave(client.data.roomId)
+      client.data.roomId = newRoomId
     }
+    // Join new one
+    client.join(newRoomId)
     this.logger.debug('PLAYER JOINED SOCKET')
   }
+
   // Handlers
   async onCreateRoom(
     player: Player,
@@ -111,83 +112,94 @@ export class RoomService {
   ): Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>> {
     try {
       const room = await this.create({ owner: player })
-      // Remove player from previous rooms
-      this.logger.debug(room)
       // Join socket to room
       this.joinSocketToRoom(client, room.id)
 
       this.logger.debug('ROOM CREATED')
       return {
         event: WSE.USER_JOINED_ROOM_SUCCESS,
-        data: { room: this.generateRoomInfoDto(room) },
+        data: { room: this.generateRoomInfoDto(room, null) },
       }
     } catch (error) {
-      this.logger.error(error)
-      throw new WsException(error)
+      client.emit(WSE.FAIL_CREATE_ROOM, { reson: error.message ?? 'An error occured' })
     }
   }
-
   async onPlayerJoinRoom(
     player: Player,
     roomId: string,
     client: Socket,
   ): Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>> {
-    // Check if room exists
-    this.logger.debug('JOINING ROOM')
-    this.logger.debug(player.name)
-    this.logger.debug('In room' + roomId)
-    const room = await this.get(roomId)
-    if (!room) {
-      throw new WsException("Room doesn't exists")
-    }
-    this.logger.debug('FATCHED ROOM')
-    const playerInfo = this.playerService.generatePlauyerInfoDto(player)
-    // Check if player already has a room
-    if (player.room) {
-      this.logger.debug('PLAYER HAS ROOM')
-      // If it's the same room, treat as reconnexion
-      if (player.room.id === roomId) {
-        this.logger.debug('PLAYER ROOM ID === ROOM ID')
-        this.logger.debug(JSON.stringify(room.players))
-        if (room.players.find((player) => player.id === player.id)) {
-          this.joinSocketToRoom(client, room.id)
-          this.logger.debug(room.admin)
-          const reconnexionData: PlayerReconnectedDto = {
-            event: WSE.USER_RECONNECTED,
-            arguments: { player: playerInfo },
-          }
-          this.emitToRoom(room.id, reconnexionData)
-        }
-
-        return {
-          event: WSE.USER_JOINED_ROOM_SUCCESS,
-          data: { room: this.generateRoomInfoDto(room) },
-        }
+    try {
+      // Check if room exists
+      this.logger.debug('JOINING ROOM')
+      this.logger.debug(player.name)
+      this.logger.debug('In room' + roomId)
+      const room = await this.get(roomId)
+      if (!room) {
+        throw new WsException('Room not found')
       }
-      this.logger.debug('PASSED CONDITION')
+      this.logger.debug('FATCHED ROOM')
+      const playerInfo = this.playerService.generatePlayerInfoDto(player, [])
+      // Check if player already has a room
+      if (player.room) {
+        this.logger.debug('PLAYER HAS ROOM')
+        // If it's the same room, treat as reconnexion
+        if (player.room.id === roomId) {
+          this.logger.debug('PLAYER ROOM ID === ROOM ID')
+          this.logger.debug(JSON.stringify(room.players))
+          if (room.players.find((player) => player.id === player.id)) {
+            this.joinSocketToRoom(client, room.id)
+            this.logger.debug(room.admin)
+            const reconnexionData: PlayerReconnectedDto = {
+              event: WSE.USER_RECONNECTED,
+              arguments: { player: playerInfo },
+            }
+            this.emitToRoom(room.id, reconnexionData)
+          }
+          let round
+          if (room.currentGame?.onGoing) {
+            round = await this.gameService.getLastOngoingORound(room.currentGame)
+          }
+          const roomInfo = this.generateRoomInfoDto(room, round)
+          return {
+            event: WSE.USER_JOINED_ROOM_SUCCESS,
+            data: { room: roomInfo },
+          }
+        }
+        this.logger.debug('PASSED CONDITION')
+      }
+
+      this.addPlayerToRoom(roomId, player)
+
+      this.joinSocketToRoom(client, roomId)
+
+      const userJoinedData: PlayerJoinedRoomDto = {
+        event: WSE.USER_JOINED_ROOM,
+        arguments: { player: playerInfo },
+      }
+
+      this.emitToRoom(room.id, userJoinedData)
+      let round
+      if (room.currentGame?.onGoing) {
+        round = await this.gameService.getLastOngoingORound(room.currentGame)
+      }
+      const roomInfo = this.generateRoomInfoDto(room, round)
+      return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: { room: roomInfo } }
+    } catch (exception) {
+      const data: FailJoinRoomDto = { event: WSE.FAIL_JOIN_ROOM, arguments: { reason: exception } }
+      this.emitToPlayer(player, data)
     }
-
-    this.addPlayerToRoom(roomId, player)
-
-    this.joinSocketToRoom(client, roomId)
-
-    const userJoinedData: PlayerJoinedRoomDto = {
-      event: WSE.USER_JOINED_ROOM,
-      arguments: { player: playerInfo },
-    }
-
-    this.emitToRoom(room.id, userJoinedData)
-
-    return { event: WSE.USER_JOINED_ROOM_SUCCESS, data: { room: this.generateRoomInfoDto(room) } }
   }
   async onDisconnectedClient(client: Socket): Promise<void> {
     this.logger.log(`Cliend id:${client.data.playerId} disconnected`)
     const player = await this.playerService.getPlayerFromSocket(client)
+    if (!player) {
+      return
+    }
     const room = await this.getRoomFromPlayer(player)
     this.logger.debug('ON DISCONNECT')
     if (!room) {
       this.logger.debug('NO ROOM')
-
       return
     }
     if (room.admin?.id === player.id) {
@@ -211,20 +223,37 @@ export class RoomService {
       (socket) => socket.data.playerId === playerId,
     )
   }
-  generateRoomInfoDto(room: Room): RoomInfoDto {
+  generateRoomInfoDto(room: Room, round: Round | null): RoomInfoDto {
+    this.logger.debug('GENERATEROOMINFODTO')
+    if (room.currentGame) {
+      const gameRoom = new Room()
+      gameRoom.id = room.id
+      room.currentGame.room = gameRoom
+    }
     return new RoomInfoDto({
       id: room.id,
-      admin: room.admin.id,
-      players: room.players.map((player) => this.playerService.generatePlauyerInfoDto(player)),
-      chatMessages: room.chatMessages.map((chat) => this.chatService.generateChatMessageDto(chat)),
+      admin: room.admin?.id ?? null,
+      players: room.players
+        ? room.players.map((player) =>
+            this.playerService.generatePlayerInfoDto(
+              player,
+              round != null ? round.artists.map((artist) => artist.id) : [],
+            ),
+          )
+        : [],
+      chatMessages: room.chatMessages
+        ? room.chatMessages.map((chat) => this.chatService.generateChatMessageDto(chat))
+        : [],
       limit: room.limit,
-      currentGame: this.gameService.generateGameInfoDto(room.currentGame),
-      scores: room.scores.map((score) => ({
-        id: score.id,
-        player: score.player.id,
-        points: score.points,
-        room: room.id,
-      })),
+      currentGame: room.currentGame ? this.gameService.generateGameInfoDto(room.currentGame) : null,
+      scores: room.scores
+        ? room.scores.map((score) => ({
+            id: score.id,
+            player: score.player.id,
+            points: score.points,
+            room: room.id,
+          }))
+        : [],
     })
   }
   async getRoomFromPlayer(player: Player): Promise<Room | undefined> {
@@ -236,10 +265,7 @@ export class RoomService {
     this.logger.debug('SETTING NEW ADMIN OR DELETE')
 
     const room = await this.get(roomId)
-    if (room.players.length === 0) {
-      await this.deleteRoom(roomId)
-      return
-    } else {
+    if (room.players.length > 0) {
       room.admin = room.players[0]
       await this.roomRepository.save(room)
     }

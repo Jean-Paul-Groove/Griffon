@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Room } from '../room/entities/room.entity'
 import { Repository } from 'typeorm'
 import { Server } from 'socket.io'
-import { PlayerService } from '../player/player.service'
 import { WsException } from '@nestjs/websockets'
 import { Game } from './entities/game.entity'
 import { GameSpecs } from './entities/game.specs.entity'
@@ -20,8 +19,8 @@ export class GriffonaryService {
   constructor(
     @Inject(forwardRef(() => GameService))
     private gameService: GameService,
+    @Inject(forwardRef(() => RoomService))
     private roomService: RoomService,
-    private playerService: PlayerService,
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
     @InjectRepository(Player)
@@ -54,7 +53,7 @@ export class GriffonaryService {
       if (!room.currentGame) {
         throw new WsException('No game on')
       }
-
+      this.logger.debug('AT BEGINNNING OF ROUND EXECUTIOn')
       const lastRound = await this.gameService.getLastOngoingORound(room.currentGame)
 
       if (lastRound != null && lastRound.onGoing) {
@@ -77,10 +76,12 @@ export class GriffonaryService {
         .where({ room })
         .andWhere('player.id NOT IN (' + formerArtists.getSql() + ')')
         .getMany()
-      this.logger.debug('POTENTIAL ')
       if (potentialArtist.length === 0) {
         this.logger.debug('Everyone was an artist')
         this.gameService.endGame(room)
+        if (this.schedulerRegistry.doesExist('timeout', `${room.id}::endOfRound`)) {
+          this.schedulerRegistry.deleteTimeout(`${room.id}::endOfRound`)
+        }
         return
       }
       const artist = sample(potentialArtist)
@@ -98,8 +99,13 @@ export class GriffonaryService {
         haveGuessed: [],
       })
       await this.roundRepository.save(round)
+      const timeOutName = `${room.id}::endOfRound`
+      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+        this.schedulerRegistry.deleteTimeout(timeOutName)
+      }
       const timeOut = setTimeout(() => this.endRound(gameId), drawingTime)
-      this.schedulerRegistry.addTimeout(`${room.id}::endOfRound`, timeOut)
+      this.schedulerRegistry.addTimeout(timeOutName, timeOut)
+
       this.gameService.sendWordToDraw(artist, newWord)
       this.gameService.sendPlayerList(round, room)
       this.gameService.sendTimeLimit(room.id, timeLimit)
@@ -118,6 +124,12 @@ export class GriffonaryService {
       }
       currentRound.onGoing = false
       await this.roundRepository.save(currentRound)
+      const room = await this.roomRepository.findOne({
+        where: { currentGame: game },
+        relations: { scores: { player: true }, players: true },
+      })
+      this.gameService.sendScore(room)
+      this.gameService.sendPlayerList(currentRound, room)
       this.executeRound(gameId)
     } catch (error) {
       this.logger.error(error)

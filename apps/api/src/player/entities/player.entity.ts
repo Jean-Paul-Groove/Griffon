@@ -20,7 +20,7 @@ export class Player {
   @Column({ type: 'varchar', length: 20 })
   name: string
 
-  @ManyToOne(() => Room, (room) => room.players, { nullable: true })
+  @ManyToOne(() => Room, (room) => room.players, { nullable: true, onDelete: 'SET NULL' })
   room: Room
 
   @OneToMany(() => Chat, (message) => message.sender)

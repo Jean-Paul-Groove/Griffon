@@ -24,7 +24,6 @@ export class AuthService {
     return true
   }
   async signInAsGuest(name: string): Promise<{ access_token: string }> {
-    this.logger.debug(name)
     const guest: CreateGuestDto = { name: name, isGuest: true }
     const player = await this.playerService.createGuest(guest)
     const payload = { id: player.id }

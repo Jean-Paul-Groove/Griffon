@@ -21,7 +21,7 @@ export class Room {
   @Column({ default: 10 })
   limit: number
 
-  @OneToOne(() => Player, { onUpdate: 'SET NULL' })
+  @OneToOne(() => Player, { onUpdate: 'SET NULL', onDelete: 'SET NULL' })
   @JoinColumn()
   admin: Player | null
 

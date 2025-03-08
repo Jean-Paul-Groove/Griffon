@@ -19,7 +19,7 @@ export class Game {
   @ManyToOne(() => GameSpecs)
   specs: GameSpecs
 
-  @ManyToOne(() => Room, { cascade: ['remove', 'soft-remove', 'recover'] })
+  @ManyToOne(() => Room, { onDelete: 'CASCADE' })
   room: Room
 
   @OneToMany(() => Round, (round) => round.game)

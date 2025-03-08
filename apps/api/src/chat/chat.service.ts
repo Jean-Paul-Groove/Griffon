@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomService } from '../room/room.service'
 import { Server, Socket } from 'socket.io'
 import { GameService } from '../game/game.service'
@@ -11,6 +11,7 @@ import { ChatMessageDto, NewChatMessageDto, WSE } from 'shared'
 @Injectable()
 export class ChatService {
   constructor(
+    @Inject(forwardRef(() => RoomService))
     private roomService: RoomService,
     private playerService: PlayerService,
     private gameService: GameService,
@@ -50,8 +51,8 @@ export class ChatService {
       id,
       content,
       sentAt,
-      sender: sender.id,
-      room: room.id,
+      sender: sender?.id,
+      room: room?.id,
     })
   }
 }

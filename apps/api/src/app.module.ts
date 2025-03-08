@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
 import { CommonModule } from './common/common.module'
 import { AuthModule } from './auth/auth.module'
 import { PlayerModule } from './player/player.module'
@@ -10,8 +8,6 @@ import jwtConfig from './config/jwt.config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { Player } from './player/entities/player.entity'
 import { Room } from './room/entities/room.entity'
-import { GameService } from './game/game.service'
-import { MessageService } from './message/message.service'
 import { Message } from './message/entities/message.entity'
 import { GameSpecs } from './game/entities/game.specs.entity'
 import { Score } from './game/entities/score.entity'
@@ -35,17 +31,15 @@ import { Chat } from './chat/entities/chat.entity'
       entities: [Player, Room, Chat, Message, GameSpecs, Game, Round, Score, Word],
       database: process.env.DB_NAME ?? 'griffon',
       synchronize: true,
-      logging: true,
+      logging: false,
     }),
     ScheduleModule.forRoot(),
+    GameModule,
     CommonModule,
     AuthModule,
     PlayerModule,
     RoomModule,
-    GameModule,
     ChatModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, GameService, MessageService],
 })
 export class AppModule {}

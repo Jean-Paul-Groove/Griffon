@@ -20,9 +20,9 @@ import { GameName, PlayerConnectionSuccessDto, WSE } from 'shared'
 import { GameService } from '../game/game.service'
 import { RoomGuard } from './room.guard'
 import { ChatService } from '../chat/chat.service'
+import { SchedulerRegistry } from '@nestjs/schedule'
 
 @UseGuards(AuthGuard)
-@UseFilters(WsFilter)
 @WebSocketGateway({
   cors: {
     origin: 'http://localhost:5173',
@@ -37,6 +37,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private playerService: PlayerService,
     private gameService: GameService,
     private chatService: ChatService,
+    private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
   private readonly logger = new Logger(RoomGateway.name)
 
@@ -53,12 +54,20 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Chek that player is known
       this.logger.debug('HANDLE CONNECT', client.data)
       const player = await this.playerService.getPlayerFromSocket(client)
-      const playerInfo = this.playerService.generatePlauyerInfoDto(player)
+      this.logger.debug(player.name)
+      // If player was to be removed for iddleness, cancel the timeout
+      const timeOutName = `${player.id}::toBeRemoved`
+      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+        this.schedulerRegistry.deleteTimeout(timeOutName)
+      }
+      this.logger.debug(player)
+      // Send the user info
+      const playerInfo = this.playerService.generatePlayerInfoDto(player, [])
       const data: PlayerConnectionSuccessDto = {
         event: WSE.CONNECTION_SUCCESS,
         arguments: { player: playerInfo },
       }
-      this.roomService.emitToPlayer(player, data)
+      client.emit(data.event, data.arguments)
     } catch (error) {
       this.logger.debug('HANDLE CONNECT ')
       this.logger.error(error)
@@ -66,9 +75,26 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.disconnect()
     }
   }
-  handleDisconnect(client: Socket): void {
+  async handleDisconnect(client: Socket): Promise<void> {
     try {
-      this.roomService.onDisconnectedClient(client)
+      // Retrieve player associated with socket
+      const player = await this.playerService.getPlayerFromSocket(client)
+      if (!player) {
+        this.logger.warn('SOCKET DISCONNECT WITHOUT A USER')
+        return
+      }
+      if (!player.room) {
+        this.logger.warn('PLAYER DISCONNECTED WITHOUT A ROOM')
+        return
+      }
+      // Considered as iddle, player will be removed from room after timeout
+      const timeOutName = `${player.id}::toBeRemoved`
+      this.logger.debug(this.schedulerRegistry.getTimeouts())
+      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+        this.schedulerRegistry.deleteTimeout(timeOutName)
+      }
+      const timeOut = setTimeout(() => this.roomService.onDisconnectedClient(client), 60000)
+      this.schedulerRegistry.addTimeout(timeOutName, timeOut)
     } catch (err) {
       this.logger.warn('HANDLE DISCONNECT', err)
     }
@@ -87,6 +113,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
   ): Promise<WsResponse> {
     const player = await this.playerService.get(client.data.playerId)
+    this.logger.debug('ONPLAYERJOIN GATEWAY')
     return this.roomService.onPlayerJoinRoom(player, roomId, client)
   }
 
@@ -117,6 +144,10 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody('game') game: GameName,
   ): Promise<void> {
-    this.gameService.onAskStartGame(client, game)
+    try {
+      this.gameService.onAskStartGame(client, game)
+    } catch (err) {
+      client.emit(WSE.FAIL_START_GAME, { reson: err.message ?? 'An error occured' })
+    }
   }
 }

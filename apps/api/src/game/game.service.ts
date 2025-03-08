@@ -9,6 +9,8 @@ import {
   GameName,
   PlayerListDto,
   PlayerScoredDto,
+  ScoreListDto,
+  StartGameDto,
   TimeLimitDto,
   UploadDrawingDto,
   WordToDrawDto,
@@ -27,8 +29,9 @@ import { Score } from './entities/score.entity'
 @Injectable()
 export class GameService {
   constructor(
-    private roomService: RoomService,
     private playerService: PlayerService,
+    @Inject(forwardRef(() => RoomService))
+    private roomService: RoomService,
     @Inject(forwardRef(() => GriffonaryService))
     private griffonary: GriffonaryService,
     @InjectRepository(Room)
@@ -55,6 +58,9 @@ export class GameService {
   async onAskStartGame(client: Socket, gameName: GameName): Promise<void> {
     this.logger.debug('OnaskStartGame ?')
     const player = await this.playerService.getPlayerFromSocket(client)
+    if (!player) {
+      throw new Error('No user')
+    }
     const room = await this.roomService.getRoomFromPlayer(player)
     if (room.currentGame != null) {
       this.logger.warn('Room already has a game going on')
@@ -75,6 +81,11 @@ export class GameService {
       this.logger.debug(result.currentGame)
       this.logger.debug(room.currentGame.id)
       this.logger.debug(room.admin)
+      const data: StartGameDto = {
+        event: WSE.START_GAME,
+        arguments: { game: this.generateGameInfoDto(game) },
+      }
+      this.roomService.emitToRoom(room.id, data)
       this.griffonary.executeRound(room.currentGame.id)
       return
     } else {
@@ -95,6 +106,9 @@ export class GameService {
       if (!room) {
         throw new Error('No room')
       }
+      if (!room.currentGame) {
+        throw new Error('No game')
+      }
       const round = await this.getLastOngoingORound(room.currentGame)
       if (!round) {
         throw new Error('No round')
@@ -103,7 +117,10 @@ export class GameService {
       if (round.artists.map((artist) => artist.id).includes(player.id)) {
         const data: UploadDrawingDto = {
           event: WSE.UPLOAD_DRAWING,
-          arguments: { drawing, player: this.playerService.generatePlauyerInfoDto(player) },
+          arguments: {
+            drawing,
+            player: this.playerService.generatePlayerInfoDto(player, [player.id]),
+          },
         }
         this.roomService.emitToRoom(room.id, data)
       }
@@ -117,7 +134,7 @@ export class GameService {
     this.logger.debug('ENDGAME')
     const { currentGame: game } = room
     game.onGoing = false
-    this.gameRepository.save(game)
+    await this.gameRepository.save(game)
     room.currentGame = null
     await this.roomRepository.save(room)
   }
@@ -153,18 +170,22 @@ export class GameService {
     const playerList = await this.playerRepository
       .createQueryBuilder('player')
       .where('player.room.id = :id', { id: room.id })
-      // .leftJoinAndSelect(Score, 'score', 'score.player.id = user.id')
       .getMany()
     this.logger.debug(JSON.stringify(playerList))
     const data: PlayerListDto = {
       event: WSE.PLAYER_LIST,
       arguments: {
-        players: playerList.map((player) => this.playerService.generatePlauyerInfoDto(player)),
+        players: playerList.map((player) =>
+          this.playerService.generatePlayerInfoDto(
+            player,
+            round.artists.map((artist) => artist.id),
+          ),
+        ),
       },
     }
     this.roomService.emitToRoom(room.id, data)
   }
-  async scorePlayerPoints(player: Player, room: Room, points: number): Promise<void> {
+  async scorePlayerPoints(player: Player, room: Room, points: number, round: Round): Promise<void> {
     this.logger.debug('SCORE PLAYER POINTS')
     let score = await this.scoreRepository.findOne({ where: { player, room } })
     if (score != null) {
@@ -173,12 +194,35 @@ export class GameService {
     } else {
       const scoreEntity = this.scoreRepository.create({ player, room, points })
       score = await this.scoreRepository.save(scoreEntity)
-      const playerInfo = this.playerService.generatePlauyerInfoDto(player)
+      const playerInfo = this.playerService.generatePlayerInfoDto(
+        player,
+        round.artists.map((artist) => artist.id),
+      )
       const data: PlayerScoredDto = {
         event: WSE.PLAYER_SCORED,
         arguments: { player: playerInfo, points },
       }
       this.roomService.emitToRoom(room.id, data)
+    }
+  }
+  async sendScore(room: Room): Promise<void> {
+    try {
+      const data: ScoreListDto = {
+        event: WSE.SCORE_LIST,
+        arguments: {
+          scores: room.scores
+            ? room.scores.map((score) => ({
+                id: score.id,
+                player: score.player.id,
+                points: score.points,
+                room: room.id,
+              }))
+            : [],
+        },
+      }
+      this.roomService.emitToRoom(room.id, data)
+    } catch (error) {
+      this.logger.error(error)
     }
   }
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
@@ -221,8 +265,9 @@ export class GameService {
           player,
           room,
           pointsMax - currentRound.haveGuessed.length * pointStep,
+          currentRound,
         )
-        await this.scorePlayerPoints(currentRound.artists[0], room, pointStep)
+        await this.scorePlayerPoints(currentRound.artists[0], room, pointStep, currentRound)
 
         // add player to guesser list
         currentRound.haveGuessed.push(player)
@@ -235,6 +280,8 @@ export class GameService {
     }
   }
   generateGameInfoDto(game: Game): GameInfoDto {
+    this.logger.debug('GENERATEGAMEINFO')
+    this.logger.debug(JSON.stringify(game))
     const { id, specs, roundDuration, onGoing } = game
     return new GameInfoDto({ id, specs, roundDuration, onGoing, room: game.room.id })
   }
