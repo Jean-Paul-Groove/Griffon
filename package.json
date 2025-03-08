@@ -10,11 +10,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspaces foreach -A --parallel --interlaced run dev",
+    "dev": "turbo run dev --parallel",
     "lint": "yarn workspaces foreach -A --parallel --interlaced run lint",
-    "build:events": "yarn workspace wse run build",
-    "build:dtos": "yarn workspace dto run build",
-    "packages": "yarn build:events && yarn build:dtos && yarn install"
+    "build:events": "yarn workspace shared run build",
+    "packages": "yarn build:events && yarn install"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.6.0",
+  "devDependencies": {
+    "turbo": "^2.4.4"
+  }
 }
