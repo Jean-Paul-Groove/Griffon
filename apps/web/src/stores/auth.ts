@@ -1,12 +1,12 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
-import type { Player, User } from 'dto'
+import type { PlayerInfoDto } from 'shared'
 
 export const useAuthStore = defineStore('auth', () => {
   const TOKEN_KEY = 'JWT'
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  const user = ref<User | Player | null>(null)
+  const currentPlayer = ref<PlayerInfoDto | null>(null)
   const isAdmin = ref<boolean>(false)
   // Composables
   const $router = useRouter()
@@ -27,21 +27,29 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error('INVALID TOKEN')
     }
   }
-  function setUserInfo(userInfo: User): void {
-    if (userInfo != null) {
-      user.value = userInfo
+  function setPlayerInfo(playerInfo: PlayerInfoDto): void {
+    console.log(playerInfo)
+    if (playerInfo != null) {
+      currentPlayer.value = playerInfo
     }
   }
   function resetToken(): void {
-    console.log('RESET TOKEN')
     token.value = null
     localStorage.removeItem(TOKEN_KEY)
 
-    user.value = null
+    currentPlayer.value = null
   }
   function setIsAdmin(bool: boolean): void {
     isAdmin.value = bool
   }
 
-  return { token, user, isAdmin, setToken, setIsAdmin, resetToken, setUserInfo }
+  return {
+    token,
+    currentPlayer,
+    isAdmin,
+    setToken,
+    setIsAdmin,
+    resetToken,
+    setPlayerInfo,
+  }
 })

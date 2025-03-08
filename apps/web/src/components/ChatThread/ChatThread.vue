@@ -1,11 +1,11 @@
 <template>
-  <div v-if="messages && user?.id" class="game-chat">
+  <div v-if="chatMessages && currentPlayer?.id" class="game-chat">
     <div ref="thread" class="game-chat_thread">
       <ChatMessage
-        v-for="(message, index) in messages"
+        v-for="(message, index) in chatMessages"
         :key="'message-' + index"
         :message="message"
-        :user-id="user.id"
+        :player-id="currentPlayer.id"
       />
     </div>
     <form class="game-chat_form" @submit="(e) => sendMessage(e)">
@@ -16,7 +16,9 @@
         name="chat-message"
         @keydown="sendOnEnter"
       ></textarea>
-      <button class="game-chat_form_submit" title="Envoyer">✉️</button>
+      <button class="game-chat_form_submit" title="Envoyer">
+        <FontAwesomeIcon icon="envelope" />
+      </button>
     </form>
   </div>
 </template>
@@ -24,9 +26,10 @@
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useAuthStore, useSocketStore } from '../../stores'
-import { WSE } from 'wse'
+import { WSE } from 'shared'
 import { storeToRefs } from 'pinia'
 import ChatMessage from './ChatMessage.vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 // Stores
 const socketStore = useSocketStore()
@@ -34,12 +37,12 @@ const authStore = useAuthStore()
 // Refs
 const thread = useTemplateRef('thread')
 const chatMessage = ref<string>('')
-const { socket, messages } = storeToRefs(socketStore)
-const { user } = storeToRefs(authStore)
+const { socket, chatMessages } = storeToRefs(socketStore)
+const { currentPlayer } = storeToRefs(authStore)
 
 // Watchers
 watch(
-  () => messages.value,
+  () => chatMessages.value,
   async () => {
     await nextTick()
     if (!thread.value) return
@@ -104,11 +107,8 @@ function sendOnEnter(e: KeyboardEvent): void {
       }
     }
     &_submit {
-      cursor: pointer;
       padding: 0.2rem 0.6rem;
       font-size: large;
-      border: none;
-      background-color: var(--main-color);
       border-top-right-radius: 0.4rem;
       border-bottom-right-radius: 0.4rem;
     }

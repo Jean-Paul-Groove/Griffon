@@ -25,7 +25,7 @@ import type { DrawingTool, DrawingPath } from './types'
 import DrawingToolBox from './DrawingToolBox.vue'
 import { useSocketStore } from '@/stores'
 import debounce from 'debounce'
-import { WSE } from 'wse'
+import { WSE } from 'shared'
 import { storeToRefs } from 'pinia'
 import { capitalizeString, resizeCanvas } from '@/helpers'
 // Constants
@@ -139,7 +139,7 @@ function startDrawingOnMouseDown(event: MouseEvent): void {
   ctx.value.moveTo(x, y)
   ctx.value.lineTo(x, y)
   ctx.value.stroke()
-
+  debouncedSendDrawing()
   canvasContainer.value.addEventListener('mousemove', draw)
   canvasContainer.value.addEventListener('mouseup', stopDraw)
 }
@@ -193,6 +193,7 @@ function startDrawingOnTouch(event: TouchEvent): void {
     ctx.value.moveTo(x, y)
     ctx.value.lineTo(x, y)
     ctx.value.stroke()
+    debouncedSendDrawing()
   }
 }
 function drawOnTouchMove(event: TouchEvent): void {
@@ -317,7 +318,7 @@ function clearCanvas(): void {
   ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
   drawingHistory.value = []
 }
-const debouncedSendDrawing = debounce(sendDrawing, 6, { immediate: true })
+const debouncedSendDrawing = debounce(sendDrawing, 100, { immediate: true })
 </script>
 
 <style lang="scss" scoped>

@@ -1,15 +1,21 @@
 <template>
-  <div>
-    <template v-if="user">
-      <label for="">room id</label>
-      <input v-model="roomId" type="text" />
-      <button @click="joinRoom">Join room</button>
-      <button @click="createNewRoom">Create new room</button></template
-    >
-    <template v-else>
-      <input v-model="username" type="text" />
-      <button @click="signIn">Sign in as a guest</button>
-    </template>
+  <div class="landing">
+    <h2 v-if="currentPlayer" class="landing_title">Rejoindre une room:</h2>
+    <h2 v-else class="landing_title">Connexion:</h2>
+    <form class="landing-form" @submit="(e) => e.preventDefault()">
+      <template v-if="currentPlayer">
+        <FormInput v-model="roomId" label="Room ID" />
+        <button @click="joinRoom(roomId)">Join room</button>
+        <button @click="createNewRoom">Create new room</button>
+        <button v-if="currentPlayer.room" @click="joinRoom(currentPlayer.room)">
+          Return to previous room
+        </button></template
+      >
+      <template v-else>
+        <FormInput v-model="username" label="Pseudo" />
+        <button @click="signIn">Sign in as a guest</button>
+      </template>
+    </form>
   </div>
 </template>
 
@@ -19,13 +25,15 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore, useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { WSE } from 'wse'
+import { WSE } from 'shared'
+import FormInput from '../components/form/FormInput.vue'
+import PlayerCard from '../components/PlayerList/PlayerCard.vue'
 
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
 const { setToken } = authStore
-const { user } = storeToRefs(authStore)
+const { currentPlayer } = storeToRefs(authStore)
 const { socket, room } = storeToRefs(socketStore)
 
 // Composables
@@ -46,6 +54,7 @@ watch(
       $router.push({ name: 'Lobby', params: { roomId } })
     }
   },
+  { immediate: true },
 )
 // Functions
 async function signIn(): Promise<void> {
@@ -56,12 +65,12 @@ async function signIn(): Promise<void> {
   }
 }
 
-function joinRoom(): void {
-  if (roomId.value === '') {
+function joinRoom(id: string): void {
+  if (id === '') {
     return
   }
   if (socket.value) {
-    socket.value.emit(WSE.ASK_JOIN_ROOM, { roomId: roomId.value })
+    socket.value.emit(WSE.ASK_JOIN_ROOM, { roomId: id })
   }
 }
 function createNewRoom(): void {
@@ -71,4 +80,27 @@ function createNewRoom(): void {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.landing {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  padding-top: 5rem;
+  flex-direction: column;
+  justify-content: start;
+  align-items: center;
+  &_title {
+    color: var(--main-color);
+  }
+  &-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 40rem;
+    padding: 2rem;
+    border: 0.1rem solid var(--main-color);
+    height: fit-content;
+    border-radius: 1rem;
+  }
+}
+</style>

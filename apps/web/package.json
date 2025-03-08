@@ -5,22 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "build": "vite build",
+    "types": "vue-tsc --noEmit",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
     "axios": "^1.7.9",
     "debounce": "^2.2.0",
-    "dto": "../../packages/dto",
     "pinia": "^2.3.0",
+    "shared": "../../packages/shared",
     "socket.io-client": "^4.8.1",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0",
-    "wse": "../../packages/socket-events"
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

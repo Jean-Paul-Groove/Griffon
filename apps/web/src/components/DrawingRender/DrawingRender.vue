@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useSocketStore } from '../../stores'
-import { WSE } from 'wse'
+import { UploadDrawingDto, WSE } from 'shared'
 import { storeToRefs } from 'pinia'
 
 // Stores
@@ -25,9 +25,9 @@ watch(
   () => socket,
   () => {
     if (socket.value != null) {
-      socket.value.on(WSE.UPLOAD_DRAWING, (body) => {
+      socket.value.on(WSE.UPLOAD_DRAWING, (body: UploadDrawingDto['arguments']) => {
         try {
-          artist.value = body?.user?.name
+          artist.value = body.player.name
           const buffer = body.drawing
           if (buffer instanceof ArrayBuffer) {
             const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)))

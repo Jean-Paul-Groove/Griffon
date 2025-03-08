@@ -1,10 +1,28 @@
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import type { Socket } from 'socket.io-client'
 import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
-import { WSE } from 'wse'
-import type { GameName, Message, NewMessageDto, Player, RoomInfoDto, User } from 'dto'
+import {
+  ChatMessageDto,
+  FailCreateRoom,
+  FailJoinRoomDto,
+  FailStartGame,
+  NewChatMessageDto,
+  PlayerConnectionSuccessDto,
+  PlayerJoinedRoomDto,
+  PlayerJoinedRoomSuccessDto,
+  PlayerListDto,
+  PlayerScoredDto,
+  ScoreDto,
+  ScoreListDto,
+  StartGameDto,
+  TimeLimitDto,
+  WordToDrawDto,
+  WSE,
+  type PlayerInfoDto,
+  type RoomInfoDto,
+} from 'shared'
 import { useRoute, useRouter } from 'vue-router'
 
 type ListenerRecord = {
@@ -14,31 +32,27 @@ type ListenerRecord = {
 export const useSocketStore = defineStore('socket', () => {
   // Composables
   const authStore = useAuthStore()
-  const { resetToken, setUserInfo, setIsAdmin } = authStore
-  const { token, user } = storeToRefs(authStore)
+  const { resetToken, setPlayerInfo, setIsAdmin } = authStore
+  const { token, currentPlayer } = storeToRefs(authStore)
   const $router = useRouter()
   const $route = useRoute()
   const socket = ref<Socket | null>(null)
   const timeLimit = ref<number | null>(null)
   const countDown = ref<number | null>(null)
-  const player = computed<Player | null>(() => {
-    if (!room.value || !user.value) {
-      return null
-    }
-    const player = room.value?.players.find((player) => player.id === user.value?.id)
-    return player ?? null
-  })
+
   // Constants
-  const SYSTEM: User = {
+  const SYSTEM: PlayerInfoDto = {
     id: 'SYSTEM',
     name: 'Griffon',
+    isGuest: false,
+    isArtist: false,
   }
   const SYSTEM_ID = -1
   const genericListeners: ListenerRecord = {
     [WSE.INVALID_TOKEN]: resetToken,
-    [WSE.CONNECTION_SUCCESS]: (data: User) => {
+    [WSE.CONNECTION_SUCCESS]: (data: PlayerConnectionSuccessDto['arguments']) => {
       if (data) {
-        setUserInfo(data)
+        setPlayerInfo(data.player)
       }
     },
     [WSE.DISCONNECTION]: (reason) => {
@@ -47,71 +61,83 @@ export const useSocketStore = defineStore('socket', () => {
         resetToken()
       }
     },
-    [WSE.NEW_MESSAGE]: (data: Message): void => {
+    [WSE.NEW_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
-        console.log('NEW MESSAGE RECEIVED')
-        console.log(data)
-        addMessage(data)
+        addMessage(data.chatMessage)
       }
     },
-    [WSE.USER_JOINED_ROOM_SUCCESS]: (data: RoomInfoDto): void => {
+    [WSE.USER_JOINED_ROOM_SUCCESS]: (data: PlayerJoinedRoomSuccessDto['arguments']): void => {
       if (data) {
-        setRoomInfo(data)
+        setRoomInfo(data.room)
       }
     },
-    [WSE.WORD_TO_DRAW]: (data: string): void => {
+    [WSE.FAIL_JOIN_ROOM]: (data: FailJoinRoomDto['arguments']): void => {
       if (data) {
-        setWordToDraw(data)
+        console.log(data.reason)
+        $router.push({ name: 'Landing' })
       }
     },
-    [WSE.USER_JOINED_ROOM]: (data: User): void => {
+    [WSE.FAIL_CREATE_ROOM]: (data: FailCreateRoom['arguments']): void => {
       if (data) {
-        systemMessage(`${data.name} joined the Room`)
+        console.log(data.reason)
+        $router.push({ name: 'Landing' })
       }
     },
-    [WSE.START_GAME]: (data: GameName) => {
+    [WSE.WORD_TO_DRAW]: (data: WordToDrawDto['arguments']): void => {
+      if (data) {
+        setWordToDraw(data.word)
+      }
+    },
+    [WSE.USER_JOINED_ROOM]: (data: PlayerJoinedRoomDto['arguments']): void => {
+      if (data) {
+        systemMessage(`${data.player.name} joined the Room`)
+      }
+    },
+    [WSE.START_GAME]: (data: StartGameDto['arguments']) => {
       if (data && room.value) {
-        room.value.currentGame = data
-        addMessage({
-          content: `New ${data} starting`,
-          sender: SYSTEM,
-          sent_at: Date.now(),
-          id: SYSTEM_ID,
-        })
+        room.value.currentGame = data.game
+        systemMessage(`New ${data.game.specs.title} is starting`)
       }
     },
-    [WSE.CAN_DRAW]: (data: User): void => {
+    [WSE.FAIL_START_GAME]: (data: FailStartGame['arguments']) => {
       if (data) {
-        setUserInfo(data)
+        console.log(data.reason)
       }
     },
     [WSE.STOP_DRAW]: (): void => {
-      if (player.value?.isDrawing) {
-        player.value.isDrawing = false
+      if (currentPlayer.value?.isArtist) {
+        setPlayerInfo({ ...currentPlayer.value, isArtist: false })
       }
     },
-    [WSE.NEW_ARTIST]: (data: Player[]): void => {
+    [WSE.PLAYER_LIST]: (data: PlayerListDto['arguments']): void => {
       if (data) {
-        updateUsers(data)
-        const artist = data.find((player) => player.isDrawing === true)
-        systemMessage(`${artist?.name} is drawing`)
+        updateUsers(data.players)
+        const artist = data.players.find((player) => player.isArtist === true)
+        if (artist) {
+          systemMessage(`${artist?.name} is drawing`)
+        }
       }
     },
-    [WSE.PLAYER_SCORED]: (data: { player: User; points: number }): void => {
+    [WSE.SCORE_LIST]: (data: ScoreListDto['arguments']): void => {
+      if (data) {
+        updateScores(data.scores)
+      }
+    },
+    [WSE.PLAYER_SCORED]: (data: PlayerScoredDto['arguments']): void => {
       if (data) {
         systemMessage(`${data.player.name} scored ${data.points} points`)
       }
     },
-    [WSE.TIME_LIMIT]: (data: number): void => {
+    [WSE.TIME_LIMIT]: (data: TimeLimitDto['arguments']): void => {
       if (data) {
-        initCountdown(data)
+        initCountdown(data.time)
       }
     },
   }
 
   // Refs
   const room = ref<RoomInfoDto | null>(null)
-  const messages = ref<Array<Message | NewMessageDto>>([])
+  const chatMessages = ref<Array<ChatMessageDto>>([])
   const wordToDraw = ref<string>('')
 
   // Watchers
@@ -126,34 +152,32 @@ export const useSocketStore = defineStore('socket', () => {
     () => room.value,
     () => {
       let isAdmin
-      if (!room.value || !user.value) {
+      if (!room.value || !currentPlayer.value) {
         isAdmin = false
       } else {
-        isAdmin = room.value.owner === user.value.id
+        isAdmin = room.value.admin === currentPlayer.value.id
       }
       setIsAdmin(isAdmin)
     },
   )
   watch(
-    () => room.value?.currentGame,
-    (value) => {
+    () => room.value?.currentGame?.specs.title,
+    (game) => {
+      console.log('NEW GAME WATCHED')
       const currentRoute = $route.name
       // Redirect to Lobby if no current game
-      if (value === undefined || value === null) {
+      if (!game) {
         if (room.value != null) {
           if (currentRoute !== 'Lobby') {
             $router.push({ name: 'Lobby', params: { roomId: room.value.id } })
           }
-
-          // Redirect to landing if no room
-        } else if (currentRoute !== 'Landing') {
-          $router.push({ name: 'Landing' })
         }
         return
       }
       // Redirect to game
-      if (value != null && room.value?.id != null && currentRoute != value) {
-        $router.push({ name: value, params: { roomId: room.value.id } })
+      if (game != null && room.value?.id != null && currentRoute != game) {
+        console.log('NAVIGATING TO GAME')
+        $router.push({ name: game, params: { roomId: room.value.id } })
       }
     },
   )
@@ -165,6 +189,7 @@ export const useSocketStore = defineStore('socket', () => {
     }
     connectSocket()
     setListeners(genericListeners)
+    console.log(socket.value?.listenersAny)
     if (socket.value?.listenersAny.length === 0) {
       socket.value?.onAny((event, args) => {
         console.log(event, args)
@@ -210,35 +235,44 @@ export const useSocketStore = defineStore('socket', () => {
   }
   function setRoomInfo(newRoom: RoomInfoDto): void {
     room.value = JSON.parse(JSON.stringify(newRoom))
-    messages.value = [...newRoom.messages]
+    chatMessages.value = [...newRoom.chatMessages]
   }
-  function addMessage(message: Message): void {
+  function addMessage(message: ChatMessageDto): void {
     if (room.value) {
-      room.value.messages.push(message)
-      messages.value.push(message)
+      room.value.chatMessages.push(message)
+      chatMessages.value.push(message)
     }
   }
   function systemMessage(content: string): void {
+    if (!room.value) {
+      return
+    }
     addMessage({
       content,
-      sender: SYSTEM,
-      sent_at: Date.now(),
+      sender: SYSTEM.id,
+      sentAt: new Date(),
       id: -1,
+      room: room.value?.id,
     })
   }
   function setWordToDraw(word: string): void {
     wordToDraw.value = word
   }
-  function updateUsers(players: Player[]): void {
+  function updateUsers(players: PlayerInfoDto[]): void {
     if (room.value) {
       room.value.players = [...players]
     }
 
-    if (user.value) {
-      const currentUser = players.find((u) => u.id === user.value?.id)
+    if (currentPlayer.value) {
+      const currentUser = players.find((u) => u.id === currentPlayer.value?.id)
       if (currentUser) {
-        setUserInfo(currentUser)
+        setPlayerInfo(currentUser)
       }
+    }
+  }
+  function updateScores(scores: ScoreDto[]): void {
+    if (room.value) {
+      room.value.scores = [...scores]
     }
   }
   function endTimeOut(id: number): void {
@@ -248,18 +282,16 @@ export const useSocketStore = defineStore('socket', () => {
   }
   function initCountdown(time: number): void {
     if (timeLimit.value != null || countDown.value != null) {
-      console.log('not null')
       return
     }
     const now = Date.now()
     if (time - now <= 0) {
-      console.log(time, now)
       return
     }
     timeLimit.value = time
     countDown.value = Math.round((time - now) / 1000)
     const id = setInterval(() => {
-      console.log('INTERVAL')
+      console.log('CountDown')
       if (!countDown.value) {
         endTimeOut(id)
         return
@@ -276,15 +308,29 @@ export const useSocketStore = defineStore('socket', () => {
       return
     }, 1000)
   }
+  function getUserById(id: string): PlayerInfoDto | undefined {
+    if (id === SYSTEM.id) {
+      return SYSTEM
+    }
+    if (room.value) {
+      return room.value.players.find((player) => player.id === id)
+    }
+  }
+  function getUserPoints(id: string): ScoreDto | undefined {
+    if (room.value) {
+      return room.value.scores.find((score) => score.player === id)
+    }
+  }
   return {
     socket,
     room,
-    player,
-    messages,
+    chatMessages,
     wordToDraw,
     SYSTEM_ID,
     countDown,
     setListeners,
     handleConnection,
+    getUserById,
+    getUserPoints,
   }
 })

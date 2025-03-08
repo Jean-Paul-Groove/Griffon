@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationRaw } from 'vue-router'
 import { BaseLayout, RoomLayout } from '@/layouts'
 import { LandingView, GameView } from '@/views'
 import { useAuthStore, useSocketStore } from '../stores'
@@ -16,12 +16,7 @@ const router = createRouter({
           path: '/',
           name: 'Landing',
           component: LandingView,
-          beforeEnter: ():
-            | {
-                name: string
-                params: { [key: string]: string }
-              }
-            | undefined => {
+          beforeEnter: (): RouteLocationRaw | undefined => {
             const { token } = useAuthStore()
             const { room } = useSocketStore()
             if (token !== null && room?.id) {
@@ -35,9 +30,9 @@ const router = createRouter({
       path: '/:roomId',
       name: 'Room',
       component: RoomLayout,
-      redirect: (to) => ({
+      redirect: {
         name: 'Lobby',
-      }),
+      },
       children: [
         {
           path: 'lobby',
@@ -45,9 +40,16 @@ const router = createRouter({
           component: LobbyView,
         },
         {
-          name: 'Griffonary',
-          path: 'griffonary',
-          component: GameView,
+          name: 'Game',
+          path: 'game',
+          redirect: { name: 'Lobby' },
+          children: [
+            {
+              name: 'Griffonary',
+              path: 'griffonary',
+              component: GameView,
+            },
+          ],
         },
       ],
     },
@@ -55,8 +57,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (to.name === 'Landing') {
+    return true
+  }
   const { token } = useAuthStore()
-  if (token === null && to.name !== 'Landing') {
+  if (token === null) {
     return { name: 'Landing' }
   }
 })

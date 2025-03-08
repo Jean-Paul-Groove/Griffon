@@ -1,7 +1,7 @@
 <template>
   <div :class="messageClass">
     <p class="chat-message_sender">
-      {{ message.sender.name }} ∙ {{ new Date(message.sent_at).toLocaleTimeString() }}
+      {{ getUserById(message.sender)?.name }} ∙ {{ new Date(message.sentAt).toLocaleTimeString() }}
     </p>
     <p class="chat-message_content">{{ message.content }}</p>
   </div>
@@ -10,20 +10,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useSocketStore } from '@/stores'
-import type { Message } from 'dto'
+import type { ChatMessageDto } from 'shared'
 
-const { SYSTEM_ID } = useSocketStore()
+const { SYSTEM_ID, getUserById } = useSocketStore()
 
 interface ChatMessageProps {
-  message: Message
-  userId: string
+  message: ChatMessageDto
+  playerId: string
 }
 const props = defineProps<ChatMessageProps>()
 
 // Computed
 const messageClass = computed<string>(() => {
   let newClass = 'chat-message'
-  if (props.message.sender.id === props.userId) {
+  if (props.message.sender === props.playerId) {
     newClass += ' isSender'
   } else if (props.message.id === SYSTEM_ID) {
     newClass += ' isSystem'
@@ -36,18 +36,19 @@ const messageClass = computed<string>(() => {
 .chat-message {
   padding: 0.2rem;
   border-radius: 0.4rem;
-  background-color: rgba(245, 245, 220, 0.415);
+  background-color: rgba(245, 245, 220, 0.747);
   width: 80%;
   margin-left: auto;
   &.isSender {
     margin-left: 0;
     margin-right: auto;
-    background-color: rgba(245, 233, 220, 0.415);
+    background-color: rgba(245, 233, 220, 0.784);
   }
   &.isSystem {
     margin-left: auto;
     margin-right: auto;
-    background-color: rgba(220, 245, 228, 0.415);
+    text-align: center;
+    background-color: rgba(220, 245, 228, 0.751);
     width: 100%;
   }
   &_sender {

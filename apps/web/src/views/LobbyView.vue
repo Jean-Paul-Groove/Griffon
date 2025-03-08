@@ -8,7 +8,7 @@
 import { onMounted } from 'vue'
 import { useAuthStore, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
-import { WSE } from 'wse'
+import { WSE } from 'shared'
 import { useRoute, useRouter } from 'vue-router'
 
 // Stores
@@ -24,6 +24,7 @@ const $router = useRouter()
 // Hooks
 onMounted(() => {
   const { roomId } = $route.params
+  console.log('INSIDE LOBBY ON MOUNTED')
   if (!socket.value?.connected) {
     handleConnection()
   }
