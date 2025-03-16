@@ -1,5 +1,22 @@
 <template>
   <DefaultLayout>
+    <ConfirmModal v-if="exitModal" @confirm="handleLeaveRoom" @close="exitModal = false"
+      >Êtes vous sûr de vouloir quitter cette Room ?
+    </ConfirmModal>
+    <template #header-end>
+      <CountDown />
+      <div
+        v-if="room"
+        class="room-layout_disconnect"
+        title="Quitter la Room"
+        @click="exitModal = true"
+      >
+        <FontAwesomeIcon
+          class="room-layout_disconnect_icon"
+          :icon="['fas', 'arrow-right-from-bracket']"
+        />
+      </div>
+    </template>
     <div v-if="breakPoint === 'laptop'" class="room-layout laptop">
       <PlayerList />
       <RouterView class="room-layout_router laptop" />
@@ -27,13 +44,27 @@
 import DefaultLayout from './components/DefaultLayout.vue'
 import { RouterView } from 'vue-router'
 import { ChatThread, PlayerList } from '@/components'
-import { useLayoutSize } from '../stores'
+import { useLayoutSize, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import ConfirmModal from '../components/ConfirmModal/ConfirmModal.vue'
+import CountDown from '../components/CountDown/CountDown.vue'
 
+// Composables
+const socketStore = useSocketStore()
 const { breakPoint } = storeToRefs(useLayoutSize())
+const { room } = storeToRefs(socketStore)
+const { leaveRoom } = socketStore
+// Refs
 const view = ref<'players' | 'chat'>('chat')
+const exitModal = ref<boolean>(false)
+
+// Functions
+function handleLeaveRoom(): void {
+  leaveRoom()
+  exitModal.value = false
+}
 </script>
 
 <style lang="scss" scoped>
@@ -52,6 +83,22 @@ const view = ref<'players' | 'chat'>('chat')
     border: solid 0.1rem var(--main-color);
     border-left-width: 0px;
     border-right-width: 0px;
+  }
+  &_disconnect {
+    position: absolute;
+    right: 5%;
+    height: 100%;
+    color: var(--main-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &:hover {
+      color: var(--secondary-color);
+    }
+    &_icon {
+      height: 70%;
+    }
   }
 }
 .room-layout.laptop {

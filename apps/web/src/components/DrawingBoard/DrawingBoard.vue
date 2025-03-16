@@ -1,7 +1,7 @@
 <template>
   <div class="drawing-board">
-    <div class="drawing-board_word">
-      <p>{{ capitalizeString(wordToDraw) }}</p>
+    <div class="drawing-board_info">
+      <p class="drawing-board_word">{{ capitalizeString(wordToDraw) }}</p>
     </div>
     <div ref="canvasContainer" class="canvas_container" :class="'cursor-' + tool"></div>
     <DrawingToolBox
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import type { DrawingTool, DrawingPath } from './types'
 import DrawingToolBox from './DrawingToolBox.vue'
 import { useSocketStore } from '@/stores'
@@ -38,7 +38,6 @@ const EMPTY_PATH: DrawingPath = {
 // Stores
 const socketStore = useSocketStore()
 
-const { setListeners } = socketStore
 const { socket, wordToDraw } = storeToRefs(socketStore)
 
 // TempalteRef
@@ -54,6 +53,7 @@ const lineWidth = ref<number>(11)
 const currentIndex = ref<number>(-1)
 const canvas = ref<HTMLCanvasElement>()
 const previousCanvasSize = ref<{ width: number; height: number } | null>(null)
+const interval = ref<number>()
 // Computeds
 const ctx = computed<CanvasRenderingContext2D | null>(() => canvas.value?.getContext('2d') || null)
 // Hooks
@@ -62,10 +62,11 @@ onMounted(() => {
   window.addEventListener('resize', () => {
     initCanvas()
   })
-
-  setListeners({ [WSE.STOP_DRAW]: clearCanvas })
+  interval.value = setInterval(debouncedSendDrawing, 500)
 })
-
+onBeforeUnmount(() => {
+  clearInterval(interval.value)
+})
 // Functions
 function initCanvas(): void {
   canvas.value = undefined
@@ -139,7 +140,6 @@ function startDrawingOnMouseDown(event: MouseEvent): void {
   ctx.value.moveTo(x, y)
   ctx.value.lineTo(x, y)
   ctx.value.stroke()
-  debouncedSendDrawing()
   canvasContainer.value.addEventListener('mousemove', draw)
   canvasContainer.value.addEventListener('mouseup', stopDraw)
 }
@@ -156,7 +156,6 @@ function draw(event: MouseEvent): void {
   currentPath.value.points.push({ x: relativeX, y: relativeY })
   ctx.value.lineTo(x, y)
   ctx.value.stroke()
-  debouncedSendDrawing()
 }
 function startDrawingOnTouch(event: TouchEvent): void {
   event.preventDefault()
@@ -193,7 +192,6 @@ function startDrawingOnTouch(event: TouchEvent): void {
     ctx.value.moveTo(x, y)
     ctx.value.lineTo(x, y)
     ctx.value.stroke()
-    debouncedSendDrawing()
   }
 }
 function drawOnTouchMove(event: TouchEvent): void {
@@ -213,7 +211,6 @@ function drawOnTouchMove(event: TouchEvent): void {
     currentTouches.value[touch.identifier].points.push({ x: relativeX, y: relativeY })
     ctx.value.lineTo(x, y)
     ctx.value.stroke()
-    debouncedSendDrawing()
   }
 }
 function stopDraw(): void {
@@ -255,7 +252,6 @@ function redraw(): void {
   ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
   ctx.value.lineCap = 'round'
   if (currentIndex.value < 0) {
-    debouncedSendDrawing()
     return
   }
   for (const path of drawingHistory.value) {
@@ -279,7 +275,6 @@ function redraw(): void {
       break
     }
   }
-  debouncedSendDrawing()
 }
 function selectColor(color: string): void {
   strokeStyle.value = color
@@ -311,13 +306,7 @@ function sendDrawing(): void {
     }, 'image/webp')
   }
 }
-function clearCanvas(): void {
-  if (!ctx.value || !canvas.value) {
-    return
-  }
-  ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
-  drawingHistory.value = []
-}
+
 const debouncedSendDrawing = debounce(sendDrawing, 100, { immediate: true })
 </script>
 
@@ -333,6 +322,12 @@ const debouncedSendDrawing = debounce(sendDrawing, 100, { immediate: true })
   gap: 0.2rem;
   align-items: center;
   min-height: 0;
+  &_info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
   &_word {
     height: 2rem;
   }

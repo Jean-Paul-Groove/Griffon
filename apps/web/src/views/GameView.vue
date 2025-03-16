@@ -7,16 +7,16 @@
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { useAuthStore, useSocketStore } from '../stores'
+import { useSocketStore } from '../stores'
 import { WSE } from 'shared'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { DrawingBoard } from '@/components'
 import DrawingRender from '../components/DrawingRender/DrawingRender.vue'
+import CountDown from '../components/CountDown/CountDown.vue'
 // Composables
 const socketStore = useSocketStore()
-const { socket, room } = storeToRefs(socketStore)
-const { currentPlayer } = storeToRefs(useAuthStore())
+const { socket, room, currentPlayer } = storeToRefs(socketStore)
 const $route = useRoute()
 const $router = useRouter()
 
@@ -54,5 +54,8 @@ onMounted(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
+  ._countdown {
+    height: 2rem;
+  }
 }
 </style>

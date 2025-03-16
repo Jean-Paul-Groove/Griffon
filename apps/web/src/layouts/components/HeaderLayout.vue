@@ -1,7 +1,9 @@
 <template>
   <div class="header">
+    <slot name="header-start" />
     <img class="header_logo" :src="logo" alt="Griphon-logo" />
     <h1 class="header_title">{{ $route.name }}</h1>
+    <slot name="header-end" />
   </div>
 </template>
 
@@ -21,6 +23,7 @@ const $route = useRoute()
   gap: 1rem;
   align-items: center;
   background: url('../../assets/background/header-scroll.webp') center/cover no-repeat;
+  padding: 0 3%;
   &_logo {
     height: 70%;
     max-height: 100%;

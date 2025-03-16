@@ -20,9 +20,11 @@ body {
   --secondary-color: rgb(207, 81, 81);
   --light-bg: rgba(250, 250, 250, 0.233);
   --inside-shadow: inset 0 0 10px 1px rgba(128, 128, 128, 0.192);
+  --title-font:'Brush-king';
+  --global-font:'Manuscript'
 }
 h1 {
-  font-family: 'Brush-king';
+  font-family: var(--title-font);
   color: var(--main-color);
 }
 #app {
@@ -35,7 +37,7 @@ h1 {
   height: 100%;
 }
 button {
-  font-family: 'Manuscript';
+  font-family: var(--global-font);
   cursor: pointer;
   font-weight: bold;
   padding: 0.5rem;

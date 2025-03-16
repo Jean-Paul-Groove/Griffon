@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import type { Socket } from 'socket.io-client'
 import { io } from 'socket.io-client'
@@ -14,6 +14,7 @@ import {
   PlayerJoinedRoomSuccessDto,
   PlayerListDto,
   PlayerScoredDto,
+  RoomStateDto,
   ScoreDto,
   ScoreListDto,
   StartGameDto,
@@ -32,14 +33,14 @@ type ListenerRecord = {
 export const useSocketStore = defineStore('socket', () => {
   // Composables
   const authStore = useAuthStore()
-  const { resetToken, setPlayerInfo, setIsAdmin } = authStore
-  const { token, currentPlayer } = storeToRefs(authStore)
+  const { resetToken, setPlayerInfo, setRequestedRoom } = authStore
+  const { token, user } = storeToRefs(authStore)
   const $router = useRouter()
   const $route = useRoute()
   const socket = ref<Socket | null>(null)
   const timeLimit = ref<number | null>(null)
   const countDown = ref<number | null>(null)
-
+  const cdDuration = ref<number | null>(null)
   // Constants
   const SYSTEM: PlayerInfoDto = {
     id: 'SYSTEM',
@@ -63,6 +64,7 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.NEW_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
+        console.log('RECEIVED')
         addMessage(data.chatMessage)
       }
     },
@@ -93,6 +95,11 @@ export const useSocketStore = defineStore('socket', () => {
         systemMessage(`${data.player.name} joined the Room`)
       }
     },
+    [WSE.ROOM_STATE]: (data: RoomStateDto['arguments']): void => {
+      if (data) {
+        setRoomInfo(data.room)
+      }
+    },
     [WSE.START_GAME]: (data: StartGameDto['arguments']) => {
       if (data && room.value) {
         room.value.currentGame = data.game
@@ -105,8 +112,8 @@ export const useSocketStore = defineStore('socket', () => {
       }
     },
     [WSE.STOP_DRAW]: (): void => {
-      if (currentPlayer.value?.isArtist) {
-        setPlayerInfo({ ...currentPlayer.value, isArtist: false })
+      if (isArtist.value && currentPlayer.value) {
+        currentPlayer.value.isArtist = false
       }
     },
     [WSE.PLAYER_LIST]: (data: PlayerListDto['arguments']): void => {
@@ -126,6 +133,7 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.PLAYER_SCORED]: (data: PlayerScoredDto['arguments']): void => {
       if (data) {
         systemMessage(`${data.player.name} scored ${data.points} points`)
+        updatePartialScores(data)
       }
     },
     [WSE.TIME_LIMIT]: (data: TimeLimitDto['arguments']): void => {
@@ -140,24 +148,26 @@ export const useSocketStore = defineStore('socket', () => {
   const chatMessages = ref<Array<ChatMessageDto>>([])
   const wordToDraw = ref<string>('')
 
+  // Computeds
+  const currentPlayer = computed<PlayerInfoDto | null>(() => {
+    return room.value?.players.find((player) => player.id === user.value?.id) ?? null
+  })
+  const isArtist = computed<boolean>(() => {
+    return currentPlayer.value?.isArtist === true
+  })
+  const isAdmin = computed<boolean>(() => {
+    if (room.value?.admin && room.value.admin === currentPlayer.value?.id) {
+      return true
+    }
+
+    return false
+  })
   // Watchers
   watch(() => token.value, handleConnection, { immediate: true })
   watch(
     () => socket.value?.connected,
     () => {
       handleConnection()
-    },
-  )
-  watch(
-    () => room.value,
-    () => {
-      let isAdmin
-      if (!room.value || !currentPlayer.value) {
-        isAdmin = false
-      } else {
-        isAdmin = room.value.admin === currentPlayer.value.id
-      }
-      setIsAdmin(isAdmin)
     },
   )
   watch(
@@ -178,6 +188,14 @@ export const useSocketStore = defineStore('socket', () => {
       if (game != null && room.value?.id != null && currentRoute != game) {
         console.log('NAVIGATING TO GAME')
         $router.push({ name: game, params: { roomId: room.value.id } })
+      }
+    },
+  )
+  watch(
+    () => room.value,
+    () => {
+      if (room.value === null) {
+        $router.push({ name: 'Landing' })
       }
     },
   )
@@ -263,8 +281,8 @@ export const useSocketStore = defineStore('socket', () => {
       room.value.players = [...players]
     }
 
-    if (currentPlayer.value) {
-      const currentUser = players.find((u) => u.id === currentPlayer.value?.id)
+    if (user.value) {
+      const currentUser = players.find((u) => u.id === user.value?.id)
       if (currentUser) {
         setPlayerInfo(currentUser)
       }
@@ -275,29 +293,45 @@ export const useSocketStore = defineStore('socket', () => {
       room.value.scores = [...scores]
     }
   }
-  function endTimeOut(id: number): void {
+  function updatePartialScores(partialScore: PlayerScoredDto['arguments']): void {
+    if (!room.value) {
+      return
+    }
+    const score = room.value.scores.find((score) => score.player === partialScore.player.id)
+    if (score) {
+      score.points += partialScore.points
+    } else {
+      room.value.scores.push({
+        id: '',
+        points: partialScore.points,
+        player: partialScore.player.id,
+        room: room.value.id,
+      })
+    }
+  }
+  function endCountDown(id: number): void {
     clearInterval(id)
     timeLimit.value = null
     countDown.value = null
+    cdDuration.value = null
   }
   function initCountdown(time: number): void {
     if (timeLimit.value != null || countDown.value != null) {
-      return
+      timeLimit.value = null
+      countDown.value = null
     }
     const now = Date.now()
     if (time - now <= 0) {
       return
     }
     timeLimit.value = time
-    countDown.value = Math.round((time - now) / 1000)
+    const countDownDuration = Math.round((time - now) / 1000)
+    countDown.value = countDownDuration
+    cdDuration.value = countDownDuration
     const id = setInterval(() => {
       console.log('CountDown')
-      if (!countDown.value) {
-        endTimeOut(id)
-        return
-      }
-      if (countDown.value === 0) {
-        endTimeOut(id)
+      if (!countDown.value || countDown.value === 0) {
+        endCountDown(id)
         return
       }
       if (countDown.value - 1 < 0) {
@@ -321,6 +355,30 @@ export const useSocketStore = defineStore('socket', () => {
       return room.value.scores.find((score) => score.player === id)
     }
   }
+  function leaveRoom(): void {
+    try {
+      if (!socket.value) {
+        return
+      }
+      socket.value.emit(WSE.ASK_LEAVE_ROOM, { roomId: room.value?.id })
+      room.value = null
+      chatMessages.value = []
+      wordToDraw.value = ''
+      setRequestedRoom(null)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  function excludePlayer(playerId: string): void {
+    try {
+      if (!socket.value || !isAdmin.value) {
+        return
+      }
+      socket.value.emit(WSE.ASK_EXCLUDE_PLAYER, { playerId })
+    } catch (error) {
+      console.log(error)
+    }
+  }
   return {
     socket,
     room,
@@ -328,9 +386,14 @@ export const useSocketStore = defineStore('socket', () => {
     wordToDraw,
     SYSTEM_ID,
     countDown,
+    isArtist,
+    isAdmin,
+    currentPlayer,
     setListeners,
     handleConnection,
     getUserById,
     getUserPoints,
+    leaveRoom,
+    excludePlayer,
   }
 })

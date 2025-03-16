@@ -60,8 +60,11 @@ router.beforeEach((to) => {
   if (to.name === 'Landing') {
     return true
   }
-  const { token } = useAuthStore()
+  const { token, setRequestedRoom } = useAuthStore()
   if (token === null) {
+    if (to.params.roomId != null && typeof to.params.roomId === 'string') {
+      setRequestedRoom(to.params.roomId)
+    }
     return { name: 'Landing' }
   }
 })

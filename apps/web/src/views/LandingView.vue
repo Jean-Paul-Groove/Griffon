@@ -1,19 +1,20 @@
 <template>
   <div class="landing">
-    <h2 v-if="currentPlayer" class="landing_title">Rejoindre une room:</h2>
+    <h2 v-if="user" class="landing_title">Rejoindre une Room:</h2>
     <h2 v-else class="landing_title">Connexion:</h2>
     <form class="landing-form" @submit="(e) => e.preventDefault()">
-      <template v-if="currentPlayer">
+      <template v-if="user">
         <FormInput v-model="roomId" label="Room ID" />
-        <button @click="joinRoom(roomId)">Join room</button>
-        <button @click="createNewRoom">Create new room</button>
-        <button v-if="currentPlayer.room" @click="joinRoom(currentPlayer.room)">
-          Return to previous room
+        <button @click="joinRoom(roomId)">Rejoindre</button>
+        <button @click="createNewRoom">Générer une Room</button>
+        <button v-if="user.room" @click="joinRoom(user.room)">
+          Rejoindre la Room précédente
         </button></template
       >
       <template v-else>
+        <div v-if="requestedRoom !== null">Connectez-vous avant de rejoindre vos amis</div>
         <FormInput v-model="username" label="Pseudo" />
-        <button @click="signIn">Sign in as a guest</button>
+        <button @click="signIn">Connexion en tant qu'invité</button>
       </template>
     </form>
   </div>
@@ -27,14 +28,12 @@ import { useAuthStore, useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { WSE } from 'shared'
 import FormInput from '../components/form/FormInput.vue'
-import PlayerCard from '../components/PlayerList/PlayerCard.vue'
-
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
-const { setToken } = authStore
-const { currentPlayer } = storeToRefs(authStore)
+const { setToken, setRequestedRoom } = authStore
 const { socket, room } = storeToRefs(socketStore)
+const { user, requestedRoom } = storeToRefs(authStore)
 
 // Composables
 const $router = useRouter()
@@ -47,6 +46,16 @@ const username = ref<string>('')
 const roomId = ref<string>('')
 
 // Watchers
+watch(
+  () => user.value,
+  () => {
+    if (user.value !== null && requestedRoom.value) {
+      joinRoom(requestedRoom.value)
+      console.log('YES')
+      setRequestedRoom(null)
+    }
+  },
+)
 watch(
   () => room.value?.id,
   (roomId) => {
@@ -96,7 +105,7 @@ function createNewRoom(): void {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 40rem;
+    width: 25rem;
     padding: 2rem;
     border: 0.1rem solid var(--main-color);
     height: fit-content;

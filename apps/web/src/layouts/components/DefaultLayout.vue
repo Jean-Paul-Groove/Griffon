@@ -1,6 +1,13 @@
 <template>
   <main class="layout">
-    <HeaderLayout class="layout_header" />
+    <HeaderLayout class="layout_header">
+      <template #header-start>
+        <slot name="header-start" />
+      </template>
+      <template #header-end>
+        <slot name="header-end" />
+      </template>
+    </HeaderLayout>
     <main class="layout_main">
       <slot></slot>
     </main>

@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useAuthStore, useSocketStore } from '../stores'
+import { useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { WSE } from 'shared'
 import { useRoute, useRouter } from 'vue-router'
@@ -14,8 +14,7 @@ import { useRoute, useRouter } from 'vue-router'
 // Stores
 const socketStore = useSocketStore()
 const { handleConnection } = socketStore
-const { socket, room } = storeToRefs(socketStore)
-const { isAdmin } = storeToRefs(useAuthStore())
+const { socket, room, isAdmin } = storeToRefs(socketStore)
 // Composables
 const $route = useRoute()
 const $router = useRouter()
@@ -29,6 +28,7 @@ onMounted(() => {
     handleConnection()
   }
   if (!roomId && !room.value?.id) {
+    console.log('pas de room du tout')
     $router.push({ name: 'Landing' })
   } else {
     if (roomId && roomId != room.value?.id && socket.value)

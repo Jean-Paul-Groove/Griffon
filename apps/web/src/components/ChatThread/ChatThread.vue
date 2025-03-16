@@ -1,5 +1,5 @@
 <template>
-  <div v-if="chatMessages && currentPlayer?.id" class="game-chat">
+  <div v-if="chatMessages !== null && currentPlayer?.id" class="game-chat">
     <div ref="thread" class="game-chat_thread">
       <ChatMessage
         v-for="(message, index) in chatMessages"
@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef, watch } from 'vue'
-import { useAuthStore, useSocketStore } from '../../stores'
+import { useSocketStore } from '../../stores'
 import { WSE } from 'shared'
 import { storeToRefs } from 'pinia'
 import ChatMessage from './ChatMessage.vue'
@@ -33,12 +33,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 // Stores
 const socketStore = useSocketStore()
-const authStore = useAuthStore()
 // Refs
 const thread = useTemplateRef('thread')
 const chatMessage = ref<string>('')
-const { socket, chatMessages } = storeToRefs(socketStore)
-const { currentPlayer } = storeToRefs(authStore)
+const { socket, chatMessages, currentPlayer } = storeToRefs(socketStore)
 
 // Watchers
 watch(

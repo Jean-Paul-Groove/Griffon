@@ -36,13 +36,13 @@ const messageClass = computed<string>(() => {
 .chat-message {
   padding: 0.2rem;
   border-radius: 0.4rem;
-  background-color: rgba(245, 245, 220, 0.747);
+  background-color: rgba(245, 233, 220, 0.784);
   width: 80%;
-  margin-left: auto;
+  margin-right: auto;
   &.isSender {
-    margin-left: 0;
-    margin-right: auto;
-    background-color: rgba(245, 233, 220, 0.784);
+    margin-right: 0;
+    margin-left: auto;
+    background-color: rgba(245, 245, 220, 0.747);
   }
   &.isSystem {
     margin-left: auto;

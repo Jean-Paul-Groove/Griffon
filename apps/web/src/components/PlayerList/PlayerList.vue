@@ -11,13 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore, useSocketStore } from '../../stores'
+import { useSocketStore } from '../../stores'
 import { storeToRefs } from 'pinia'
 import PlayerCard from './PlayerCard.vue'
 
 // Refs
-const { room } = storeToRefs(useSocketStore())
-const { currentPlayer } = storeToRefs(useAuthStore())
+const { room, currentPlayer } = storeToRefs(useSocketStore())
 
 // Watchers
 

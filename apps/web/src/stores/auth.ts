@@ -6,8 +6,8 @@ import type { PlayerInfoDto } from 'shared'
 export const useAuthStore = defineStore('auth', () => {
   const TOKEN_KEY = 'JWT'
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  const currentPlayer = ref<PlayerInfoDto | null>(null)
-  const isAdmin = ref<boolean>(false)
+  const user = ref<PlayerInfoDto | null>(null)
+  const requestedRoom = ref<string | null>(null)
   // Composables
   const $router = useRouter()
   // Watchers
@@ -27,29 +27,28 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error('INVALID TOKEN')
     }
   }
-  function setPlayerInfo(playerInfo: PlayerInfoDto): void {
-    console.log(playerInfo)
-    if (playerInfo != null) {
-      currentPlayer.value = playerInfo
-    }
-  }
   function resetToken(): void {
     token.value = null
     localStorage.removeItem(TOKEN_KEY)
 
-    currentPlayer.value = null
+    user.value = null
   }
-  function setIsAdmin(bool: boolean): void {
-    isAdmin.value = bool
+  function setPlayerInfo(playerInfo: PlayerInfoDto): void {
+    console.log(playerInfo)
+    if (playerInfo != null) {
+      user.value = playerInfo
+    }
   }
-
+  function setRequestedRoom(value: string | null): void {
+    requestedRoom.value = value
+  }
   return {
     token,
-    currentPlayer,
-    isAdmin,
+    user,
+    requestedRoom,
     setToken,
-    setIsAdmin,
     resetToken,
     setPlayerInfo,
+    setRequestedRoom,
   }
 })

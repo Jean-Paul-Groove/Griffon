@@ -19,7 +19,7 @@ defineProps<{ label?: string }>()
   border-top-right-radius: 1rem;
 }
 .form-input {
-  margin: 0 0.5rem 0 0.5rem;
+  padding: 0 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,6 +38,7 @@ defineProps<{ label?: string }>()
     padding: 0 0.5rem;
     height: 1.5rem;
     width: 100%;
+    text-align: center;
 
     border: none;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.552);
@@ -60,10 +61,8 @@ defineProps<{ label?: string }>()
       transform 200ms,
       color 200ms;
     top: 1.5rem;
-    left: 0.3rem;
     padding: 0.2rem 0.5rem;
-    max-width: 100%;
-    margin-left: 0.2rem;
+    max-width: calc(100% - 2rem);
     flex-wrap: nowrap;
     max-height: 50%;
     overflow: hidden;
