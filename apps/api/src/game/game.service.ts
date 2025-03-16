@@ -64,7 +64,7 @@ export class GameService {
     const room = await this.roomService.getRoomFromPlayer(player)
     if (room.currentGame != null) {
       this.logger.warn('Room already has a game going on')
-      this.griffonary.executeRound(room.currentGame.id)
+      this.griffonary.executeRound(room.id)
       return
     }
     const gameSpecs = await this.gameSpecsRepository.findOneBy({ title: gameName })
@@ -86,7 +86,7 @@ export class GameService {
         arguments: { game: this.generateGameInfoDto(game) },
       }
       this.roomService.emitToRoom(room.id, data)
-      this.griffonary.executeRound(room.currentGame.id)
+      this.griffonary.executeRound(room.id)
       return
     } else {
       throw new WsException('Unauthorized')
@@ -102,31 +102,41 @@ export class GameService {
       if (!player) {
         throw new Error('No player')
       }
-      const room = await this.roomService.getRoomFromPlayer(player)
+      const room = await this.roomService.get(player.room.id)
       if (!room) {
         throw new Error('No room')
       }
-      if (!room.currentGame) {
-        throw new Error('No game')
-      }
-      const round = await this.getLastOngoingORound(room.currentGame)
+      const round = this.getLastOngoingORound(room)
       if (!round) {
         throw new Error('No round')
       }
-      // If player is artist can draw
-      if (round.artists.map((artist) => artist.id).includes(player.id)) {
-        const data: UploadDrawingDto = {
-          event: WSE.UPLOAD_DRAWING,
-          arguments: {
-            drawing,
-            player: this.playerService.generatePlayerInfoDto(player, [player.id]),
-          },
-        }
-        this.roomService.emitToRoom(room.id, data)
+      const data: UploadDrawingDto = {
+        event: WSE.UPLOAD_DRAWING,
+        arguments: {
+          drawing,
+          player: this.playerService.generatePlayerInfoDto(player, [player.id]),
+        },
       }
+      this.roomService.emitToRoom(player.room.id, data)
     } catch (error) {
       this.logger.error(error)
       return { event: WSE.STOP_DRAW, data: undefined }
+    }
+  }
+  handleReconnexionDuringGame(player: Player, room: Room, round: Round): void {
+    if (!player || !room || !round) {
+      this.logger.warn('No valid reconnexion during game')
+      return
+    }
+    if (round.timeLimit) {
+      const timeDto: TimeLimitDto = {
+        event: WSE.TIME_LIMIT,
+        arguments: { time: round.timeLimit.getTime() },
+      }
+      this.roomService.emitToPlayer(player, timeDto)
+    }
+    if (round.word && round.artists.map((artist) => artist.id).includes(player.id)) {
+      this.sendWordToDraw(player, round.word)
     }
   }
   // Services
@@ -137,6 +147,7 @@ export class GameService {
     await this.gameRepository.save(game)
     room.currentGame = null
     await this.roomRepository.save(room)
+    this.roomService.sendRoomState(room)
   }
   async getRandomWord(): Promise<Word> {
     this.logger.debug('GETRANDOMWORD')
@@ -187,23 +198,31 @@ export class GameService {
   }
   async scorePlayerPoints(player: Player, room: Room, points: number, round: Round): Promise<void> {
     this.logger.debug('SCORE PLAYER POINTS')
-    let score = await this.scoreRepository.findOne({ where: { player, room } })
+    let score = await this.scoreRepository
+      .createQueryBuilder('score')
+      .innerJoin('score.room', 'room')
+      .innerJoin('score.player', 'player')
+      .where('room.id =:roomId', { roomId: room.id })
+      .andWhere('player.id =:playerId', { playerId: player.id })
+      .getOne()
     if (score != null) {
+      this.logger.debug(score)
       score.points += points
       await this.scoreRepository.save(score)
     } else {
+      this.logger.debug('NO SCORE FOUND WITH ROOM AND PLAYER')
       const scoreEntity = this.scoreRepository.create({ player, room, points })
       score = await this.scoreRepository.save(scoreEntity)
-      const playerInfo = this.playerService.generatePlayerInfoDto(
-        player,
-        round.artists.map((artist) => artist.id),
-      )
-      const data: PlayerScoredDto = {
-        event: WSE.PLAYER_SCORED,
-        arguments: { player: playerInfo, points },
-      }
-      this.roomService.emitToRoom(room.id, data)
     }
+    const playerInfo = this.playerService.generatePlayerInfoDto(
+      player,
+      round.artists.map((artist) => artist.id),
+    )
+    const data: PlayerScoredDto = {
+      event: WSE.PLAYER_SCORED,
+      arguments: { player: playerInfo, points },
+    }
+    this.roomService.emitToRoom(room.id, data)
   }
   async sendScore(room: Room): Promise<void> {
     try {
@@ -228,35 +247,39 @@ export class GameService {
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
     return (await this.scoreRepository.findOne({ where: { player, room } })).points
   }
-  async getLastOngoingORound(game: Game): Promise<Round> {
-    this.logger.debug('GET LAST ROUND')
-    const round = await this.roundRepository
-      .createQueryBuilder('round')
-      .where('round.game =:game', { game: game.id })
-      .andWhere('round.onGoing = true')
-      .leftJoinAndSelect('round.artists', 'artist')
-      .leftJoinAndSelect('round.haveGuessed', 'haveGuessed')
-      .leftJoinAndSelect('round.word', 'word')
-      .orderBy('round.createdAt', 'DESC')
-      .getOne()
+  async getLastOngoingORound(room: Room): Promise<Round | undefined> {
+    if (!room) {
+      throw new Error('No room')
+    }
+    if (!room.currentGame) {
+      throw new Error('No game')
+    }
+    const round = room.currentGame.rounds[0]
+    // Check that round time limit isn't over
+    if (round && round.timeLimit.getTime() < Date.now()) {
+      round.onGoing = false
+      await this.roundRepository.save(round)
+      return undefined
+    }
     return round
   }
   async guessWord(word: string, player: Player, room: Room): Promise<boolean> {
     try {
       this.logger.debug('Guess word')
-      const currentGame = room.currentGame
-      const currentRound = await this.getLastOngoingORound(currentGame)
+      const currentRound = await this.getLastOngoingORound(room)
 
       // Can not guess if no round Ongoing or player has guessed or player is the artist
+      if (!currentRound) {
+        this.logger.debug("Can't make a guess, message can be shared")
+        return true
+      }
       if (
-        !currentRound ||
         currentRound.haveGuessed.map((player) => player.id).includes(player.id) ||
         currentRound.artists.map((artist) => artist.id).includes(player.id)
       ) {
-        this.logger.debug("Can't make a guess")
+        this.logger.debug("Can't make a guess, message can not be shared")
         return false
       }
-
       // Check if guess is correct
       if (word.toLowerCase() === currentRound.word.value.toLowerCase()) {
         // Set points for the player and the artist
@@ -272,16 +295,16 @@ export class GameService {
         // add player to guesser list
         currentRound.haveGuessed.push(player)
         await this.roundRepository.save(currentRound)
-        return true
+        this.logger.debug('Has guessed correctly, message can not be shared')
+        return false
       }
-      return false
+      return true
     } catch (error) {
       this.logger.error(error)
     }
   }
   generateGameInfoDto(game: Game): GameInfoDto {
     this.logger.debug('GENERATEGAMEINFO')
-    this.logger.debug(JSON.stringify(game))
     const { id, specs, roundDuration, onGoing } = game
     return new GameInfoDto({ id, specs, roundDuration, onGoing, room: game.room.id })
   }

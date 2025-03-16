@@ -28,9 +28,9 @@ export class ChatService {
     const room = await this.roomService.getRoomFromPlayer(player)
     // Check if current game takes guesses
     if (room.currentGame?.specs?.withGuesses) {
-      const goodGuess = await this.gameService.guessWord(message, player, room)
+      const showMessage = await this.gameService.guessWord(message, player, room)
       // If player has good guess do not send the answer to the roomchat
-      if (goodGuess) {
+      if (!showMessage) {
         return
       }
     }

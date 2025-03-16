@@ -13,7 +13,7 @@ export class AuthGuard implements CanActivate {
       const hasToken = this.authService.validateWsConnexion(client)
       return hasToken
     } catch (error) {
-      this.logger.debug('ERROR IN GUARD')
+      this.logger.error(error)
       throw new WsException({ status: 401, message: error?.message || 'No valid Token' })
     }
   }

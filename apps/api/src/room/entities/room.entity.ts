@@ -7,6 +7,7 @@ import {
   OneToMany,
   OneToOne,
   JoinColumn,
+  BeforeUpdate,
 } from 'typeorm'
 import { Player } from '../../player/entities/player.entity'
 import { Score } from '../../game/entities/score.entity'

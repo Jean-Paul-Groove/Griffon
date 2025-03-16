@@ -39,13 +39,10 @@ export class GriffonaryService {
   }
   public io: Server
   private readonly logger = new Logger(GriffonaryService.name, { timestamp: true })
-  async executeRound(gameId: string): Promise<void> {
+  async executeRound(roomId: string): Promise<void> {
     try {
       this.logger.debug('EXECUTE ROUND')
-      const room = await this.roomRepository.findOne({
-        where: { currentGame: { id: gameId } },
-        relations: { players: true, currentGame: { specs: true } },
-      })
+      const room = await this.roomService.get(roomId)
 
       if (!room) {
         throw new WsException('No room')
@@ -54,7 +51,7 @@ export class GriffonaryService {
         throw new WsException('No game on')
       }
       this.logger.debug('AT BEGINNNING OF ROUND EXECUTIOn')
-      const lastRound = await this.gameService.getLastOngoingORound(room.currentGame)
+      const lastRound = room.currentGame.rounds[0]
 
       if (lastRound != null && lastRound.onGoing) {
         this.logger.warn('A ROUND IS ALREADY ONGOING')
@@ -97,40 +94,34 @@ export class GriffonaryService {
         word: newWord,
         artists: [artist],
         haveGuessed: [],
+        timeLimit: new Date(timeLimit),
       })
       await this.roundRepository.save(round)
       const timeOutName = `${room.id}::endOfRound`
       if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
-      const timeOut = setTimeout(() => this.endRound(gameId), drawingTime)
+      const timeOut = setTimeout(() => this.endRound(roomId), drawingTime)
       this.schedulerRegistry.addTimeout(timeOutName, timeOut)
 
       this.gameService.sendWordToDraw(artist, newWord)
       this.gameService.sendPlayerList(round, room)
-      this.gameService.sendTimeLimit(room.id, timeLimit)
+      this.gameService.sendTimeLimit(room.id, round.timeLimit.getTime())
     } catch (error) {
       this.logger.error(error)
     }
   }
-  async endRound(gameId: string): Promise<void> {
+  async endRound(roomId: string): Promise<void> {
     try {
       this.logger.debug('End round')
-      const game = new Game()
-      game.id = gameId
-      const currentRound = await this.gameService.getLastOngoingORound(game)
-      if (!currentRound) {
-        throw new Error('NO ROUND')
+      const room = await this.roomService.get(roomId)
+      const currentRound = await this.gameService.getLastOngoingORound(room)
+      if (currentRound) {
+        currentRound.onGoing = false
+        await this.roundRepository.save(currentRound)
       }
-      currentRound.onGoing = false
-      await this.roundRepository.save(currentRound)
-      const room = await this.roomRepository.findOne({
-        where: { currentGame: game },
-        relations: { scores: { player: true }, players: true },
-      })
-      this.gameService.sendScore(room)
-      this.gameService.sendPlayerList(currentRound, room)
-      this.executeRound(gameId)
+      this.roomService.sendRoomState(room)
+      this.executeRound(roomId)
     } catch (error) {
       this.logger.error(error)
     }

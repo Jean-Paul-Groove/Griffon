@@ -1,4 +1,4 @@
-import { Logger, UseFilters, UseGuards } from '@nestjs/common'
+import { Logger, UseGuards } from '@nestjs/common'
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,12 +8,12 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
   WsResponse,
 } from '@nestjs/websockets'
 
 import { Server, Socket } from 'socket.io'
 import { RoomService } from './room.service'
-import { WsFilter } from '../common/ws/ws.filter'
 import { AuthGuard } from '../auth/auth.guard'
 import { PlayerService } from '../player/player.service'
 import { GameName, PlayerConnectionSuccessDto, WSE } from 'shared'
@@ -21,6 +21,7 @@ import { GameService } from '../game/game.service'
 import { RoomGuard } from './room.guard'
 import { ChatService } from '../chat/chat.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
+import { Roles } from './decorators/roles'
 
 @UseGuards(AuthGuard)
 @WebSocketGateway({
@@ -111,14 +112,37 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async handleJoinRoom(
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
-  ): Promise<WsResponse> {
+  ): Promise<void> {
+    if (!roomId) {
+      throw new WsException('Room not found')
+    }
     const player = await this.playerService.get(client.data.playerId)
     this.logger.debug('ONPLAYERJOIN GATEWAY')
     return this.roomService.onPlayerJoinRoom(player, roomId, client)
   }
 
-  // CHAT HANDLERS
+  @SubscribeMessage(WSE.ASK_LEAVE_ROOM)
+  async handleLeaveRoom(
+    @MessageBody('roomId') roomId: string,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    this.logger.debug('ASKED TO LEAVE')
+    if (!roomId) {
+      throw new WsException('Room not found')
+    }
+    return this.roomService.onPlayerLeaveRoom(client, roomId)
+  }
 
+  @SubscribeMessage(WSE.ASK_EXCLUDE_PLAYER)
+  @Roles('admin')
+  async handleExcludePlayer(
+    @MessageBody('playerId') playerId: string,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    return this.roomService.onExcludePlayer(playerId, client.data.roomId)
+  }
+
+  // CHAT HANDLERS
   @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.NEW_MESSAGE)
   handleNewMessage(
@@ -131,6 +155,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   // GAME HANDLERS
   @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.UPLOAD_DRAWING)
+  @Roles('artist')
   async handledawingUpload(
     @ConnectedSocket() client: Socket,
     @MessageBody('drawing') drawing: Blob,
@@ -140,6 +165,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.ASK_START_GAME)
+  @Roles('admin')
   async handleAskStartGame(
     @ConnectedSocket() client: Socket,
     @MessageBody('game') game: GameName,

@@ -3,12 +3,14 @@ import { PlayerService } from '../player/player.service'
 import { Socket } from 'socket.io'
 import { RoomService } from './room.service'
 import { WsException } from '@nestjs/websockets'
+import { Reflector } from '@nestjs/core'
 
 @Injectable()
 export class RoomGuard implements CanActivate {
   constructor(
     private playerService: PlayerService,
     private roomService: RoomService,
+    private reflector: Reflector,
   ) {}
   private readonly logger = new Logger(RoomGuard.name)
 
@@ -16,7 +18,6 @@ export class RoomGuard implements CanActivate {
     try {
       // Check player has a room
       const client: Socket = context.switchToWs().getClient()
-      this.logger.debug(client.data)
       const player = await this.playerService.getPlayerFromSocket(client)
       if (!player?.room?.id) {
         throw new Error('Player has not joined any room')
@@ -26,9 +27,9 @@ export class RoomGuard implements CanActivate {
       if (!room) {
         throw new Error("Room doesn't exist")
       }
-      if (!(await this.roomService.hasPlayer(room, player.id))) {
-        player.room = undefined
+      if (!this.roomService.hasPlayer(room, player.id)) {
         client.data.roomId = undefined
+        player.room = null
         throw new Error('Player room is not valid')
       }
       // Set up client metadata
@@ -42,9 +43,34 @@ export class RoomGuard implements CanActivate {
         this.roomService.onPlayerJoinRoom(player, player.room.id, client)
       }
 
+      // Check for role specific routes
+      const requiredRoles: string[] = this.reflector.get('roles', context.getHandler())
+      if (!requiredRoles) {
+        return true
+      }
+      // ROOM ADMIN RESTRICTED
+      if (requiredRoles.includes('admin')) {
+        if (room.admin.id !== player.id) {
+          return false
+        }
+      }
+      // ROUND ARTIST RESTRICTED
+      if (requiredRoles.includes('artist')) {
+        const currentRound = room.currentGame.rounds[0]
+        if (
+          !currentRound ||
+          !currentRound.onGoing ||
+          !currentRound.artists ||
+          !currentRound.artists.map((artist) => artist.id).includes(player.id)
+        ) {
+          return false
+        }
+      }
+
       return true
     } catch (error) {
       this.logger.debug('ERROR IN GUARD')
+      this.logger.error(error)
       throw new WsException({ status: 401, message: error?.message || 'No access to room' })
     }
   }

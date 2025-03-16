@@ -34,6 +34,9 @@ export class Round {
   @Column()
   onGoing: boolean
 
+  @Column({ nullable: true })
+  timeLimit: Date
+
   @CreateDateColumn()
   createdAt: Date
 

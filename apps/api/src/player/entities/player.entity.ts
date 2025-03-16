@@ -47,9 +47,9 @@ export class Player {
   @OneToMany(() => Message, (message) => message.receiver, { nullable: true })
   messagesReceived: Message[]
 
-  @CreateDateColumn()
+  @CreateDateColumn({ select: false })
   createdAt: Date
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ select: false })
   updatedAt: Date
 }
