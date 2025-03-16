@@ -32,3 +32,11 @@ export class InvalidTokenDto extends SocketDto {
     event: WSE.INVALID_TOKEN
     arguments: undefined
 }
+export class AskLeaveRoomDto extends SocketDto {
+    event: WSE.ASK_LEAVE_ROOM
+    arguments: undefined
+}
+export class AskExcludePlayerDto extends SocketDto {
+    event: WSE.ASK_EXCLUDE_PLAYER
+    arguments: {playerId:string}
+}

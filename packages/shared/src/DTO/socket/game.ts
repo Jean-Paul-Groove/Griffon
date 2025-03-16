@@ -1,13 +1,17 @@
 import { WSE } from "../../WSE";
 import { GameInfoDto, ScoreDto } from "../game";
 import { PlayerInfoDto } from "../player";
+import { RoomInfoDto } from "../room";
 import { SocketDto } from "./common";
 
 export class PlayerScoredDto extends SocketDto{
     event: WSE.PLAYER_SCORED
     arguments: { player: PlayerInfoDto, points:number }
 }
-
+export class RoomStateDto extends SocketDto{
+    event: WSE.ROOM_STATE
+    arguments: { room: RoomInfoDto }
+}
 export class TimeLimitDto extends SocketDto {
     event: WSE.TIME_LIMIT
      arguments: {time:number}

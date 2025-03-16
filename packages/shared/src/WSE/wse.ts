@@ -3,6 +3,8 @@ export enum WSE {
   INVALID_TOKEN = 'invalid-token',
   ASK_CREATE_ROOM = 'ask-create-room',
   ASK_JOIN_ROOM = 'ask-join-room',
+  ASK_LEAVE_ROOM = 'ask-leave-room',
+  ASK_EXCLUDE_PLAYER = 'ask-exclude-player',
   USER_JOINED_ROOM_SUCCESS = 'user-joined-room-successfully',
   USER_JOINED_ROOM = 'user-joined-room',
   USER_LEFT_ROOM = 'user-left-room', //
@@ -15,6 +17,7 @@ export enum WSE {
   START_GAME = 'start-game',
   ASK_PLAYER_LIST='ask-player-list', // 
   PLAYER_LIST='player-list',
+  ROOM_STATE='room-state',
   CAN_DRAW = 'user-can-draw',
   TIME_LIMIT = 'time-limit',
   STOP_DRAW = 'stop-draw',
