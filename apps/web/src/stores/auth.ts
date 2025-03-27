@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', () => {
     () => token.value,
     (newToken) => {
       if (newToken === null) {
-        $router.replace('Home')
+        $router.replace({ name: 'home' })
       }
     },
   )

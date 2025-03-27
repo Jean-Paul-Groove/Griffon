@@ -1,4 +1,12 @@
-import { Body, Controller, Post, HttpCode, HttpStatus, Logger } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { Token } from './types/Token'
 
@@ -12,7 +20,7 @@ export class AuthController {
   signInAsGuest(@Body() signInAsGuestDto: Record<string, string>): Promise<Token> {
     this.logger.debug(signInAsGuestDto)
     if (!signInAsGuestDto.username || typeof signInAsGuestDto.username !== 'string') {
-      throw new Error('Bad Request')
+      throw new BadRequestException()
     }
     return this.authService.signInAsGuest(signInAsGuestDto.username)
   }

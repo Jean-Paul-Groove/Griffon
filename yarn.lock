@@ -10182,15 +10182,15 @@ __metadata:
 
 "shared@file:../../packages/shared::locator=api%40workspace%3Aapps%2Fapi":
   version: 0.0.0
-  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=d3d9d9&locator=api%40workspace%3Aapps%2Fapi"
-  checksum: 10c0/5837cfe33842d23d92dc22a491039337103e506a936a02ae8c8e9aabed5b3984272a1fd21bf836b8dca43caece9a0ff61837da62b256befb58e232be0042a7c0
+  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=9452c2&locator=api%40workspace%3Aapps%2Fapi"
+  checksum: 10c0/3aef1e3334e1b6554ad3f72c421c46ef9365c3ba1eaf9bc83a872bfae8bba592eb55528f1d6a7612deeef020f1d8a3eb55cf6138000c57c8507754d2756dca32
   languageName: node
   linkType: hard
 
 "shared@file:../../packages/shared::locator=web%40workspace%3Aapps%2Fweb":
   version: 0.0.0
-  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=d3d9d9&locator=web%40workspace%3Aapps%2Fweb"
-  checksum: 10c0/5837cfe33842d23d92dc22a491039337103e506a936a02ae8c8e9aabed5b3984272a1fd21bf836b8dca43caece9a0ff61837da62b256befb58e232be0042a7c0
+  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=9452c2&locator=web%40workspace%3Aapps%2Fweb"
+  checksum: 10c0/3aef1e3334e1b6554ad3f72c421c46ef9365c3ba1eaf9bc83a872bfae8bba592eb55528f1d6a7612deeef020f1d8a3eb55cf6138000c57c8507754d2756dca32
   languageName: node
   linkType: hard
 
@@ -11625,6 +11625,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-toast-notification@npm:^3.1.3":
+  version: 3.1.3
+  resolution: "vue-toast-notification@npm:3.1.3"
+  peerDependencies:
+    vue: ^3.0
+  checksum: 10c0/49dbddefdafc6f0c288f51ab49220accb7513722e5004530e1a21b220d9d8a7973e558d52c3478c6936b76d449c5a8570230d034a84d15606261ebff5385cf91
+  languageName: node
+  linkType: hard
+
 "vue-tsc@npm:^2.1.10":
   version: 2.2.0
   resolution: "vue-tsc@npm:2.2.0"
@@ -11716,6 +11725,7 @@ __metadata:
     vite-plugin-vue-devtools: "npm:^7.6.8"
     vue: "npm:^3.5.13"
     vue-router: "npm:^4.5.0"
+    vue-toast-notification: "npm:^3.1.3"
     vue-tsc: "npm:^2.1.10"
   languageName: unknown
   linkType: soft

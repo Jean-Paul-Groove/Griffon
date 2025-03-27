@@ -13,7 +13,7 @@
       <img v-if="player.isArtist" :src="pen" alt="artist-pen" />
     </p>
     <button
-      v-if="currentPlayerAdmin && optionDisplayed"
+      v-if="currentPlayerAdmin && optionDisplayed && !isAdmin"
       title="Exclure ce joueur"
       class="player-card_exclude"
       @click="handleExclude"
@@ -74,6 +74,11 @@ function handleExclude(e: Event): void {
   height: 2rem;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.486);
   cursor: pointer;
+  transform: scale(0.99);
+  &:hover {
+    transform: scale(1);
+    transition: scale 0.3s linear;
+  }
   &_tag {
     width: 2rem;
     & img {

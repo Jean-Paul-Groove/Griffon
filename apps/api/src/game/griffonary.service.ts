@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Room } from '../room/entities/room.entity'
 import { Repository } from 'typeorm'
 import { Server } from 'socket.io'
-import { WsException } from '@nestjs/websockets'
 import { Game } from './entities/game.entity'
 import { GameSpecs } from './entities/game.specs.entity'
 import { Round } from './entities/round.entity'
@@ -13,6 +12,8 @@ import { GameService } from './game.service'
 import { Word } from './entities/word.entity'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { Player } from '../player/entities/player.entity'
+import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
+import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
 
 @Injectable()
 export class GriffonaryService {
@@ -45,10 +46,10 @@ export class GriffonaryService {
       const room = await this.roomService.get(roomId)
 
       if (!room) {
-        throw new WsException('No room')
+        throw new RoomNotFoundWsException()
       }
       if (!room.currentGame) {
-        throw new WsException('No game on')
+        throw new GameNotFoundWsException()
       }
       this.logger.debug('AT BEGINNNING OF ROUND EXECUTIOn')
       const lastRound = room.currentGame.rounds[0]
@@ -76,7 +77,10 @@ export class GriffonaryService {
       if (potentialArtist.length === 0) {
         this.logger.debug('Everyone was an artist')
         this.gameService.endGame(room)
-        if (this.schedulerRegistry.doesExist('timeout', `${room.id}::endOfRound`)) {
+        if (
+          this.schedulerRegistry?.doesExist !== undefined &&
+          this.schedulerRegistry.doesExist('timeout', `${room.id}::endOfRound`)
+        ) {
           this.schedulerRegistry.deleteTimeout(`${room.id}::endOfRound`)
         }
         return
@@ -98,7 +102,10 @@ export class GriffonaryService {
       })
       await this.roundRepository.save(round)
       const timeOutName = `${room.id}::endOfRound`
-      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+      if (
+        this.schedulerRegistry?.doesExist !== undefined &&
+        this.schedulerRegistry?.doesExist('timeout', timeOutName)
+      ) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
       const timeOut = setTimeout(() => this.endRound(roomId), drawingTime)

@@ -1,9 +1,15 @@
-import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common'
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { PlayerService } from '../player/player.service'
 import { Socket } from 'socket.io'
 import { RoomService } from './room.service'
-import { WsException } from '@nestjs/websockets'
 import { Reflector } from '@nestjs/core'
+import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 
 @Injectable()
 export class RoomGuard implements CanActivate {
@@ -20,17 +26,17 @@ export class RoomGuard implements CanActivate {
       const client: Socket = context.switchToWs().getClient()
       const player = await this.playerService.getPlayerFromSocket(client)
       if (!player?.room?.id) {
-        throw new Error('Player has not joined any room')
+        throw new UnauthorizedException()
       }
       // Check Room exists and has the player registered in
       const room = await this.roomService.get(player.room.id)
       if (!room) {
-        throw new Error("Room doesn't exist")
+        throw new RoomNotFoundWsException()
       }
       if (!this.roomService.hasPlayer(room, player.id)) {
         client.data.roomId = undefined
         player.room = null
-        throw new Error('Player room is not valid')
+        throw new UnauthorizedException()
       }
       // Set up client metadata
       if (player.room.id !== client.data.roomId) {
@@ -71,7 +77,7 @@ export class RoomGuard implements CanActivate {
     } catch (error) {
       this.logger.debug('ERROR IN GUARD')
       this.logger.error(error)
-      throw new WsException({ status: 401, message: error?.message || 'No access to room' })
+      throw new UnauthorizedException()
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Logger, UseGuards } from '@nestjs/common'
+import { Logger, UseFilters, UseGuards } from '@nestjs/common'
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,7 +8,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
   WsResponse,
 } from '@nestjs/websockets'
 
@@ -22,7 +21,10 @@ import { RoomGuard } from './room.guard'
 import { ChatService } from '../chat/chat.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { Roles } from './decorators/roles'
+import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
+import { WsFilter } from '../common/ws/ws.filter'
 
+@UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
 @WebSocketGateway({
   cors: {
@@ -31,6 +33,7 @@ import { Roles } from './decorators/roles'
     allowedHeaders: ['my-custom-header'],
   },
   pingTimeout: 60000,
+  exceptionFilters: new WsFilter(),
 })
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
@@ -55,10 +58,13 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Chek that player is known
       this.logger.debug('HANDLE CONNECT', client.data)
       const player = await this.playerService.getPlayerFromSocket(client)
-      this.logger.debug(player.name)
+      this.logger.debug(player?.name)
       // If player was to be removed for iddleness, cancel the timeout
       const timeOutName = `${player.id}::toBeRemoved`
-      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+      if (
+        this.schedulerRegistry?.doesExist !== undefined &&
+        this.schedulerRegistry?.doesExist('timeout', timeOutName)
+      ) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
       this.logger.debug(player)
@@ -91,7 +97,10 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Considered as iddle, player will be removed from room after timeout
       const timeOutName = `${player.id}::toBeRemoved`
       this.logger.debug(this.schedulerRegistry.getTimeouts())
-      if (this.schedulerRegistry.doesExist('timeout', timeOutName)) {
+      if (
+        this.schedulerRegistry?.doesExist !== undefined &&
+        this.schedulerRegistry?.doesExist('timeout', timeOutName)
+      ) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
       const timeOut = setTimeout(() => this.roomService.onDisconnectedClient(client), 60000)
@@ -107,14 +116,14 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const player = await this.playerService.get(client.data.playerId)
     return this.roomService.onCreateRoom(player, client)
   }
-
+  @UseFilters(new WsFilter())
   @SubscribeMessage(WSE.ASK_JOIN_ROOM)
   async handleJoinRoom(
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     if (!roomId) {
-      throw new WsException('Room not found')
+      throw new RoomNotFoundWsException()
     }
     const player = await this.playerService.get(client.data.playerId)
     this.logger.debug('ONPLAYERJOIN GATEWAY')
@@ -128,7 +137,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<void> {
     this.logger.debug('ASKED TO LEAVE')
     if (!roomId) {
-      throw new WsException('Room not found')
+      throw new RoomNotFoundWsException()
     }
     return this.roomService.onPlayerLeaveRoom(client, roomId)
   }

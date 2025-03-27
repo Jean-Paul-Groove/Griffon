@@ -1,6 +1,12 @@
 <template>
   <div class="form-input">
-    <input v-model="model" class="form-input_input" type="text" placeholder="   " />
+    <input
+      v-model="model"
+      class="form-input_input"
+      :class="{ error: error }"
+      type="text"
+      placeholder="   "
+    />
     <label class="form-input_label">{{ label }} </label>
   </div>
 </template>
@@ -8,7 +14,7 @@
 <script setup lang="ts">
 const model = defineModel<string>()
 
-defineProps<{ label?: string }>()
+defineProps<{ label?: string; error?: boolean }>()
 </script>
 
 <style lang="scss" scoped>
@@ -45,6 +51,13 @@ defineProps<{ label?: string }>()
     &:focus {
       border: 0.2rem solid var(--main-color);
       box-shadow: none;
+    }
+    &.error {
+      border: 0.2rem solid var(--secondary-color);
+      box-shadow: none;
+      & ~ .form-input_label {
+        color: var(--secondary-color);
+      }
     }
     &:focus ~ .form-input_label {
       @include top-label;

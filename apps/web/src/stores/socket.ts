@@ -25,6 +25,7 @@ import {
   type RoomInfoDto,
 } from 'shared'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '../composables/useToast'
 
 type ListenerRecord = {
   [key in WSE]?: (arg: any) => void
@@ -37,10 +38,7 @@ export const useSocketStore = defineStore('socket', () => {
   const { token, user } = storeToRefs(authStore)
   const $router = useRouter()
   const $route = useRoute()
-  const socket = ref<Socket | null>(null)
-  const timeLimit = ref<number | null>(null)
-  const countDown = ref<number | null>(null)
-  const cdDuration = ref<number | null>(null)
+  const $toast = useToast()
   // Constants
   const SYSTEM: PlayerInfoDto = {
     id: 'SYSTEM',
@@ -70,19 +68,25 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.USER_JOINED_ROOM_SUCCESS]: (data: PlayerJoinedRoomSuccessDto['arguments']): void => {
       if (data) {
+        if (room.value === null) {
+          $toast.success('Vous avez rejoint la room avec succès !')
+        }
         setRoomInfo(data.room)
       }
     },
     [WSE.FAIL_JOIN_ROOM]: (data: FailJoinRoomDto['arguments']): void => {
       if (data) {
-        console.log(data.reason)
-        $router.push({ name: 'Landing' })
+        if (data.reason === 'room-full') {
+          $toast.error('Arf ! La room est déjà pleine ...')
+        } else {
+          $toast.error('Impossible de rejoindre cette room')
+        }
       }
     },
     [WSE.FAIL_CREATE_ROOM]: (data: FailCreateRoom['arguments']): void => {
       if (data) {
         console.log(data.reason)
-        $router.push({ name: 'Landing' })
+        $toast.error('Nous ne pouvons générer de room...')
       }
     },
     [WSE.WORD_TO_DRAW]: (data: WordToDrawDto['arguments']): void => {
@@ -109,6 +113,7 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.FAIL_START_GAME]: (data: FailStartGame['arguments']) => {
       if (data) {
         console.log(data.reason)
+        $toast.error('Impossible de lancer une partie ...')
       }
     },
     [WSE.STOP_DRAW]: (): void => {
@@ -136,18 +141,37 @@ export const useSocketStore = defineStore('socket', () => {
         updatePartialScores(data)
       }
     },
+    [WSE.ROOM_NOT_FOUND]: (): void => {
+      $toast.error("Cette room n'existe pas...")
+    },
     [WSE.TIME_LIMIT]: (data: TimeLimitDto['arguments']): void => {
       if (data) {
         initCountdown(data.time)
       }
     },
+    // ERROR MANAGEMENT
+    [WSE.PLAYER_NOT_FOUND]: (): void => {
+      $toast.error('Ce joueur est introuvable')
+    },
+    [WSE.GAME_NOT_FOUND]: (): void => {
+      $toast.error('La partie est introuvable ...')
+    },
+    [WSE.ROUND_NOT_FOUND]: (): void => {
+      $toast.error('La manche est introuvable...')
+    },
+    [WSE.UNAUTHORIZED]: (): void => {
+      $toast.error("Vous n'êtes pas authorisé à faire ça...")
+    },
   }
-
   // Refs
   const room = ref<RoomInfoDto | null>(null)
   const chatMessages = ref<Array<ChatMessageDto>>([])
   const wordToDraw = ref<string>('')
-
+  const socket = ref<Socket | null>(null)
+  const timeLimit = ref<number | null>(null)
+  const countDown = ref<number | null>(null)
+  const cdDuration = ref<number | null>(null)
+  const countDownInterval = ref<number | null>(null)
   // Computeds
   const currentPlayer = computed<PlayerInfoDto | null>(() => {
     return room.value?.players.find((player) => player.id === user.value?.id) ?? null
@@ -310,6 +334,8 @@ export const useSocketStore = defineStore('socket', () => {
     }
   }
   function endCountDown(id: number): void {
+    console.log('END COUNTDOWN')
+    console.log(id)
     clearInterval(id)
     timeLimit.value = null
     countDown.value = null
@@ -319,6 +345,10 @@ export const useSocketStore = defineStore('socket', () => {
     if (timeLimit.value != null || countDown.value != null) {
       timeLimit.value = null
       countDown.value = null
+    }
+    if (countDownInterval.value != null) {
+      clearInterval(countDownInterval.value)
+      countDownInterval.value = null
     }
     const now = Date.now()
     if (time - now <= 0) {
@@ -330,6 +360,7 @@ export const useSocketStore = defineStore('socket', () => {
     cdDuration.value = countDownDuration
     const id = setInterval(() => {
       console.log('CountDown')
+      console.log(id)
       if (!countDown.value || countDown.value === 0) {
         endCountDown(id)
         return

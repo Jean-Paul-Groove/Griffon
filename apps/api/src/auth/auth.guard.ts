@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import { AuthService } from './auth.service'
-import { WsException } from '@nestjs/websockets'
+import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private authService: AuthService) {}
@@ -14,7 +14,7 @@ export class AuthGuard implements CanActivate {
       return hasToken
     } catch (error) {
       this.logger.error(error)
-      throw new WsException({ status: 401, message: error?.message || 'No valid Token' })
+      throw new InvalidCredentialsWsException()
     }
   }
 }

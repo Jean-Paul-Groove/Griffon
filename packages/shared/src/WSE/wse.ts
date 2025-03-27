@@ -35,5 +35,11 @@ export enum WSE {
   FAIL_CREATE_ROOM='fail-create-room',
   FAIL_JOIN_ROOM='fail-join-room',
   FAIL_START_GAME='fail-start-game',
+  ROOM_NOT_FOUND='room-not-found',
+  PLAYER_NOT_FOUND='player-not-found',
+  GAME_NOT_FOUND='game-not-found',
+  ROUND_NOT_FOUND='round-not-found',
+  INVALID_CREDENTIALS='invalid-credentials',
+  UNAUTHORIZED='unauthorized'
 
 }

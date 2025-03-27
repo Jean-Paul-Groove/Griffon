@@ -2,8 +2,8 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { PlayerService } from '../player/player.service'
 import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
-import { WsException } from '@nestjs/websockets'
 import { CreateGuestDto } from 'shared'
+import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
 @Injectable()
 export class AuthService {
   constructor(
@@ -19,7 +19,7 @@ export class AuthService {
     if (payload.id.trim() !== '') {
       client.data.playerId = payload.id
     } else {
-      throw new WsException({ status: 401, message: 'Invalid credentials.' })
+      throw new InvalidCredentialsWsException()
     }
     return true
   }

@@ -1,13 +1,15 @@
 <template>
-  <div class="confirm-modal_wrapper">
-    <div class="confirm-modal_content">
-      <slot></slot>
-      <div class="confirm-modal_buttons">
-        <button @click="emit('confirm')">Ok</button>
-        <button @click="emit('close')">Annuler</button>
+  <teleport to="#modal">
+    <div class="confirm-modal_wrapper">
+      <div class="confirm-modal_content">
+        <slot></slot>
+        <div class="confirm-modal_buttons">
+          <button @click="emit('confirm')">Ok</button>
+          <button @click="emit('close')">Annuler</button>
+        </div>
       </div>
     </div>
-  </div>
+  </teleport>
 </template>
 
 <script setup lang="ts">

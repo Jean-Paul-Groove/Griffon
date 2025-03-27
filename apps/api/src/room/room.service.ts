@@ -20,6 +20,7 @@ import { Player } from '../player/entities/player.entity'
 import { ChatService } from '../chat/chat.service'
 import { GameService } from '../game/game.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
+import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 
 @Injectable()
 export class RoomService {
@@ -31,7 +32,6 @@ export class RoomService {
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
     @InjectRepository(Player)
-    private playerRepository: Repository<Player>,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
   public io: Server
@@ -82,7 +82,7 @@ export class RoomService {
       return room
     } catch (error) {
       this.logger.error(error)
-      throw new WsException('No Room')
+      throw new RoomNotFoundWsException()
     }
   }
   hasPlayer(room: Room, playerId: string): boolean {
@@ -94,7 +94,7 @@ export class RoomService {
   private async addPlayerToRoom(roomId: string, player: Player): Promise<Player> {
     const room = await this.get(roomId)
     if (!room) {
-      throw new WsException('Room not found')
+      throw new RoomNotFoundWsException()
     }
     if (this.hasPlayer(room, player.id)) {
       this.logger.warn('Player already in Room')
@@ -106,7 +106,7 @@ export class RoomService {
 
       if (room.players) {
         if (room.players.length >= room.limit) {
-          throw new WsException('ROOM FULL')
+          throw new WsException('room-full')
         }
         room.players.push(player)
       } else {
@@ -119,7 +119,11 @@ export class RoomService {
       this.gameService.handleReconnexionDuringGame(player, room, room.currentGame.rounds[0])
     }
     // If room was set  to be deleted, remove the timeout
-    if (this.schedulerRegistry.doesExist('timeout', `${room.id}::toBeRemoved`)) {
+    if (
+      this.schedulerRegistry &&
+      this.schedulerRegistry.doesExist !== undefined &&
+      this.schedulerRegistry.doesExist('timeout', `${room.id}::toBeRemoved`)
+    ) {
       const timeOut = this.schedulerRegistry.getTimeout(`${room.id}::toBeRemoved`)
       clearTimeout(timeOut)
       this.schedulerRegistry.deleteTimeout(`${room.id}::toBeRemoved`)
@@ -154,7 +158,10 @@ export class RoomService {
 
     // If no more players, set room to be deleted after 5mn
     if (room.players === null || room.players.length === 0) {
-      if (!this.schedulerRegistry.doesExist('timeout', `${room.id}::toBeRemoved`)) {
+      if (
+        this.schedulerRegistry?.doesExist !== undefined &&
+        !this.schedulerRegistry?.doesExist('timeout', `${room.id}::toBeRemoved`)
+      ) {
         const timeOut = setTimeout(() => {
           this.logger.fatal('ROOM IS BEING DELETED')
           this.logger.fatal(room.id)
@@ -351,7 +358,7 @@ export class RoomService {
   emitToPlayer(player: Player, data: SocketDto): void {
     const client = this.getSocketFromPlayer(player.id)
     if (!client) {
-      throw new Error(`Socket not found for ${player.name}`)
+      return
     }
     client.emit(data.event, data.arguments)
   }

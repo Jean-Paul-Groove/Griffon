@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { RoomService } from '../room/room.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Room } from '../room/entities/room.entity'
@@ -17,7 +17,7 @@ import {
   WSE,
 } from 'shared'
 import { PlayerService } from '../player/player.service'
-import { WsException, WsResponse } from '@nestjs/websockets'
+import { WsResponse } from '@nestjs/websockets'
 import { Game } from './entities/game.entity'
 import { GameSpecs } from './entities/game.specs.entity'
 import { Round } from './entities/round.entity'
@@ -25,6 +25,10 @@ import { GriffonaryService } from './griffonary.service'
 import { Word } from './entities/word.entity'
 import { Player } from '../player/entities/player.entity'
 import { Score } from './entities/score.entity'
+import { PlayerNotFoundWsException } from '../common/ws/exceptions/playerNotFound'
+import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
+import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
+import { RoundNotFoundWsException } from '../common/ws/exceptions/roundNotFound'
 
 @Injectable()
 export class GameService {
@@ -59,7 +63,7 @@ export class GameService {
     this.logger.debug('OnaskStartGame ?')
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
-      throw new Error('No user')
+      throw new PlayerNotFoundWsException()
     }
     const room = await this.roomService.getRoomFromPlayer(player)
     if (room.currentGame != null) {
@@ -69,7 +73,7 @@ export class GameService {
     }
     const gameSpecs = await this.gameSpecsRepository.findOneBy({ title: gameName })
     if (!gameSpecs) {
-      throw new WsException(`${gameName} is not a valid game`)
+      throw new GameNotFoundWsException()
     }
     if (player.id === room.admin.id) {
       const gameEntity = this.gameRepository.create({ specs: gameSpecs, onGoing: true, room })
@@ -89,7 +93,7 @@ export class GameService {
       this.griffonary.executeRound(room.id)
       return
     } else {
-      throw new WsException('Unauthorized')
+      throw new UnauthorizedException()
     }
   }
   async onDrawingUpload(
@@ -100,15 +104,15 @@ export class GameService {
       this.logger.debug('DRAWING SHARED')
       const player = await this.playerService.getPlayerFromSocket(client)
       if (!player) {
-        throw new Error('No player')
+        throw new PlayerNotFoundWsException()
       }
       const room = await this.roomService.get(player.room.id)
       if (!room) {
-        throw new Error('No room')
+        throw new RoomNotFoundWsException()
       }
       const round = this.getLastOngoingORound(room)
       if (!round) {
-        throw new Error('No round')
+        throw new RoundNotFoundWsException()
       }
       const data: UploadDrawingDto = {
         event: WSE.UPLOAD_DRAWING,
@@ -249,10 +253,10 @@ export class GameService {
   }
   async getLastOngoingORound(room: Room): Promise<Round | undefined> {
     if (!room) {
-      throw new Error('No room')
+      throw new RoomNotFoundWsException()
     }
     if (!room.currentGame) {
-      throw new Error('No game')
+      throw new GameNotFoundWsException()
     }
     const round = room.currentGame.rounds[0]
     // Check that round time limit isn't over
