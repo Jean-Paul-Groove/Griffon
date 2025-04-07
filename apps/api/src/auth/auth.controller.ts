@@ -18,7 +18,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('guest')
   signInAsGuest(@Body() signInAsGuestDto: Record<string, string>): Promise<Token> {
-    this.logger.debug(signInAsGuestDto)
     if (!signInAsGuestDto.username || typeof signInAsGuestDto.username !== 'string') {
       throw new BadRequestException()
     }

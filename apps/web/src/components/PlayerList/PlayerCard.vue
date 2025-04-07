@@ -72,7 +72,7 @@ function handleExclude(e: Event): void {
   background-color: white;
   border-radius: 0.3rem;
   height: 2rem;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.486);
+  box-shadow: var(--light-shadow);
   cursor: pointer;
   transform: scale(0.99);
   &:hover {

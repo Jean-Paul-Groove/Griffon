@@ -9,9 +9,18 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      const client: Socket = context.switchToWs().getClient()
-      const hasToken = this.authService.validateWsConnexion(client)
-      return hasToken
+      const type = context.getType()
+      if (type === 'ws') {
+        const client: Socket = context.switchToWs().getClient()
+        const hasToken = this.authService.validateWsConnexion(client)
+        return hasToken
+      }
+      if (type === 'http') {
+        const hasToken = this.authService.getPlayerIdFromRequest(
+          context.switchToHttp().getRequest(),
+        )
+        return hasToken.trim() != ''
+      }
     } catch (error) {
       this.logger.error(error)
       throw new InvalidCredentialsWsException()

@@ -4,7 +4,7 @@
       v-model="model"
       class="form-input_input"
       :class="{ error: error }"
-      type="text"
+      :type="type"
       placeholder="   "
     />
     <label class="form-input_label">{{ label }} </label>
@@ -14,7 +14,10 @@
 <script setup lang="ts">
 const model = defineModel<string>()
 
-defineProps<{ label?: string; error?: boolean }>()
+withDefaults(defineProps<{ label?: string; error?: boolean; type?: string }>(), {
+  type: 'text',
+  label: '',
+})
 </script>
 
 <style lang="scss" scoped>

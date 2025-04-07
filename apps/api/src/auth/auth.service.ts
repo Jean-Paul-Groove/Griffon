@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
 import { CreateGuestDto } from 'shared'
 import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
+import { Request } from 'express'
 @Injectable()
 export class AuthService {
   constructor(
@@ -22,6 +23,14 @@ export class AuthService {
       throw new InvalidCredentialsWsException()
     }
     return true
+  }
+  getPlayerIdFromRequest(request: Request): string {
+    const payload = this.jwtService.verify(request.headers?.authorization.split('bearer ')[1], {
+      secret: process.env.JWT_SECRET,
+    })
+    if (payload.id.trim() !== '') {
+      return payload.id
+    }
   }
   async signInAsGuest(name: string): Promise<{ access_token: string }> {
     const guest: CreateGuestDto = { name: name, isGuest: true }

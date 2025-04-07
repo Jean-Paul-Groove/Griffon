@@ -203,7 +203,7 @@ export const useSocketStore = defineStore('socket', () => {
       if (!game) {
         if (room.value != null) {
           if (currentRoute !== 'Lobby') {
-            $router.push({ name: 'Lobby', params: { roomId: room.value.id } })
+            $router.replace({ name: 'Lobby', params: { roomId: room.value.id } })
           }
         }
         return
@@ -211,7 +211,7 @@ export const useSocketStore = defineStore('socket', () => {
       // Redirect to game
       if (game != null && room.value?.id != null && currentRoute != game) {
         console.log('NAVIGATING TO GAME')
-        $router.push({ name: game, params: { roomId: room.value.id } })
+        $router.replace({ name: game, params: { roomId: room.value.id } })
       }
     },
   )
@@ -219,7 +219,7 @@ export const useSocketStore = defineStore('socket', () => {
     () => room.value,
     () => {
       if (room.value === null) {
-        $router.push({ name: 'Landing' })
+        $router.replace({ name: 'Landing' })
       }
     },
   )
@@ -249,7 +249,8 @@ export const useSocketStore = defineStore('socket', () => {
         auth: {
           token: `bearer ${token.value}`,
         },
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 20,
+        timeout: 30000,
       })
     }
     if (socket.value && socket.value.connected === false) {
@@ -333,13 +334,15 @@ export const useSocketStore = defineStore('socket', () => {
       })
     }
   }
-  function endCountDown(id: number): void {
-    console.log('END COUNTDOWN')
-    console.log(id)
-    clearInterval(id)
+  function endCountDown(): void {
+    if (countDownInterval.value) {
+      clearInterval(countDownInterval.value)
+    }
+
     timeLimit.value = null
     countDown.value = null
     cdDuration.value = null
+    countDownInterval.value = null
   }
   function initCountdown(time: number): void {
     if (timeLimit.value != null || countDown.value != null) {
@@ -347,8 +350,7 @@ export const useSocketStore = defineStore('socket', () => {
       countDown.value = null
     }
     if (countDownInterval.value != null) {
-      clearInterval(countDownInterval.value)
-      countDownInterval.value = null
+      endCountDown()
     }
     const now = Date.now()
     if (time - now <= 0) {
@@ -362,7 +364,7 @@ export const useSocketStore = defineStore('socket', () => {
       console.log('CountDown')
       console.log(id)
       if (!countDown.value || countDown.value === 0) {
-        endCountDown(id)
+        endCountDown()
         return
       }
       if (countDown.value - 1 < 0) {
@@ -372,6 +374,7 @@ export const useSocketStore = defineStore('socket', () => {
       countDown.value--
       return
     }, 1000)
+    countDownInterval.value = id
   }
   function getUserById(id: string): PlayerInfoDto | undefined {
     if (id === SYSTEM.id) {

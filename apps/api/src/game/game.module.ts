@@ -10,6 +10,8 @@ import { PlayerModule } from '../player/player.module'
 import { GriffonaryService } from './griffonary.service'
 import { Word } from './entities/word.entity'
 import { Score } from './entities/score.entity'
+import { GameController } from './game.controller'
+import { AuthModule } from '../auth/auth.module'
 
 @Module({
   providers: [GameService, GriffonaryService],
@@ -17,8 +19,10 @@ import { Score } from './entities/score.entity'
     forwardRef(() => RoomModule),
     PlayerModule,
     CommonModule,
+    AuthModule,
     TypeOrmModule.forFeature([Game, GameSpecs, Round, Word, Score]),
   ],
   exports: [GameService, GriffonaryService, TypeOrmModule],
+  controllers: [GameController],
 })
 export class GameModule {}

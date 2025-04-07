@@ -13,7 +13,6 @@ import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { DrawingBoard } from '@/components'
 import DrawingRender from '../components/DrawingRender/DrawingRender.vue'
-import CountDown from '../components/CountDown/CountDown.vue'
 // Composables
 const socketStore = useSocketStore()
 const { socket, room, currentPlayer } = storeToRefs(socketStore)
@@ -29,7 +28,7 @@ watch(
   () => room.value,
   () => {
     if (room.value && room.value.currentGame == null) {
-      $router.push({ name: 'Lobby', params: { roomId: room.value.id } })
+      $router.replace({ name: 'Lobby', params: { roomId: room.value.id } })
     }
   },
 )
@@ -41,7 +40,7 @@ onMounted(() => {
     socketStore.handleConnection()
   }
   if (!roomId && !room.value?.id) {
-    $router.push({ name: 'Landing' })
+    $router.replace({ name: 'Landing' })
   } else {
     if (roomId && roomId != room.value?.id && socket.value)
       socket.value.emit(WSE.ASK_JOIN_ROOM, { roomId })

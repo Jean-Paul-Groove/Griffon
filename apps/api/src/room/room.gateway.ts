@@ -180,7 +180,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody('game') game: GameName,
   ): Promise<void> {
     try {
-      this.gameService.onAskStartGame(client, game)
+      await this.gameService.onAskStartGame(client, game)
     } catch (err) {
       client.emit(WSE.FAIL_START_GAME, { reson: err.message ?? 'An error occured' })
     }

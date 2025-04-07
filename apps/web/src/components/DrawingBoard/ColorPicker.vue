@@ -1,12 +1,12 @@
 <template>
   <div class="color-picker">
-    <button
+    <a
       v-for="color of colors"
       :key="color"
       class="color-picker_color"
       :style="{ backgroundColor: color }"
       @click="emit('selected-color', color)"
-    ></button>
+    />
   </div>
 </template>
 
@@ -23,7 +23,6 @@ const colors = [
   '#008781',
   '#05a045',
   '#000000',
-
   '#fed835',
   '#fb8c00',
   '#f5511e',
@@ -34,7 +33,6 @@ const colors = [
   '#029688',
   '#4cb050',
   '#606060',
-
   '#ffeb3c',
   '#ffa727',
   '#fe5722',

@@ -51,11 +51,8 @@ export class GriffonaryService {
       if (!room.currentGame) {
         throw new GameNotFoundWsException()
       }
-      this.logger.debug('AT BEGINNNING OF ROUND EXECUTIOn')
       const lastRound = room.currentGame.rounds[0]
-
       if (lastRound != null && lastRound.onGoing) {
-        this.logger.warn('A ROUND IS ALREADY ONGOING')
         return
       }
       const drawingTime =
@@ -83,6 +80,7 @@ export class GriffonaryService {
         ) {
           this.schedulerRegistry.deleteTimeout(`${room.id}::endOfRound`)
         }
+
         return
       }
       const artist = sample(potentialArtist)

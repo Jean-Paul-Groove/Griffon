@@ -1,13 +1,9 @@
 <template>
   <div class="toolbox">
     <ColorPicker @selected-color="selectColor" />
-    <div
-      class="toolbox_thickness"
-      @mouseenter="toggleThickRange(true)"
-      @mouseleave="toggleThickRange(false)"
-    >
-      <div v-if="thickRangeOpen" class="toolbox_thickness_picker">
-        <input v-model="lineThickness" type="range" :min="1" :max="61" :step="10" />
+    <div class="toolbox_thickness">
+      <div class="toolbox_thickness_picker">
+        <input v-model="lineThickness" type="range" :min="1" :max="61" :step="5" />
       </div>
       <div class="toolbox_thickness_preview_container">
         <div
@@ -23,20 +19,20 @@
       </div>
     </div>
     <div class="toolbox_tools">
-      <button class="toolbox_action toolbox_action_tool" @click="setTool('pen')">
+      <a class="toolbox_action toolbox_action_tool" @click="setTool('pen')">
         <img :src="pen" alt="pen" />
-      </button>
-      <button class="toolbox_action toolbox_action_tool" @click="setTool('eraser')">
+      </a>
+      <a class="toolbox_action toolbox_action_tool" @click="setTool('eraser')">
         <img :src="eraser" alt="eraser" />
-      </button>
+      </a>
     </div>
     <div class="toolbox_history">
-      <button :disabled="!canUndo" class="toolbox_action" @click="emit('undo')">
+      <a :disabled="!canUndo" class="toolbox_action" @click="emit('undo')">
         <img class="toolbox_action_svg" :src="undo" alt="undo" />
-      </button>
-      <button :disabled="!canRedo" class="toolbox_action" @click="emit('redo')">
+      </a>
+      <a :disabled="!canRedo" class="toolbox_action" @click="emit('redo')">
         <img class="toolbox_action_svg" :src="redo" alt="redo" />
-      </button>
+      </a>
     </div>
   </div>
 </template>
@@ -127,17 +123,21 @@ function setTool(newTool: DrawingTool): void {
     position: relative;
     width: 70px;
     height: 70px;
+    &:hover &_picker {
+      display: initial;
+    }
     &_picker {
+      display: none;
       position: absolute;
-      bottom: -15px;
-      background-color: rgba(255, 255, 255, 0.805);
+      bottom: -2rem;
+      background-color: rgba(255, 255, 255, 0.941);
       padding: 0.2rem;
       border-radius: 0.8rem;
       box-shadow: 0.05rem 0.05rem 0.8rem black;
+      z-index: 10;
       input {
         margin: auto;
         cursor: pointer;
-        color: red;
       }
     }
     &_preview {
@@ -157,11 +157,20 @@ function setTool(newTool: DrawingTool): void {
     background: none;
     border: none;
     cursor: pointer;
+    transform: scale(0.99);
+    &:hover {
+      transform: scale(1.1);
+      -webkit-text-stroke-color: var(--main-color);
+    }
     &:disabled {
       opacity: 0.2;
     }
     &_svg {
       width: 2rem;
+      :hover {
+        stroke: var(--main-color);
+        fill: var(--main-color);
+      }
     }
   }
 }

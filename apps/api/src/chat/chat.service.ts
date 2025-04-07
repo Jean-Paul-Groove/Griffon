@@ -36,7 +36,7 @@ export class ChatService {
     }
     // Create and send chat message
     const chatEntity = this.chatRepository.create({ sender: player, content: message, room: room })
-    const chat = await this.chatRepository.save(chatEntity)
+    const chat = await this.chatRepository.save(chatEntity, { reload: true })
 
     const data: NewChatMessageDto = {
       event: WSE.NEW_MESSAGE,

@@ -303,7 +303,7 @@ export class RoomService {
   generateRoomInfoDto(room: Room): RoomInfoDto {
     this.logger.debug('GENERATEROOMINFODTO')
     let round = null
-    if (room.currentGame) {
+    if (room.currentGame != null) {
       const gameRoom = new Room()
       gameRoom.id = room.id
       room.currentGame.room = gameRoom
@@ -326,7 +326,8 @@ export class RoomService {
         ? room.chatMessages.map((chat) => this.chatService.generateChatMessageDto(chat))
         : [],
       limit: room.limit,
-      currentGame: room.currentGame ? this.gameService.generateGameInfoDto(room.currentGame) : null,
+      currentGame:
+        room.currentGame != null ? this.gameService.generateGameInfoDto(room.currentGame) : null,
       scores: room.scores
         ? room.scores.map((score) => ({
             id: score.id,

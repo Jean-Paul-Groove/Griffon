@@ -14,6 +14,8 @@ export class WsFilter implements ExceptionFilter {
       if (client && exception.message) {
         client.emit(exception.message)
       }
+    } else {
+      this.logger.debug(exception)
     }
   }
 }
