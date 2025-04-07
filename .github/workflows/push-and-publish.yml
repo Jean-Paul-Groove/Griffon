@@ -1,0 +1,85 @@
+name: Publish and deploy to VPS
+
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ secrets.REPO_OWNER }}/griffon
+  DB_HOST: ${{secrets.DB_HOST}}
+jobs:
+  push_backend:
+    name: Backend artefact
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # - name: Install additional libraries
+      #   uses: ./.github/actions/install-packages
+
+      - name: login
+        run: |
+          echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Copy yarn.lock
+        run: cp ./yarn.lock ./apps/api
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          file: ./apps/api/Dockerfile
+          context: ./apps/api
+          push: true
+          build-args: |
+            DB_HOST=${{secrets.DB_HOST}}
+            JWT_SECRET=${{secrets.JWT_SECRET}}
+            PORT=${{secrets.PORT}}
+            DB_PORT=${{secrets.DB_PORT}}
+            DB_USERNAME=${{secrets.DB_USERNAME}}
+            DB_PASSWORD=${{secrets.DB_PASSWORD}}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
+
+  push_frontend:
+    name: publish image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install dependencies
+        run: npm install
+      - name: build front
+        run: npm run build
+      - name: login
+        run: |
+          echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Copy package-lock.json
+        run: cp ./package-lock.json ./apps/web
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          file: apps/web/Dockerfile
+          context: apps/web
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+  deploy:
+    needs: [push_backend, push_frontend]
+    name: deploy image
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: install ssh keys
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+      - name: connect and pull
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker compose up -d && exit"
+      - name: cleanup
+        run: rm -rf ~/.ssh
