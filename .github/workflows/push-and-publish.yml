@@ -12,7 +12,9 @@ env:
   DB_HOST: ${{secrets.DB_HOST}}
 jobs:
   install_dependencies:
-     steps:
+    name: Install dependencies
+    runs-on: ubuntu-24.04
+    steps:
       - uses: actions/checkout@v4
       
       - uses: actions/setup-node@v4
