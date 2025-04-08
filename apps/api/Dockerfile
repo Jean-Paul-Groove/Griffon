@@ -1,4 +1,4 @@
-FROM node:20 AS builder
+FROM node:22 AS builder
 
 WORKDIR /app
 COPY . .
@@ -24,8 +24,6 @@ RUN npm install --platform=linux --arch=x64 sharp
 RUN npm install bcrypt
 RUN npm install
 RUN npm run build
-
-VOLUME /app/step-pictures/
 
 EXPOSE 443
 EXPOSE 7512
