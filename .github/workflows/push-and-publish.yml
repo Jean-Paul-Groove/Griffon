@@ -11,7 +11,21 @@ env:
   IMAGE_NAME: ${{ secrets.REPO_OWNER }}/griffon
   DB_HOST: ${{secrets.DB_HOST}}
 jobs:
+  install_dependencies:
+     steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Yarn
+        run: corepack prepare yarn@4.6.0 --activate
+
   push_backend:
+    needs: [install_dependencies]
     name: Backend image
     runs-on: ubuntu-24.04
     steps:
@@ -24,20 +38,13 @@ jobs:
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Copy yarn.lock
-        run: cp ./yarn.lock ./apps/api
-        
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Yarn
-        run: corepack prepare yarn@4.6.0 --activate
       - name: Build and push
         run: |
           docker build ./apps/api/Dockerfile --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api . 
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
 
   push_frontend:
+    needs: [install_dependencies]
     name: Frontend image
     runs-on: ubuntu-latest
 
@@ -47,32 +54,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Yarn
-        run: corepack prepare yarn@4.6.0 --activate
-
-      - name: install dependencies
-        run: yarn install
-
       - name: build front
         run: yarn run build
         
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    
-      - name: Copy package-lock.json
-        run: cp ./package-lock.json ./apps/web
 
       - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          file: apps/web/Dockerfile
-          context: apps/web
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+        run: |
+          docker build ./apps/web/Dockerfile --build-arg VITE_API_ADDRESS=${{secrets.VITE_API_ADDRESS}} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api . 
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
   deploy:
     needs: [push_backend, push_frontend]
     name: deploy image
