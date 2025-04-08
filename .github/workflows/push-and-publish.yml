@@ -25,6 +25,9 @@ jobs:
 
       - name: Setup Yarn
         run: corepack prepare yarn@4.6.0 --activate
+      
+      - name: Run Yarn
+        run: yarn install
 
   push_backend:
     needs: [install_dependencies]
