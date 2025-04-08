@@ -16,17 +16,25 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Copy yarn.lock
         run: cp ./yarn.lock ./apps/api
+        
+      - name: Enable Corepack
+        run: corepack enable
 
+      - name: Setup Yarn
+        run: corepack prepare yarn@4.6.0 --activate
       - name: Build and push
         run: |
-          docker build  --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api . 
+          docker build ./apps/api/Dockerfile --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api . 
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
 
   push_frontend:
@@ -38,10 +46,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Yarn
+        run: corepack prepare yarn@4.6.0 --activate
+
       - name: install dependencies
         run: yarn install
+
       - name: build front
         run: yarn run build
+        
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
