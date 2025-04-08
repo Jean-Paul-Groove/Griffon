@@ -22,11 +22,9 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: Run install
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install # will run `yarn install` command
+      - uses: bahmutov/npm-install@HEAD
 
+      - run: npm t
       # - name: Install additional libraries
       #   uses: ./.github/actions/install-packages
 
