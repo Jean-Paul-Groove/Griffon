@@ -12,18 +12,10 @@ env:
   DB_HOST: ${{secrets.DB_HOST}}
 jobs:
   push_backend:
-    name: Backend artefact
+    name: Backend image
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.x
-
-      # - name: Install additional libraries
-      #   uses: ./.github/actions/install-packages
 
       - name: login
         run: |
@@ -33,22 +25,12 @@ jobs:
         run: cp ./yarn.lock ./apps/api
 
       - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          file: ./apps/api/Dockerfile
-          context: ./apps/api
-          push: true
-          build-args: |
-            DB_HOST=${{secrets.DB_HOST}}
-            JWT_SECRET=${{secrets.JWT_SECRET}}
-            PORT=${{secrets.PORT}}
-            DB_PORT=${{secrets.DB_PORT}}
-            DB_USERNAME=${{secrets.DB_USERNAME}}
-            DB_PASSWORD=${{secrets.DB_PASSWORD}}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
+        run: |
+          docker build  --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api . 
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
 
   push_frontend:
-    name: publish image
+    name: Frontend image
     runs-on: ubuntu-latest
 
     steps:
@@ -57,9 +39,9 @@ jobs:
         with:
           node-version: 22
       - name: install dependencies
-        run: npm install
+        run: yarn install
       - name: build front
-        run: npm run build
+        run: yarn run build
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
