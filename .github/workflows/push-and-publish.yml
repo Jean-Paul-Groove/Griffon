@@ -27,8 +27,7 @@ jobs:
         run: corepack prepare yarn@4.6.0 --activate
       
       - name: Run Yarn
-        run: yarn build:events && yarn install
-
+        run: yarn install && yarn build:events
   push_backend:
     needs: [install_dependencies]
     name: Backend image
