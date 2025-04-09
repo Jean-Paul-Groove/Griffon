@@ -10,6 +10,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ secrets.REPO_OWNER }}/griffon
   DB_HOST: ${{secrets.DB_HOST}}
+  VITE_API_ADDRESS: ${{secrets.VITE_API_ADDRESS}} 
   YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
   install_dependencies:
@@ -72,8 +73,8 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build  --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api ./apps/api
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
+          docker build  --build-arg DB_HOST=${{secrets.DB_HOST}} --build-arg JWT_SECRET=${{secrets.JWT_SECRET}} --build-arg PORT=${{secrets.PORT}}  --build-arg DB_PORT=${{secrets.DB_PORT}} --build-arg DB_USERNAME=${{secrets.DB_USERNAME}} --build-arg DB_PASSWORD=${{secrets.DB_PASSWORD}} --build-arg DB_NAME=${{secrets.DB_NAME}} --build-arg JWT_EXPIRATION=${{secrets.JWT_EXPIRATION}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:latest ./apps/api
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:latest
 
   push_frontend:
     needs: [install_dependencies]
@@ -110,8 +111,8 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build  --build-arg VITE_API_ADDRESS=${{secrets.VITE_API_ADDRESS}} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web ./apps/web
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+          docker build  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest ./apps/web
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest
   deploy:
     needs: [push_backend, push_frontend]
     name: deploy image
