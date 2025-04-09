@@ -121,7 +121,7 @@ jobs:
     steps:
       - name: install ssh pass
         run: |
-          apt -y install sshpass 
+          sudo apt -y install sshpass 
       - name: connect and pull
         run: sshpass -p ${{ secrets.SSH_PASS }} ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd root && docker compose up -d && exit"
       - name: cleanup
