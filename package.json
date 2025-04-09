@@ -13,6 +13,8 @@
     "dev": "turbo run dev --parallel",
     "lint": "yarn workspaces foreach -A --parallel --interlaced run lint",
     "build:events": "yarn workspace shared run build",
+    "build:api": "yarn workspace api run build",
+    "build:web": "yarn workspace api run build",
     "packages": "yarn build:events && yarn install"
   },
   "packageManager": "yarn@4.6.0",

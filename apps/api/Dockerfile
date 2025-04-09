@@ -1,7 +1,7 @@
 FROM node:22-slim AS builder
 
 WORKDIR /app
-COPY . .
+COPY ./dist .
 ARG DB_HOST
 ARG DB_PORT
 ARG DB_USERNAME
@@ -20,9 +20,8 @@ ENV JWT_SECRET=$JWT_SECRET
 ENV JWT_EXPIRATION=$JWT_EXPIRATION
 ENV PORT=$PORT
 
-RUN yarn run build
 
 EXPOSE 443
 EXPOSE 7512
 
-CMD node ./dist/main.js
+CMD node ./main.js
