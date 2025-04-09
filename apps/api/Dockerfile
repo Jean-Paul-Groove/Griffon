@@ -20,10 +20,7 @@ ENV JWT_SECRET=$JWT_SECRET
 ENV JWT_EXPIRATION=$JWT_EXPIRATION
 ENV PORT=$PORT
 
-RUN npm install --platform=linux --arch=x64 sharp
-RUN npm install bcrypt
-RUN npm install
-RUN npm run build
+RUN yarn run build
 
 EXPOSE 443
 EXPOSE 7512
