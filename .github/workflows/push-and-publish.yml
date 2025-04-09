@@ -30,14 +30,9 @@ jobs:
       - name: Run Yarn
         run: yarn install
       
-      - uses: actions/upload-artifact@v4
+      - uses: actions/cache@v4
         with:
-          # Name of the artifact to upload.
-          # Optional. Default is 'artifact'
-          name: Node_modules
-      
-          # A file, directory or wildcard pattern that describes what to upload
-          # Required.
+          key: ${{ hashFiles('yarn.lock') }}-modules
           path: |
             node_modules
             packages
@@ -53,6 +48,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Enable Corepack
+        run: corepack enable
+  
+      - name: Setup Yarn
+        run: corepack prepare yarn@4.6.0 --activate
+        
+      - uses: actions/cache/restore@v4
+        with:
+          key: ${{ hashFiles('yarn.lock') }}-modules
+          path: |
+            node_modules
+            packages
+            apps/web/node_modules
+            apps/api/node_modules
+   
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -78,7 +88,16 @@ jobs:
 
       - name: Setup Yarn
         run: corepack prepare yarn@4.6.0 --activate
-      - uses: actions/download-artifact@v4
+        
+      - uses: actions/cache/restore@v4
+        with:
+          key: ${{ hashFiles('yarn.lock') }}-modules
+          path: |
+            node_modules
+            packages
+            apps/web/node_modules
+            apps/api/node_modules
+  
       - name: build front
         run: yarn run build
         
