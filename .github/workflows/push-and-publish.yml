@@ -121,6 +121,6 @@ jobs:
     steps:
       - name: connect and pull
         run: |
-          sshpass -e ssh  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose up -d && exit'
+          sshpass -v -e ssh  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose up -d && exit'
         env:
           SSHPASS: ${{ secrets.SSH_PASS }} 
