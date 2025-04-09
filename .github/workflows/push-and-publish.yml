@@ -119,10 +119,8 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: install ssh pass
-        run: |
-          sudo apt -y install sshpass 
       - name: connect and pull
-        run: sshpass -p ${{ secrets.SSH_PASS }} ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd root && docker compose up -d && exit"
-      - name: cleanup
-        run: rm -rf ~/.ssh
+        run: |
+          sshpass -e ssh  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose up -d && exit'
+        env:
+          SSHPASS: ${{ secrets.SSH_PASS }} 
