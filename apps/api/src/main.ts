@@ -10,5 +10,6 @@ async function bootstrap(): Promise<void> {
     logger: new ConsoleLogger(),
   })
   await app.listen(process.env.PORT ?? 3000)
+  console.info('STARTED ON PORT ' + (process.env.PORT ?? 3000))
 }
 bootstrap()
