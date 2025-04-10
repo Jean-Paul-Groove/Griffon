@@ -69,12 +69,11 @@ async function getAvailableGames(): Promise<void> {
   }
 }
 async function requestGame(title: string): Promise<void> {
-  const response = await axios.get(apiUrl + '/game/start/' + title, {
-    headers: {
-      Authorization: 'bearer ' + token,
-    },
-  })
-  console.log(response)
+  try {
+    socket.value?.emit(WSE.ASK_START_GAME, { game: title })
+  } catch (error) {
+    console.log(error)
+  }
 }
 </script>
 

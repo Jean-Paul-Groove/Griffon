@@ -346,12 +346,12 @@ const debouncedSendDrawing = debounce(sendDrawing, 100, { immediate: true })
 .cursor {
   &-eraser {
     cursor:
-      url('../../assets/icons/eraser.png') 0 20,
+      url('../../assets/icons/cursor-eraser.png') 5 20,
       auto;
   }
   &-pen {
     cursor:
-      url('../../assets/icons/pen.png') 5 35,
+      url('../../assets/icons/cursor-pen.png') 1 35,
       auto;
   }
 }

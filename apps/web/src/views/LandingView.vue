@@ -119,10 +119,13 @@ function createNewRoom(): void {
       text-align: center;
     }
     &_button {
-      color: white;
-      background-color: var(--main-color);
+      color: var(--main-color);
+      background-color: white;
+      border: 1px solid var(--main-color);
       &:hover {
         box-shadow: none;
+        color: white;
+        background-color: var(--main-color);
       }
     }
   }

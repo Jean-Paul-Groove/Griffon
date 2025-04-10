@@ -1,11 +1,14 @@
 <template>
   <div class="toolbox">
     <ColorPicker @selected-color="selectColor" />
-    <div class="toolbox_thickness">
-      <div class="toolbox_thickness_picker">
+    <div class="toolbox_thickness" @touchend="toggleThickRange">
+      <div class="toolbox_thickness_picker" :style="{ display: thickRangeOpen ? 'initial' : '' }">
         <input v-model="lineThickness" type="range" :min="1" :max="61" :step="5" />
       </div>
-      <div class="toolbox_thickness_preview_container">
+      <div
+        class="toolbox_thickness_preview_container"
+        :style="{ borderColor: tool === 'pen' ? color : '' }"
+      >
         <div
           class="toolbox_thickness_preview"
           :style="{
@@ -94,8 +97,8 @@ function selectColor(newColor: string): void {
   color.value = newColor
   tool.value = 'pen'
 }
-function toggleThickRange(bool: boolean): void {
-  thickRangeOpen.value = bool
+function toggleThickRange(): void {
+  thickRangeOpen.value = !thickRangeOpen.value
 }
 function setTool(newTool: DrawingTool): void {
   tool.value = newTool
@@ -115,6 +118,10 @@ function setTool(newTool: DrawingTool): void {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 2rem;
+    & img {
+      max-width: 100%;
+    }
   }
   &_thickness {
     display: flex;
@@ -147,7 +154,7 @@ function setTool(newTool: DrawingTool): void {
         align-items: center;
         border-radius: 100%;
         border: 0.1px solid;
-        background-color: rgba(195, 195, 195, 0.358);
+        backdrop-filter: brightness(95%);
         width: 61px;
         height: 61px;
       }
