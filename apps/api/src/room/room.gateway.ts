@@ -23,6 +23,7 @@ import { SchedulerRegistry } from '@nestjs/schedule'
 import { Roles } from './decorators/roles'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { WsFilter } from '../common/ws/ws.filter'
+import { Throttle } from '@nestjs/throttler'
 
 @UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
@@ -173,6 +174,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @UseGuards(RoomGuard)
+  @Throttle({ 'start-game': { ttl: 2000, limit: 1 } })
   @SubscribeMessage(WSE.ASK_START_GAME)
   @Roles('admin')
   async handleAskStartGame(

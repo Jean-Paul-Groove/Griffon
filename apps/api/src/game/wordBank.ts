@@ -3,7 +3,7 @@
 // )
 // await this.wordRepository.save(wordEntities)
 
-export const WORD_BANK = [
+const WORD_BANK = [
   'angle',
   'armoire',
   'banc',
@@ -1072,3 +1072,4 @@ export const WORD_BANK = [
   'vague',
   'voile',
 ]
+export const newArray = Array.from(new Set(WORD_BANK))

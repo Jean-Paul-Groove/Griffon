@@ -142,38 +142,6 @@ export class GameService {
   async getAvailableGames(): Promise<Partial<GameSpecs[]>> {
     return await this.gameSpecsRepository.find()
   }
-  async askStartGame(player: Player, gameName: string): Promise<void> {
-    this.logger.debug('OnaskStartGame ?')
-    if (!player) {
-      throw new PlayerNotFoundWsException()
-    }
-    const room = await this.roomService.getRoomFromPlayer(player)
-
-    if (room.currentGame != null) {
-      this.logger.warn('Room already has a game going on')
-      return
-    }
-    const gameSpecs = await this.gameSpecsRepository.findOneBy({ title: gameName })
-    if (!gameSpecs) {
-      throw new GameNotFoundWsException()
-    }
-    if (player.id === room.admin.id) {
-      const gameEntity = this.gameRepository.create({ specs: gameSpecs, onGoing: true, room })
-      const game = await this.gameRepository.save(gameEntity, { reload: true })
-      room.currentGame = game
-      await this.roomRepository.save(room, { reload: true })
-      this.logger.debug(room.currentGame.id)
-      const data: StartGameDto = {
-        event: WSE.START_GAME,
-        arguments: { game: this.generateGameInfoDto(game) },
-      }
-      this.roomService.emitToRoom(room.id, data)
-      this.griffonary.executeRound(room.id)
-      return
-    } else {
-      throw new UnauthorizedException()
-    }
-  }
   // Services
   async endGame(room: Room): Promise<void> {
     this.logger.debug('ENDGAME')

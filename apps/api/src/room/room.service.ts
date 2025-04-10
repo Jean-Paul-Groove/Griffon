@@ -195,7 +195,7 @@ export class RoomService {
    * @returns {void}
    */
   private removeSocketFromRoom(client: Socket, roomId: string): void {
-    if (client.data.roomId) {
+    if (client?.data?.roomId) {
       client.data.roomId = null
     }
     client.leave(roomId)

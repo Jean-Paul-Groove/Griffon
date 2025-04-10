@@ -18,6 +18,7 @@ import { GameModule } from './game/game.module'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ChatModule } from './chat/chat.module'
 import { Chat } from './chat/entities/chat.entity'
+import { ThrottlerModule } from '@nestjs/throttler'
 
 @Module({
   imports: [
@@ -32,6 +33,13 @@ import { Chat } from './chat/entities/chat.entity'
       database: process.env.DB_NAME ?? 'griffon',
       synchronize: true,
       logging: false,
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        { name: 'start-game', ttl: 2000, limit: 1 },
+        { name: 'short', ttl: 1000, limit: 2 },
+        { name: 'medium', ttl: 10000, limit: 12 },
+      ],
     }),
     ScheduleModule.forRoot(),
     GameModule,
