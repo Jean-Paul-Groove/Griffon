@@ -29,9 +29,7 @@ import { Throttle } from '@nestjs/throttler'
 @UseGuards(AuthGuard)
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['my-custom-header'],
+    origin: process.env.FRONT_URL,
   },
   pingTimeout: 60000,
   exceptionFilters: new WsFilter(),

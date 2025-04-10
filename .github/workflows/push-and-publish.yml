@@ -121,6 +121,6 @@ jobs:
     steps:
       - name: connect and pull
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose up -d && exit'
+          sshpass -e ssh -o StrictHostKeyChecking=no  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker pull && docker compose up -d && exit'
         env:
           SSHPASS: ${{ secrets.SSH_PASS }} 
