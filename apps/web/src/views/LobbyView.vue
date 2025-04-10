@@ -60,6 +60,8 @@ async function getAvailableGames(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/game')
     games.value = response.data
+    console.log('GETTING AVAILABLE GAMES')
+    console.log(games.value)
   } catch (err) {
     console.log(err)
 

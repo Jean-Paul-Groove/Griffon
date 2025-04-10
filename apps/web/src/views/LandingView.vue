@@ -1,12 +1,21 @@
 <template>
   <div class="landing">
-    <h2 v-if="user" class="landing_title">Rejoindre une Room:</h2>
-    <h2 v-else class="landing_title">Connexion:</h2>
-    <form v-if="user" class="landing-form" @submit="(e) => e.preventDefault()">
+    <form v-if="user" class="landing_form" @submit="(e) => e.preventDefault()">
+      <h2 class="landing_form_title">Rejoindre une partie:</h2>
       <FormInput v-model="roomId" :error="roomIdError != null" label="Room ID" />
-      <button @click="joinRoom(roomId)">Rejoindre</button>
-      <button @click="createNewRoom">Générer une Room</button>
-      <button v-if="user.room" @click="joinRoom(user.room)">Rejoindre la Room précédente</button>
+      <button class="landing_form_button" @click="joinRoom(roomId)">Rejoindre</button>
+      <DividerText color="var(--main-color)" text-color="var(--main-color)" text="ou" />
+      <button class="landing_form_button" @click="createNewRoom">Créer une parite</button>
+      <DividerText
+        v-if="user.room"
+        color="var(--main-color)"
+        text-color="var(--main-color)"
+        text="ou"
+      />
+
+      <button v-if="user.room" class="landing_form_button" @click="joinRoom(user.room)">
+        Rejoindre la Room précédente
+      </button>
     </form>
     <Login v-else />
 
@@ -24,6 +33,7 @@ import { storeToRefs } from 'pinia'
 import { WSE } from 'shared'
 import FormInput from '../components/form/FormInput.vue'
 import Login from '../components/Login/LoginForm.vue'
+import DividerText from '../components/Divider/DividerText.vue'
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
@@ -88,19 +98,33 @@ function createNewRoom(): void {
   padding-top: 5rem;
   flex-direction: column;
   justify-content: start;
+  margin-top: 5rem;
   align-items: center;
-  &_title {
-    color: var(--main-color);
-  }
-  &-form {
-    display: flex;
+
+  &_form {
     flex-direction: column;
     gap: 1rem;
-    width: 25rem;
-    padding: 2rem;
-    border: 0.1rem solid var(--main-color);
     height: fit-content;
-    border-radius: 1rem;
+    margin-top: 2rem;
+    display: flex;
+    padding: 1rem;
+    min-width: 300px;
+    border-radius: 0.5rem;
+    box-shadow: var(--light-shadow);
+    background-color: white;
+    position: relative;
+    color: var(--main-color);
+    &_title {
+      color: var(--main-color);
+      text-align: center;
+    }
+    &_button {
+      color: white;
+      background-color: var(--main-color);
+      &:hover {
+        box-shadow: none;
+      }
+    }
   }
   &_errors {
     display: flex;

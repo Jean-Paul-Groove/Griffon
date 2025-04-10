@@ -33,4 +33,12 @@ const $route = useRoute()
     font-size: 1.5vw;
   }
 }
+@media screen and (max-width: 700px) {
+  .header {
+    aspect-ratio: 10;
+    &_title {
+      font-size: 2.5vw;
+    }
+  }
+}
 </style>
