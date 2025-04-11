@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Get,
 } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { Token } from './types/Token'
@@ -22,5 +23,11 @@ export class AuthController {
       throw new BadRequestException()
     }
     return this.authService.signInAsGuest(signInAsGuestDto.username)
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('ping')
+  ping(): string {
+    return 'pong'
   }
 }

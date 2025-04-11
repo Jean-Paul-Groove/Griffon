@@ -82,7 +82,6 @@ export class RoomService {
       return room
     } catch (error) {
       this.logger.error(error)
-      throw new RoomNotFoundWsException()
     }
   }
   hasPlayer(room: Room, playerId: string): boolean {

@@ -31,7 +31,7 @@ jobs:
       - name: Run Yarn
         run: yarn install
       
-      - uses: actions/cache@v4
+      - uses: actions/cache/save@v4
         with:
           key: node_modules
           path: |
@@ -121,6 +121,6 @@ jobs:
     steps:
       - name: connect and pull
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose pull && docker compose up -d && exit'
+          sshpass -e ssh -o StrictHostKeyChecking=no  ${{ secrets.SSH_USER}}@${{ secrets.SSH_HOST }} 'cd root && docker compose pull griffon-api griffon-web && docker compose up griffon-web griffon-api -d && exit'
         env:
           SSHPASS: ${{ secrets.SSH_PASS }} 
