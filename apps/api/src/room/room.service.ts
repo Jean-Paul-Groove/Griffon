@@ -254,7 +254,10 @@ export class RoomService {
       }
       this.emitToRoom(roomId, userJoinedData)
     } catch (exception) {
-      const data: FailJoinRoomDto = { event: WSE.FAIL_JOIN_ROOM, arguments: { reason: exception } }
+      const data: FailJoinRoomDto = {
+        event: WSE.FAIL_JOIN_ROOM,
+        arguments: { reason: exception.message },
+      }
       this.emitToPlayer(player, data)
       this.logger.error(exception)
     }
@@ -363,6 +366,9 @@ export class RoomService {
     this.io.in(roomId).emit(data.event, data.arguments)
   }
   emitToPlayer(player: Player, data: SocketDto): void {
+    if (!player) {
+      return
+    }
     const client = this.getSocketFromPlayer(player.id)
     if (!client) {
       return

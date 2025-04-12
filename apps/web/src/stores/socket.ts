@@ -47,7 +47,7 @@ export const useSocketStore = defineStore('socket', () => {
     isArtist: false,
   }
   const SYSTEM_ID = -1
-  const genericListeners: ListenerRecord = {
+  const socketListeners: ListenerRecord = {
     [WSE.INVALID_TOKEN]: resetToken,
     [WSE.CONNECTION_SUCCESS]: (data: PlayerConnectionSuccessDto['arguments']) => {
       if (data) {
@@ -55,38 +55,43 @@ export const useSocketStore = defineStore('socket', () => {
       }
     },
     [WSE.DISCONNECTION]: (reason) => {
-      console.log('disconnect reason ', reason)
+      // If server initialized disconnexion, reset token
       if (reason === 'io server disconnect') {
         resetToken()
       }
     },
     [WSE.NEW_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
-        console.log('RECEIVED')
         addMessage(data.chatMessage)
       }
     },
     [WSE.USER_JOINED_ROOM_SUCCESS]: (data: PlayerJoinedRoomSuccessDto['arguments']): void => {
       if (data) {
         if (room.value === null) {
-          $toast.success('Vous avez rejoint la room avec succès !')
+          $toast.success('Vous avez rejoint le salon avec succès !')
         }
         setRoomInfo(data.room)
       }
     },
     [WSE.FAIL_JOIN_ROOM]: (data: FailJoinRoomDto['arguments']): void => {
       if (data) {
+        // Redirige vers la page d'accueil si n'y est pas déjà
+        if ($route.name !== 'Accueil') {
+          $router.replace({ name: 'Accueil' })
+        }
+        // Toast d'erreur
         if (data.reason === 'room-full') {
           $toast.error('Arf ! La room est déjà pleine ...')
+        } else if (data.reason === 'room-not-found') {
+          $toast.error("Ce salon n'exsite pas ...")
         } else {
-          $toast.error('Impossible de rejoindre cette room')
+          $toast.error('Impossible de rejoindre ce salon')
         }
       }
     },
     [WSE.FAIL_CREATE_ROOM]: (data: FailCreateRoom['arguments']): void => {
       if (data) {
-        console.log(data.reason)
-        $toast.error('Nous ne pouvons générer de room...')
+        $toast.error('Nous ne pouvons générer de salon...')
       }
     },
     [WSE.WORD_TO_DRAW]: (data: WordToDrawDto['arguments']): void => {
@@ -96,7 +101,7 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.USER_JOINED_ROOM]: (data: PlayerJoinedRoomDto['arguments']): void => {
       if (data) {
-        systemMessage(`${data.player.name} joined the Room`)
+        systemMessage(`${data.player.name} à rejoint le salon`)
       }
     },
     [WSE.ROOM_STATE]: (data: RoomStateDto['arguments']): void => {
@@ -107,13 +112,12 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.START_GAME]: (data: StartGameDto['arguments']) => {
       if (data && room.value) {
         room.value.currentGame = data.game
-        systemMessage(`New ${data.game.specs.title} is starting`)
+        systemMessage(`Une partie de ${data.game.specs.title} commence !`)
       }
     },
     [WSE.FAIL_START_GAME]: (data: FailStartGame['arguments']) => {
       if (data) {
-        console.log(data.reason)
-        $toast.error('Impossible de lancer une partie ...')
+        $toast.error('Impossible de lancer cette partie ...')
       }
     },
     [WSE.STOP_DRAW]: (): void => {
@@ -126,7 +130,7 @@ export const useSocketStore = defineStore('socket', () => {
         updateUsers(data.players)
         const artist = data.players.find((player) => player.isArtist === true)
         if (artist) {
-          systemMessage(`${artist?.name} is drawing`)
+          systemMessage(`${artist?.name} dessine !`)
         }
       }
     },
@@ -137,12 +141,12 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.PLAYER_SCORED]: (data: PlayerScoredDto['arguments']): void => {
       if (data) {
-        systemMessage(`${data.player.name} scored ${data.points} points`)
+        systemMessage(`${data.player.name} a marqué ${data.points} points`)
         updatePartialScores(data)
       }
     },
     [WSE.ROOM_NOT_FOUND]: (): void => {
-      $toast.error("Cette room n'existe pas...")
+      $toast.error("Ce salon n'existe pas...")
     },
     [WSE.TIME_LIMIT]: (data: TimeLimitDto['arguments']): void => {
       if (data) {
@@ -197,7 +201,6 @@ export const useSocketStore = defineStore('socket', () => {
   watch(
     () => room.value?.currentGame?.specs.title,
     (game) => {
-      console.log('NEW GAME WATCHED')
       const currentRoute = $route.name
       // Redirect to Lobby if no current game
       if (!game) {
@@ -210,7 +213,6 @@ export const useSocketStore = defineStore('socket', () => {
       }
       // Redirect to game
       if (game != null && room.value?.id != null && currentRoute != game) {
-        console.log('NAVIGATING TO GAME')
         $router.replace({ name: game, params: { roomId: room.value.id } })
       }
     },
@@ -219,7 +221,7 @@ export const useSocketStore = defineStore('socket', () => {
     () => room.value,
     () => {
       if (room.value === null) {
-        $router.replace({ name: 'Landing' })
+        $router.replace({ name: 'Accueil' })
       }
     },
   )
@@ -230,13 +232,7 @@ export const useSocketStore = defineStore('socket', () => {
       return
     }
     connectSocket()
-    setListeners(genericListeners)
-    console.log(socket.value?.listenersAny)
-    if (socket.value?.listenersAny.length === 0) {
-      socket.value?.onAny((event, args) => {
-        console.log(event, args)
-      })
-    }
+    setListeners(socketListeners)
   }
   function connectSocket(): void {
     if (token.value === null) {
@@ -261,11 +257,8 @@ export const useSocketStore = defineStore('socket', () => {
     if (socket.value) {
       for (const key of Object.keys(record) as WSE[]) {
         const handler = record[key]
-
         if (handler != null && !socket.value.listeners(key).includes(handler)) {
           socket.value.on(key, handler)
-        } else {
-          console.log("Couldn't add listener for " + key)
         }
       }
     }
@@ -361,17 +354,12 @@ export const useSocketStore = defineStore('socket', () => {
     countDown.value = countDownDuration
     cdDuration.value = countDownDuration
     const id = setInterval(() => {
-      console.log('CountDown')
-      console.log(id)
-      if (!countDown.value || countDown.value === 0) {
+      if (!countDown.value || countDown.value === 0 || timeLimit.value === null) {
         endCountDown()
         return
       }
-      if (countDown.value - 1 < 0) {
-        countDown.value = 0
-        return
-      }
-      countDown.value--
+      const now = Date.now()
+      countDown.value = Math.round((timeLimit.value - now) / 1000)
       return
     }, 1000)
     countDownInterval.value = id
@@ -423,7 +411,6 @@ export const useSocketStore = defineStore('socket', () => {
     isArtist,
     isAdmin,
     currentPlayer,
-    setListeners,
     handleConnection,
     getUserById,
     getUserPoints,

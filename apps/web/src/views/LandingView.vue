@@ -1,11 +1,11 @@
 <template>
   <div class="landing">
     <form v-if="user" class="landing_form" @submit="(e) => e.preventDefault()">
-      <h2 class="landing_form_title">Rejoindre une partie:</h2>
-      <FormInput v-model="roomId" :error="roomIdError != null" label="Room ID" />
+      <h2 class="landing_form_title">Rejoindre un salon</h2>
+      <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
       <button class="landing_form_button" @click="joinRoom(roomId)">Rejoindre</button>
       <DividerText color="var(--main-color)" text-color="var(--main-color)" text="ou" />
-      <button class="landing_form_button" @click="createNewRoom">Créer une parite</button>
+      <button class="landing_form_button" @click="createNewRoom">Créer un salon</button>
       <DividerText
         v-if="user.room"
         color="var(--main-color)"
@@ -13,8 +13,8 @@
         text="ou"
       />
 
-      <button v-if="user.room" class="landing_form_button" @click="joinRoom(user.room)">
-        Rejoindre la Room précédente
+      <button v-if="user.room" class="landing_form_button" @click="joinPrevious">
+        Rejoindre le salon précédent
       </button>
     </form>
     <Login v-else />
@@ -45,7 +45,7 @@ const { user, requestedRoom } = storeToRefs(authStore)
 const $router = useRouter()
 
 // Refs
-const roomId = ref<string>('')
+const roomId = ref<string>(user.value?.room || '')
 const checkForErrors = ref(false)
 const roomIdError = computed<null | string>(() => {
   if (!checkForErrors.value) {
@@ -86,6 +86,12 @@ function joinRoom(id: string): void {
 function createNewRoom(): void {
   if (socket.value) {
     socket.value.emit(WSE.ASK_CREATE_ROOM)
+  }
+}
+function joinPrevious(): void {
+  if (user.value?.room) {
+    roomId.value = user.value?.room
+    joinRoom(user.value.room)
   }
 }
 </script>

@@ -40,7 +40,7 @@ onMounted(() => {
     socketStore.handleConnection()
   }
   if (!roomId && !room.value?.id) {
-    $router.replace({ name: 'Landing' })
+    $router.replace({ name: 'Accueil' })
   } else {
     if (roomId && roomId != room.value?.id && socket.value)
       socket.value.emit(WSE.ASK_JOIN_ROOM, { roomId })
