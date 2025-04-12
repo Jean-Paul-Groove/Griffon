@@ -31,8 +31,7 @@ import { Throttle } from '@nestjs/throttler'
   cors: {
     origin: process.env.FRONT_URL,
   },
-  pingTimeout: 60000,
-  exceptionFilters: new WsFilter(),
+  pingTimeout: 120000,
 })
 export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
@@ -115,7 +114,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const player = await this.playerService.get(client.data.playerId)
     return this.roomService.onCreateRoom(player, client)
   }
-  @UseFilters(new WsFilter())
+
   @SubscribeMessage(WSE.ASK_JOIN_ROOM)
   async handleJoinRoom(
     @MessageBody('roomId') roomId: string,
@@ -125,8 +124,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       throw new RoomNotFoundWsException()
     }
     const player = await this.playerService.get(client.data.playerId)
-    this.logger.debug('ONPLAYERJOIN GATEWAY')
-    return this.roomService.onPlayerJoinRoom(player, roomId, client)
+    return await this.roomService.onPlayerJoinRoom(player, roomId, client)
   }
 
   @SubscribeMessage(WSE.ASK_LEAVE_ROOM)

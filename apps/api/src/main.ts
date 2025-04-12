@@ -9,7 +9,7 @@ async function bootstrap(): Promise<void> {
     logger,
   })
 
-  fastify.enableCors({ origin: '*' })
+  fastify.enableCors({ origin: process.env.FRONT_URL })
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0')
   logger.log(process.env.PORT ?? 3000)
 }

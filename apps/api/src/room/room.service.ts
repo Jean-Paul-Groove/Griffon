@@ -80,8 +80,8 @@ export class RoomService {
         .leftJoinAndSelect('onGoingRound.word', 'word')
         .getOne()
       return room
-    } catch (error) {
-      this.logger.error(error)
+    } catch {
+      throw new RoomNotFoundWsException()
     }
   }
   hasPlayer(room: Room, playerId: string): boolean {
@@ -194,6 +194,9 @@ export class RoomService {
    * @returns {void}
    */
   private removeSocketFromRoom(client: Socket, roomId: string): void {
+    if (!client) {
+      return
+    }
     if (client?.data?.roomId) {
       client.data.roomId = null
     }
@@ -222,6 +225,10 @@ export class RoomService {
   async onPlayerJoinRoom(player: Player, roomId: string, client: Socket): Promise<void> {
     try {
       // Check if room exists
+      const room = await this.get(roomId)
+      if (!room) {
+        throw new RoomNotFoundWsException()
+      }
       this.logger.debug('JOINING ROOM')
       this.logger.debug(player.name)
       this.logger.debug('In room' + roomId)
