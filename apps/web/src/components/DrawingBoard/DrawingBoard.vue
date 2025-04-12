@@ -241,9 +241,6 @@ function stopDrawOnTouch(event: TouchEvent | MouseEvent): void {
       }
     }
   }
-
-  canvasContainer.value?.removeEventListener('touchmove', drawOnTouchMove)
-  canvasContainer.value?.removeEventListener('touchend', stopDrawOnTouch)
 }
 function redraw(): void {
   if (!canvas.value || !ctx.value) {
