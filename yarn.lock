@@ -2115,7 +2115,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@img/sharp-linux-x64@npm:0.34.1":
+"@img/sharp-linux-x64@npm:0.34.1, @img/sharp-linux-x64@npm:^0.34.1":
   version: 0.34.1
   resolution: "@img/sharp-linux-x64@npm:0.34.1"
   dependencies:
@@ -2123,6 +2123,7 @@ __metadata:
   dependenciesMeta:
     "@img/sharp-libvips-linux-x64":
       optional: true
+  checksum: 10c0/45a0834aed58e974eacbc8c3f81881c72b781c695a6789ef8efe3da4975a14b2315e71b2593e4653730d63c2c14015b4e842433f54dc68670ee0fcfa0fd1a11b
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
@@ -4382,6 +4383,7 @@ __metadata:
     "@fastify/multipart": "npm:^9.0.3"
     "@fastify/static": "npm:^8.1.1"
     "@fastify/view": "npm:^11.0.0"
+    "@img/sharp-linux-x64": "npm:^0.34.1"
     "@nestjs/axios": "npm:^4.0.0"
     "@nestjs/cli": "npm:^10.4.9"
     "@nestjs/common": "npm:^11.0.15"

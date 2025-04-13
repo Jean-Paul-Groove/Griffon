@@ -31,6 +31,9 @@ jobs:
       - name: Run Yarn
         run: yarn install
       
+      - name: Install bcrypt
+        run: yarn add bcrypt
+        
       - uses: actions/cache/save@v4
         with:
           key: node_modules
@@ -54,12 +57,7 @@ jobs:
   
       - name: Setup Yarn
         run: corepack prepare yarn@4.6.0 --activate
-
-      - name: Install missing dependencies
-        run: |
-         yarn add bcrypt
-         SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm_config_arch=x64 npm_config_platform=linux yarn add sharp
-        
+ 
       - uses: actions/cache/restore@v4
         with:
           key: node_modules
