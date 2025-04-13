@@ -71,10 +71,10 @@ jobs:
 
       - name: Copy files
         run: |
-         cp -r .yarn ./apps/api
-         cp -r yarn.lock ./apps/api
-         cp -r packages ./apps/api
-         cp  -r .yarn.yml ./apps/api
+         COPY -r .yarn  ./apps/api
+         COPY -r yarn.lock ./apps/api
+         COPY -r packages ./apps/api
+         COPY -r .yarn.yml ./apps/api
           
       - name: login
         run: |
