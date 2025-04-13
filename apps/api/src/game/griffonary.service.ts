@@ -114,6 +114,7 @@ export class GriffonaryService {
       this.gameService.sendTimeLimit(room.id, round.timeLimit.getTime())
     } catch (error) {
       this.logger.error(error)
+      this.endRound(roomId)
     }
   }
   async endRound(roomId: string): Promise<void> {

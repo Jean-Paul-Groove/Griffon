@@ -5,6 +5,7 @@ import { CreateGuestDto, PlayerInfoDto } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Player } from './entities/player.entity'
+import { PlayerNotFoundWsException } from '../common/ws/exceptions/playerNotFound'
 
 // This should be a real class/interface representing a user entity
 
@@ -31,13 +32,18 @@ export class PlayerService {
   }
 
   async get(playerId: string): Promise<Player | undefined> {
-    const guest = await this.playerRepository.findOne({
-      where: {
-        id: playerId,
-      },
-      relations: { room: true },
-    })
-    return guest
+    try {
+      const player = await this.playerRepository.findOne({
+        where: {
+          id: playerId,
+        },
+        relations: { room: true },
+      })
+      return player
+    } catch (err) {
+      this.logger.error(err)
+      throw new PlayerNotFoundWsException()
+    }
   }
   async getPlayerFromSocket(client: Socket): Promise<Player | undefined> {
     this.authService.validateWsConnexion(client)
@@ -53,5 +59,12 @@ export class PlayerService {
       isGuest: player.isGuest,
       room: player.room?.id,
     })
+  }
+  async resetPlayerRooms(): Promise<void> {
+    try {
+      await this.playerRepository.update({}, { room: null })
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 }

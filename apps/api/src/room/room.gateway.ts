@@ -17,13 +17,14 @@ import { AuthGuard } from '../auth/auth.guard'
 import { PlayerService } from '../player/player.service'
 import { GameName, PlayerConnectionSuccessDto, WSE } from 'shared'
 import { GameService } from '../game/game.service'
-import { RoomGuard } from './room.guard'
+import { RoomGuard } from './guards/room.guard'
 import { ChatService } from '../chat/chat.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { Roles } from './decorators/roles'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { WsFilter } from '../common/ws/ws.filter'
 import { Throttle } from '@nestjs/throttler'
+import { DrawingGuard } from './guards/drawing.guard'
 
 @UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
@@ -47,6 +48,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   io: Server
 
   afterInit(): void {
+    this.playerService.resetPlayerRooms()
+    this.gameService.resetGames()
     this.roomService.io = this.io
     this.io.disconnectSockets()
     this.logger.log('Room gateway initialized')
@@ -136,7 +139,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!roomId) {
       throw new RoomNotFoundWsException()
     }
-    return this.roomService.onPlayerLeaveRoom(client, roomId)
+    return await this.roomService.onPlayerLeaveRoom(client, roomId)
   }
 
   @SubscribeMessage(WSE.ASK_EXCLUDE_PLAYER)
@@ -145,28 +148,29 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody('playerId') playerId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    return this.roomService.onExcludePlayer(playerId, client.data.roomId)
+    return await this.roomService.onExcludePlayer(playerId, client.data.roomId)
   }
 
   // CHAT HANDLERS
   @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.NEW_MESSAGE)
-  handleNewMessage(
+  async handleNewMessage(
     @MessageBody('message') message: string,
     @ConnectedSocket() client: Socket,
-  ): void {
-    this.chatService.onNewChatMessage(message, client)
+  ): Promise<void> {
+    await this.chatService.onNewChatMessage(message, client)
   }
 
   // GAME HANDLERS
   @UseGuards(RoomGuard)
+  @UseGuards(DrawingGuard)
   @SubscribeMessage(WSE.UPLOAD_DRAWING)
   @Roles('artist')
   async handledawingUpload(
     @ConnectedSocket() client: Socket,
-    @MessageBody('drawing') drawing: Blob,
+    @MessageBody('drawing') drawing: Buffer,
   ): Promise<WsResponse | void> {
-    return this.gameService.onDrawingUpload(client, drawing)
+    return await this.gameService.onDrawingUpload(client, drawing)
   }
 
   @UseGuards(RoomGuard)

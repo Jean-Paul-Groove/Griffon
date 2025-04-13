@@ -40,10 +40,16 @@ export class RoomService {
   // Private methods
   private async create(options?: RoomOptions): Promise<Room> {
     this.logger.debug('ATTEMPTING TO CREATE A ROOM')
+    // Room is historized if at least one player has an account
+    let historized = false
+    if (options.owner && options.owner.isGuest === false) {
+      historized = true
+    }
     const roomEntity = this.roomRepository.create({
       limit: options?.maxNumPlayer,
       admin: options?.owner,
       players: options?.owner ? [options?.owner] : [],
+      historized,
     })
     const room = await this.roomRepository.save(roomEntity)
     return room
@@ -112,6 +118,10 @@ export class RoomService {
         room.players = [player]
       }
     }
+    // Room is historized if at least one player has an account
+    if (player.isGuest === false && room.historized === false) {
+      room.historized = true
+    }
     await this.roomRepository.save(room)
     this.sendRoomState(room)
     if (room.currentGame?.onGoing && room.currentGame.rounds.length > 0) {
@@ -155,16 +165,20 @@ export class RoomService {
     const playerSocket = this.getSocketFromPlayer(playerId)
     this.removeSocketFromRoom(playerSocket, room.id)
 
-    // If no more players, set room to be deleted after 5mn
-    if (room.players === null || room.players.length === 0) {
+    // If no more players and room is not to be historized, set room to be deleted after 5mn
+    if (room.players === null || (room.players.length === 0 && room.historized === false)) {
       if (
         this.schedulerRegistry?.doesExist !== undefined &&
         !this.schedulerRegistry?.doesExist('timeout', `${room.id}::toBeRemoved`)
       ) {
-        const timeOut = setTimeout(() => {
-          this.logger.fatal('ROOM IS BEING DELETED')
-          this.logger.fatal(room.id)
-          this.deleteRoom(room.id)
+        const timeOut = setTimeout(async () => {
+          try {
+            this.logger.fatal('ROOM IS BEING DELETED')
+            this.logger.fatal(room.id)
+            await this.deleteRoom(room.id)
+          } catch (err) {
+            this.logger.error(err)
+          }
         }, this.emptyRoomTime)
         this.schedulerRegistry.addTimeout(`${room.id}::toBeRemoved`, timeOut)
       }
@@ -211,9 +225,9 @@ export class RoomService {
     try {
       const room = await this.create({ owner: player })
       // Join socket to room
+      this.logger.debug('ROOM CREATED')
       this.joinSocketToRoom(client, room.id)
 
-      this.logger.debug('ROOM CREATED')
       return {
         event: WSE.USER_JOINED_ROOM_SUCCESS,
         data: { room: this.generateRoomInfoDto(room) },
@@ -348,13 +362,17 @@ export class RoomService {
     })
   }
   async sendRoomState(room: Room, player?: Player): Promise<void> {
-    const data: RoomStateDto = {
-      event: WSE.ROOM_STATE,
-      arguments: { room: this.generateRoomInfoDto(room) },
-    }
-    this.emitToRoom(room.id, data)
-    if (player) {
-      this.emitToPlayer(player, data)
+    try {
+      const data: RoomStateDto = {
+        event: WSE.ROOM_STATE,
+        arguments: { room: this.generateRoomInfoDto(room) },
+      }
+      this.emitToRoom(room.id, data)
+      if (player) {
+        this.emitToPlayer(player, data)
+      }
+    } catch (error) {
+      this.logger.error(error)
     }
   }
   async getRoomFromPlayer(player: Player): Promise<Room | undefined> {

@@ -38,6 +38,9 @@ export class Room {
   @JoinColumn()
   currentGame: Game | null
 
+  @Column({ default: false })
+  historized: boolean = false
+
   @CreateDateColumn()
   createdAt: Date
 

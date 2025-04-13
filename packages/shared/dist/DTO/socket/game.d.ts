@@ -31,7 +31,7 @@ export declare class WordToDrawDto extends SocketDto {
 export declare class UploadDrawingDto extends SocketDto {
     event: WSE.UPLOAD_DRAWING;
     arguments: {
-        drawing: Blob;
+        drawing: Buffer | Blob;
         player: PlayerInfoDto;
     };
 }

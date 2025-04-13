@@ -18,7 +18,7 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('guest')
-  signInAsGuest(@Body() signInAsGuestDto: Record<string, string>): Promise<Token> {
+  signInAsGuest(@Body() signInAsGuestDto: { username: string }): Promise<Token> {
     if (!signInAsGuestDto.username || typeof signInAsGuestDto.username !== 'string') {
       throw new BadRequestException()
     }
@@ -26,8 +26,8 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Get('ping')
-  ping(): string {
+  @Post('sign-in')
+  signIn(): string {
     return 'pong'
   }
 }

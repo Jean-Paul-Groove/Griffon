@@ -5,14 +5,15 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common'
-import { PlayerService } from '../player/player.service'
+import { PlayerService } from '../../player/player.service'
 import { Socket } from 'socket.io'
-import { RoomService } from './room.service'
+import { RoomService } from '../room.service'
 import { Reflector } from '@nestjs/core'
-import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
-import { AuthService } from '../auth/auth.service'
-import { Room } from './entities/room.entity'
-import { Player } from '../player/entities/player.entity'
+import { RoomNotFoundWsException } from '../../common/ws/exceptions/roomNotFound'
+import { AuthService } from '../../auth/auth.service'
+import { Room } from '../entities/room.entity'
+import { Player } from '../../player/entities/player.entity'
+import { WSE } from 'shared'
 
 @Injectable()
 export class RoomGuard implements CanActivate {
@@ -96,6 +97,7 @@ export class RoomGuard implements CanActivate {
         !currentRound.artists ||
         !currentRound.artists.map((artist) => artist.id).includes(player.id)
       ) {
+        this.roomService.emitToPlayer(player, { event: WSE.STOP_DRAW, arguments: undefined })
         return false
       }
     }

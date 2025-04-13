@@ -94,7 +94,7 @@ export class GameService {
   }
   async onDrawingUpload(
     client: Socket,
-    drawing: Blob,
+    drawing: Buffer,
   ): Promise<void | WsResponse<UploadDrawingDto['arguments'] | undefined>> {
     try {
       const player = await this.playerService.getPlayerFromSocket(client)
@@ -105,7 +105,7 @@ export class GameService {
       if (!room) {
         throw new RoomNotFoundWsException()
       }
-      const round = this.getLastOngoingORound(room)
+      const round = await this.getLastOngoingORound(room)
       if (!round) {
         throw new RoundNotFoundWsException()
       }
@@ -310,5 +310,13 @@ export class GameService {
     this.logger.debug('GENERATEGAMEINFO')
     const { id, specs, roundDuration, onGoing } = game
     return new GameInfoDto({ id, specs, roundDuration, onGoing, room: game.room.id })
+  }
+  async resetGames(): Promise<void> {
+    try {
+      await this.roundRepository.update({ onGoing: true }, { onGoing: false })
+      await this.gameRepository.update({ onGoing: true }, { onGoing: false })
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 }
