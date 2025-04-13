@@ -45,7 +45,7 @@ jobs:
         run: |
          cp -r .yarn ./apps/api
          cp -r yarn.lock ./apps/api
-         cp -r  packages ../..
+         cp -r  packages ./apps/api
          cp -r .yarnrc.yml ./apps/api
          echo $(ls ./apps/api)
 
@@ -74,9 +74,9 @@ jobs:
         run: |
          cp -r .yarn  ./apps/web
          cp -r yarn.lock ./apps/web
-         cp -r packages ../..
+         cp -r packages ./apps/web
          cp -r .yarnrc.yml ./apps/web
-         echo $(ls ./apps/web)
+         echo $(ls -la ./apps/web)
 
           
       - name: login
