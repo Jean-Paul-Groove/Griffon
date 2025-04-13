@@ -76,7 +76,7 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest ./apps/web
+          docker build --build-arg VITE_API_ADDRESS=${{secrets.VITE_API_ADDRESS}}  -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest ./apps/web
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest
   deploy:
     needs: [push_backend, push_frontend]
