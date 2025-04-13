@@ -14,7 +14,7 @@
       && yarn config set supportedArchitectures.cpu x64
     
     # Install production dependencies (skip devDeps if needed)
-    RUN yarn install --immutable --mode=skip-build
+    RUN yarn install  --mode=skip-build
     
     # Copy source and build it
     COPY . .
