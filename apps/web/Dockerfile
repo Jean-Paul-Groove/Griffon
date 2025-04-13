@@ -6,7 +6,7 @@ COPY .yarnrc.yml ./
 COPY /packages /packages
 ARG VITE_API_ADDRESS
 
-RUN yarn install --immutable --mode=skip-build
+RUN yarn install  --mode=skip-build
     
 # Copy source and build it
 COPY . .
