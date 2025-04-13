@@ -58,7 +58,7 @@ jobs:
       - name: Install missing dependencies
         run: |
          yarn add bcrypt
-         yarn add sharp
+         SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm_config_arch=x64 npm_config_platform=linux yarn add sharp
         
       - uses: actions/cache/restore@v4
         with:
