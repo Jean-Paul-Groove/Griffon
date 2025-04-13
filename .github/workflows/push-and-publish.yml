@@ -29,7 +29,10 @@ jobs:
         run: corepack prepare yarn@4.6.0 --activate
       
       - name: Run Yarn
-        run: yarn install
+        run: |
+         yarn config set supportedArchitectures.os linux
+         yarn config set supportedArchitectures.cpu x64
+         yarn install
       
       - name: Install bcrypt
         run: yarn add bcrypt
