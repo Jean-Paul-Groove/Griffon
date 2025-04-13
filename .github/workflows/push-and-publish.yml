@@ -43,10 +43,10 @@ jobs:
 
       - name: Copy files
         run: |
-         cp .yarn /apps/api/
-         cp yarn.lock /apps/api/
-         cp packages /apps/api
-         cp .yarn.yml /apps/api
+         cp -r .yarn /apps/api
+         cp  -r yarn.lock /apps/api
+         cp -r  packages /apps/api
+         cp -r .yarn.yml /apps/api
 
       - name: Build and push
         run: |
@@ -71,8 +71,8 @@ jobs:
 
       - name: Copy files
         run: |
-         cp -r .yarn /apps/api/
-         cp -r yarn.lock /apps/api/
+         cp -r .yarn /apps/api
+         cp -r yarn.lock /apps/api
          cp -r packages /apps/api
          cp  -r .yarn.yml /apps/api
           
