@@ -30,7 +30,7 @@ export class Player {
   isGuest: boolean
 
   @Column({ type: 'varchar', length: 20, unique: true, nullable: true, select: false })
-  login: string
+  email: string
 
   @Column({ select: false, nullable: true })
   password: string

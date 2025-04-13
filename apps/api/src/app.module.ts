@@ -19,6 +19,8 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { ChatModule } from './chat/chat.module'
 import { Chat } from './chat/entities/chat.entity'
 import { ThrottlerModule } from '@nestjs/throttler'
+import { join } from 'path'
+import { ServeStaticModule } from '@nestjs/serve-static'
 
 @Module({
   imports: [
@@ -40,6 +42,13 @@ import { ThrottlerModule } from '@nestjs/throttler'
         { name: 'short', ttl: 1000, limit: 2 },
         { name: 'medium', ttl: 10000, limit: 12 },
       ],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads', 'public'),
+      serveRoot: '/uploads/public/',
+      serveStaticOptions: {
+        extensions: ['webp'],
+      },
     }),
     ScheduleModule.forRoot(),
     GameModule,

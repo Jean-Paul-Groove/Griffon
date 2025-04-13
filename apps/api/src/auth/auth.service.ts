@@ -1,10 +1,15 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { PlayerService } from '../player/player.service'
 import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
-import { CreateGuestDto } from 'shared'
+import { CreateGuestDto, CreateUserDto } from 'shared'
 import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
 import { Request } from 'express'
+import { RegisterDto } from './validation/Register.dto'
+import { Token } from './types/Token'
+import * as bcrypt from 'bcrypt'
+import { MemoryStorageFile } from '@blazity/nest-file-fastify'
+import { LoginDto } from './validation/Login.dto'
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,9 +37,31 @@ export class AuthService {
       return payload.id
     }
   }
-  async signInAsGuest(name: string): Promise<{ access_token: string }> {
+  async signUpAsGuest(name: string): Promise<Token> {
     const guest: CreateGuestDto = { name: name, isGuest: true }
     const player = await this.playerService.createGuest(guest)
+    const payload = { id: player.id }
+    return {
+      access_token: this.jwtService.sign(payload),
+    }
+  }
+
+  async registerUser(userInfo: RegisterDto, avatar?: MemoryStorageFile): Promise<void> {
+    const { username, email, password: toBeHashed } = userInfo
+    const password = await bcrypt.hash(toBeHashed, 14)
+    const createUserDto: CreateUserDto = { name: username, email, password, isGuest: false }
+    await this.playerService.createUser(createUserDto, avatar)
+  }
+
+  async login(loginDto: LoginDto): Promise<Token> {
+    const player = await this.playerService.getPlayerCredentials(loginDto.email)
+    if (!player) {
+      throw new UnauthorizedException()
+    }
+    const validPassword = await bcrypt.compare(loginDto.password, player.password)
+    if (!validPassword) {
+      throw new UnauthorizedException()
+    }
     const payload = { id: player.id }
     return {
       access_token: this.jwtService.sign(payload),

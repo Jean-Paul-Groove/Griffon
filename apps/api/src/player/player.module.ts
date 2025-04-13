@@ -3,9 +3,10 @@ import { PlayerService } from './player.service'
 import { AuthModule } from '../auth/auth.module'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { Player } from './entities/player.entity'
+import { CommonModule } from '../common/common.module'
 
 @Module({
-  imports: [forwardRef(() => AuthModule), TypeOrmModule.forFeature([Player])],
+  imports: [forwardRef(() => AuthModule), TypeOrmModule.forFeature([Player]), CommonModule],
   providers: [PlayerService],
   exports: [PlayerService, TypeOrmModule],
 })

@@ -1,5 +1,6 @@
 <template>
   <div class="landing">
+    <p v-if="user" class="landing_welcome">Bienvenue {{ user.name }} !</p>
     <form v-if="user" class="landing_form" @submit="(e) => e.preventDefault()">
       <h2 class="landing_form_title">Rejoindre un salon</h2>
       <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
@@ -43,7 +44,6 @@ const { user, requestedRoom } = storeToRefs(authStore)
 
 // Composables
 const $router = useRouter()
-
 // Refs
 const roomId = ref<string>(user.value?.room || '')
 const checkForErrors = ref(false)
@@ -106,7 +106,11 @@ function joinPrevious(): void {
   justify-content: start;
   margin-top: 5rem;
   align-items: center;
-
+  &_welcome {
+    color: var(--main-color);
+    font-size: 2rem;
+    font-weight: bold;
+  }
   &_form {
     flex-direction: column;
     gap: 1rem;

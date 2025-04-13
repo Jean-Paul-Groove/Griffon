@@ -3,6 +3,7 @@ import { BaseLayout, RoomLayout } from '@/layouts'
 import { LandingView, GameView, NotFound, LobbyView } from '@/views'
 import { useAuthStore, useSocketStore } from '../stores'
 import { useToast } from 'vue-toast-notification'
+import RegisterView from '../views/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,18 @@ const router = createRouter({
           path: '/',
           name: 'Accueil',
           component: LandingView,
+          beforeEnter: (): RouteLocationRaw | undefined => {
+            const { token } = useAuthStore()
+            const { room } = useSocketStore()
+            if (token !== null && room?.id) {
+              return { name: 'Lobby', params: { roomId: room.id } }
+            }
+          },
+        },
+        {
+          path: 'register',
+          name: 'Inscription',
+          component: RegisterView,
           beforeEnter: (): RouteLocationRaw | undefined => {
             const { token } = useAuthStore()
             const { room } = useSocketStore()
@@ -72,7 +85,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.name === 'Accueil') {
+  if (to.name === 'Accueil' || to.name === 'Inscription') {
     return true
   }
   const { token, setRequestedRoom } = useAuthStore()

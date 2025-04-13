@@ -18,3 +18,9 @@ export declare class CreateGuestDto {
     name: string;
     isGuest: true;
 }
+export declare class CreateUserDto {
+    name: string;
+    isGuest: false;
+    email: string;
+    password: string;
+}

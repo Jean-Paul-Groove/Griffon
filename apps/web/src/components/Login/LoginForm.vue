@@ -22,18 +22,20 @@
       <p v-if="guestNameErrors && !user">{{ guestNameErrors }}</p>
     </form>
     <form v-else class="login-form_user">
-      <FormInput v-model="username" :error="userNameError != null" label="Pseudo" />
+      <FormInput v-model="email" :error="emailError != null" label="Email" />
       <FormInput
         v-model="password"
         type="password"
         :error="passwordError != null"
         label="Mot de passe"
       />
-      <button class="login-form_button">Connexion</button>
-      <p v-if="userNameError && !user">{{ userNameError }}</p>
-      <p v-if="passwordError && !user">{{ passwordError }}</p>
+      <button class="login-form_button" @click="login">Connexion</button>
+      <div class="login-form_errors">
+        <p v-if="emailError && !user">{{ emailError }}</p>
+        <p v-if="passwordError && !user">{{ passwordError }}</p>
+      </div>
 
-      <RouterLink class="login-form_link" to="/subscribe">Pas de compte ? S'inscrire !</RouterLink>
+      <RouterLink class="login-form_link" to="/register">Pas de compte ? S'inscrire !</RouterLink>
     </form>
   </div>
 </template>
@@ -42,35 +44,39 @@
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../../stores'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import FormInput from '../form/FormInput.vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import { useToast } from '../../composables/useToast'
 
 // Composables
 const { user } = storeToRefs(useAuthStore())
 const { setToken } = useAuthStore()
-
+const $toast = useToast()
+const $route = useRoute()
 // Constants
 const apiUrl = import.meta.env.VITE_API_ADDRESS
-
+const tabs = ['guest', 'connexion']
 //Refs
 const checkForErrors = ref(false)
-const username = ref<string>('')
+const email = ref<string>('')
 const password = ref<string>('')
 const guestName = ref<string>('')
-const activeTab = ref<'guest' | 'connexion'>('guest')
+const activeTab = ref<'guest' | 'connexion'>(
+  tabs.includes($route.query.tab as string) ? ($route.query.tab as any) : 'guest',
+)
 // Computeds
 const guestNameErrors = computed<null | string>(() => {
   if (!checkForErrors.value) {
     return null
   }
-  return guestName.value.trim() === '' ? 'Veuiller entrer un pseudo valide' : null
+  return guestName.value.trim() === '' ? 'Veuiller entrer un email valide' : null
 })
-const userNameError = computed<null | string>(() => {
+const emailError = computed<null | string>(() => {
   if (!checkForErrors.value) {
     return null
   }
-  return username.value.trim() === '' ? 'Veuiller entrer mot de passe' : null
+  return email.value.trim() === '' ? 'Veuiller entrer mot de passe' : null
 })
 const passwordError = computed<null | string>(() => {
   if (!checkForErrors.value) {
@@ -101,7 +107,35 @@ async function signIn(e: Event): Promise<void> {
       }
     }
   } catch (error) {
-    console.log(error)
+    if (error instanceof AxiosError) {
+      if (error.code == '400') {
+        $toast.error('Ces identifiants sont invalides')
+        email.value = ''
+        password.value = ''
+        checkForErrors.value = false
+        return
+      }
+    }
+    $toast.error('Connexion impossible...')
+  }
+}
+async function login(e: Event): Promise<void> {
+  try {
+    e.preventDefault()
+    checkForErrors.value = true
+    if (emailError.value === null && passwordError.value === null) {
+      const response = await axios.post(apiUrl + '/auth/login', {
+        email: email.value,
+        password: password.value,
+      })
+      const jwt = response?.data?.access_token
+      checkForErrors.value = false
+      if (jwt) {
+        setToken(jwt)
+      }
+    }
+  } catch {
+    $toast.error('Connexion impossible')
   }
 }
 </script>
@@ -122,6 +156,12 @@ async function signIn(e: Event): Promise<void> {
     &:hover {
       box-shadow: none;
     }
+  }
+  &_errors {
+    display: flex;
+    flex-direction: column;
+    color: var(--secondary-color);
+    gap: 0.3rem;
   }
   &_tabs {
     position: absolute;

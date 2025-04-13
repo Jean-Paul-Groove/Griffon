@@ -1,5 +1,6 @@
 <template>
   <div class="player-card" @click="handleClick">
+    <img class="player-card_avatar" :src="player.avatar || defaultAvatar" alt="" />
     <div class="player-card_info">
       <span class="player-card_info_name">
         <FontAwesomeIcon v-if="isAdmin" icon="crown" />
@@ -37,6 +38,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
+import defaultAvatar from '../../assets/avatar/default-avatar.webp'
 interface PlayerCardProp {
   player: PlayerInfoDto
   isAdmin: boolean
@@ -71,10 +73,19 @@ function handleExclude(e: Event): void {
   align-items: center;
   background-color: white;
   border-radius: 0.3rem;
-  height: 2rem;
+  height: 3rem;
   box-shadow: var(--light-shadow);
   cursor: pointer;
   transform: scale(0.99);
+  max-width: 25rem;
+  &_avatar {
+    height: 90%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 100%;
+    border: 3px solid var(--main-color);
+    margin-right: 1rem;
+  }
   &:hover {
     transform: scale(1);
     transition: scale 0.3s linear;
@@ -90,6 +101,9 @@ function handleExclude(e: Event): void {
     display: flex;
     gap: 0.2rem;
     justify-content: space-between;
+    &_name {
+      text-align: center;
+    }
   }
   &_exclude {
     height: 90%;
