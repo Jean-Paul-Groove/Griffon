@@ -58,7 +58,7 @@ jobs:
       - name: Install missing dependencies
         run: |
          yarn add bcrypt
-         npm install --platform=linux --arch=x64 sharp
+         yarn add sharp
         
       - uses: actions/cache/restore@v4
         with:
