@@ -5,6 +5,7 @@ COPY .yarn .yarn
 COPY .yarnrc.yml ./
 COPY /packages /packages
 ARG VITE_API_ADDRESS
+ENV VITE_API_ADDRESS = $VITE_API_ADDRESS
 
 RUN yarn install  --mode=skip-build
     
