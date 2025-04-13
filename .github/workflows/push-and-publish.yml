@@ -28,15 +28,6 @@ jobs:
       - name: Setup Yarn
         run: corepack prepare yarn@4.6.0 --activate
  
-      - uses: actions/cache/restore@v4
-        with:
-          key: node_modules
-          path: |
-            node_modules
-            packages
-            apps/web/node_modules
-            apps/api/node_modules
-   
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
