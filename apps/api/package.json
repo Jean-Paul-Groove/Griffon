@@ -52,7 +52,7 @@
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "shared": "./packages/shared",
+    "shared": "../../packages/shared",
     "sharp": "^0.34.1",
     "socket.io-client": "^4.8.1",
     "typeorm": "^0.3.22",
