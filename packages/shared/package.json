@@ -1,4 +1,5 @@
 {
+    "version": "1.0.0",
     "name": "shared",
     "packageManager": "yarn@4.6.0",
     "main": "./dist/index.js",

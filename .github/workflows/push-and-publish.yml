@@ -13,40 +13,7 @@ env:
   VITE_API_ADDRESS: ${{secrets.VITE_API_ADDRESS}} 
   YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
-  install_dependencies:
-    name: Install dependencies
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Yarn
-        run: corepack prepare yarn@4.6.0 --activate
-      
-      - name: Run Yarn
-        run: |
-         yarn config set supportedArchitectures.os linux
-         yarn config set supportedArchitectures.cpu x64
-         yarn install
-      
-      - name: Install bcrypt
-        run: yarn add bcrypt
-        
-      - uses: actions/cache/save@v4
-        with:
-          key: node_modules
-          path: |
-            node_modules
-            packages
-            apps/web/node_modules
-            apps/api/node_modules
   push_backend:
-    needs: [install_dependencies]
     name: Backend image
     runs-on: ubuntu-24.04
     steps:
@@ -74,8 +41,12 @@ jobs:
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: build back
-        run: yarn build:api
+      - name: Copy files
+        run: |
+         cp .yarn /apps/api/
+         cp yarn.lock /apps/api/
+         cp packages /apps/api
+         cp .yarn.yml /apps/api
 
       - name: Build and push
         run: |
@@ -83,7 +54,6 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api:latest
 
   push_frontend:
-    needs: [install_dependencies]
     name: Frontend image
     runs-on: ubuntu-latest
 
@@ -99,18 +69,13 @@ jobs:
       - name: Setup Yarn
         run: corepack prepare yarn@4.6.0 --activate
 
-      - uses: actions/cache/restore@v4
-        with:
-          key: node_modules
-          path: |
-            node_modules
-            packages
-            apps/web/node_modules
-            apps/api/node_modules
-  
-      - name: build front
-        run: yarn build:web
-        
+      - name: Copy files
+        run: |
+         cp .yarn /apps/api/
+         cp yarn.lock /apps/api/
+         cp packages /apps/api
+         cp .yarn.yml /apps/api
+          
       - name: login
         run: |
           echo ${{ secrets.GH_SECRET }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
