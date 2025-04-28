@@ -12,6 +12,8 @@ import {
   PlayerJoinedRoomDto,
   FailJoinRoomDto,
   RoomStateDto,
+  ScoreListDto,
+  ScoreDto,
 } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -21,6 +23,7 @@ import { ChatService } from '../chat/chat.service'
 import { GameService } from '../game/game.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
+import { Score } from '../game/entities/score.entity'
 
 @Injectable()
 export class RoomService {
@@ -33,6 +36,8 @@ export class RoomService {
     private roomRepository: Repository<Room>,
     @InjectRepository(Player)
     private readonly schedulerRegistry: SchedulerRegistry,
+    @InjectRepository(Score)
+    private readonly scoreRepository: Repository<Score>,
   ) {}
   public io: Server
   private readonly logger = new Logger(RoomService.name, { timestamp: true })
@@ -75,10 +80,10 @@ export class RoomService {
         .leftJoinAndSelect('room.players', 'players')
         .leftJoinAndSelect('room.chatMessages', 'chatMessages')
         .leftJoinAndSelect('chatMessages.sender', 'sender')
-        .leftJoinAndSelect('room.scores', 'scores')
-        .leftJoinAndSelect('scores.player', 'player')
         .leftJoinAndSelect('room.currentGame', 'currentGame')
         .leftJoinAndSelect('currentGame.specs', 'specs')
+        .leftJoinAndSelect('currentGame.scores', 'scores')
+        .leftJoinAndSelect('scores.player', 'player')
         .leftJoinAndSelect('room.admin', 'admin')
         .leftJoinAndSelect('currentGame.rounds', 'onGoingRound', 'onGoingRound.onGoing = true')
         .leftJoinAndSelect('onGoingRound.artists', 'artists')
@@ -86,7 +91,8 @@ export class RoomService {
         .leftJoinAndSelect('onGoingRound.word', 'word')
         .getOne()
       return room
-    } catch {
+    } catch (err) {
+      this.logger.error(err)
       throw new RoomNotFoundWsException()
     }
   }
@@ -216,13 +222,47 @@ export class RoomService {
     }
     client.leave(roomId)
   }
-
+  private async getRoomScores(room: Room): Promise<ScoreDto[]> {
+    try {
+      const scores: ScoreDto[] = await this.scoreRepository
+        .createQueryBuilder('score')
+        .select('player.id', 'player')
+        .addSelect('SUM(score.points)', 'points')
+        .innerJoin('score.player', 'player')
+        .innerJoin('score.game', 'game')
+        .innerJoin('game.room', 'room')
+        .where('room.id = :roomId', { roomId: room.id })
+        .groupBy('player.id')
+        .addGroupBy('player.name')
+        .getRawMany()
+      return scores
+    } catch (err) {
+      this.logger.debug(err)
+    }
+  }
+  async sendScore(room: Room): Promise<void> {
+    try {
+      const roomScores = await this.getRoomScores(room)
+      const data: ScoreListDto = {
+        event: WSE.SCORE_LIST,
+        arguments: {
+          scores: roomScores,
+        },
+      }
+      this.emitToRoom(room.id, data)
+    } catch (error) {
+      this.logger.error(error)
+    }
+  }
   // Handlers
   async onCreateRoom(
     player: Player,
     client: Socket,
   ): Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>> {
     try {
+      if (player.room) {
+        await this.removePlayerFromRoom(player.room, player.id)
+      }
       const room = await this.create({ owner: player })
       // Join socket to room
       this.logger.debug('ROOM CREATED')
@@ -230,9 +270,10 @@ export class RoomService {
 
       return {
         event: WSE.USER_JOINED_ROOM_SUCCESS,
-        data: { room: this.generateRoomInfoDto(room) },
+        data: { room: await this.generateRoomInfoDto(room) },
       }
     } catch (error) {
+      this.logger.error(error)
       client.emit(WSE.FAIL_CREATE_ROOM, { reson: error.message ?? 'An error occured' })
     }
   }
@@ -323,7 +364,7 @@ export class RoomService {
       (socket) => socket.data.playerId === playerId,
     )
   }
-  generateRoomInfoDto(room: Room): RoomInfoDto {
+  async generateRoomInfoDto(room: Room): Promise<RoomInfoDto> {
     this.logger.debug('GENERATEROOMINFODTO')
     let round = null
     if (room.currentGame != null) {
@@ -334,6 +375,7 @@ export class RoomService {
         round = room.currentGame.rounds[0]
       }
     }
+    const scores = await this.getRoomScores(room)
     return new RoomInfoDto({
       id: room.id,
       admin: room.admin?.id ?? null,
@@ -351,21 +393,15 @@ export class RoomService {
       limit: room.limit,
       currentGame:
         room.currentGame != null ? this.gameService.generateGameInfoDto(room.currentGame) : null,
-      scores: room.scores
-        ? room.scores.map((score) => ({
-            id: score.id,
-            player: score.player.id,
-            points: score.points,
-            room: room.id,
-          }))
-        : [],
+      // TODO CHECK THIS
+      scores,
     })
   }
   async sendRoomState(room: Room, player?: Player): Promise<void> {
     try {
       const data: RoomStateDto = {
         event: WSE.ROOM_STATE,
-        arguments: { room: this.generateRoomInfoDto(room) },
+        arguments: { room: await this.generateRoomInfoDto(room) },
       }
       this.emitToRoom(room.id, data)
       if (player) {

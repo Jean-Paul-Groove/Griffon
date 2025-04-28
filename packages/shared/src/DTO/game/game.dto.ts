@@ -8,7 +8,8 @@ export class GameInfoDto {
       specs: SpecsDto
       room: RoomInfoDto['id']
       roundDuration: number | null
-      onGoing: boolean
+      onGoing: boolean,
+      scores: GameScoreDto[],
     }
   ) {
     Object.assign(this, props)
@@ -47,7 +48,7 @@ export class SpecsDto {
   pointsMax: number
 }
 
-export class ScoreDto {
+export class RoomScoreDto {
   constructor(
     props: {
       id: string
@@ -62,4 +63,21 @@ export class ScoreDto {
   points: number
   player: PlayerInfoDto['id']
   room: RoomInfoDto['id']
+}
+
+export class GameScoreDto {
+  constructor(
+    props: {
+      id: string
+      points: number
+      player: PlayerInfoDto['id']
+      game: GameInfoDto['id']
+    }
+  ) {
+    Object.assign(this, props)
+  }
+  id: string
+  points: number
+  player: PlayerInfoDto['id']
+  game: GameInfoDto['id']
 }

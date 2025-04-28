@@ -7,6 +7,7 @@ export declare class GameInfoDto {
         room: RoomInfoDto['id'];
         roundDuration: number | null;
         onGoing: boolean;
+        scores: GameScoreDto[];
     });
     id: string;
     specs: SpecsDto;
@@ -36,7 +37,7 @@ export declare class SpecsDto {
     pointStep: number;
     pointsMax: number;
 }
-export declare class ScoreDto {
+export declare class RoomScoreDto {
     constructor(props: {
         id: string;
         points: number;
@@ -47,4 +48,16 @@ export declare class ScoreDto {
     points: number;
     player: PlayerInfoDto['id'];
     room: RoomInfoDto['id'];
+}
+export declare class GameScoreDto {
+    constructor(props: {
+        id: string;
+        points: number;
+        player: PlayerInfoDto['id'];
+        game: GameInfoDto['id'];
+    });
+    id: string;
+    points: number;
+    player: PlayerInfoDto['id'];
+    game: GameInfoDto['id'];
 }

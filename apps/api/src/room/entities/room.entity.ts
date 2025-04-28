@@ -9,7 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm'
 import { Player } from '../../player/entities/player.entity'
-import { Score } from '../../game/entities/score.entity'
 import { Game } from '../../game/entities/game.entity'
 import { Chat } from '../../chat/entities/chat.entity'
 
@@ -27,9 +26,6 @@ export class Room {
 
   @OneToMany(() => Player, (player) => player.room, { orphanedRowAction: 'nullify' })
   players: Player[]
-
-  @OneToMany(() => Score, (score) => score.room, { orphanedRowAction: 'delete' })
-  scores: Score[]
 
   @OneToMany(() => Chat, (message) => message.room, { orphanedRowAction: 'delete' })
   chatMessages: Chat[]

@@ -1,5 +1,5 @@
 import { PlayerInfoDto } from '../player/player.dto';
-import { GameInfoDto, ScoreDto } from '../game/game.dto';
+import { GameInfoDto, RoomScoreDto } from '../game/game.dto';
 export declare class RoomInfoDto {
     constructor(props: {
         id: string;
@@ -7,7 +7,7 @@ export declare class RoomInfoDto {
         players: PlayerInfoDto[];
         limit: number;
         currentGame: GameInfoDto;
-        scores: ScoreDto[];
+        scores: RoomScoreDto[];
         chatMessages: ChatMessageDto[];
     });
     id: string;
@@ -15,7 +15,7 @@ export declare class RoomInfoDto {
     players: PlayerInfoDto[];
     limit: number;
     currentGame: GameInfoDto;
-    scores: ScoreDto[];
+    scores: RoomScoreDto[];
     chatMessages: ChatMessageDto[];
 }
 export declare class ChatMessageDto {

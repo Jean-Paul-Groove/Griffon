@@ -1,5 +1,5 @@
 import { WSE } from "../../WSE";
-import { GameInfoDto, ScoreDto } from "../game";
+import { GameInfoDto, RoomScoreDto } from "../game";
 import { PlayerInfoDto } from "../player";
 import { RoomInfoDto } from "../room";
 import { SocketDto } from "./common";
@@ -47,5 +47,5 @@ export class FailStartGame extends SocketDto {
 }
 export class ScoreListDto extends SocketDto {
     event: WSE.SCORE_LIST
-    arguments: {scores:ScoreDto[]}
+    arguments: {scores:RoomScoreDto[]}
 }

@@ -9,7 +9,6 @@ import {
   GameName,
   PlayerListDto,
   PlayerScoredDto,
-  ScoreListDto,
   StartGameDto,
   TimeLimitDto,
   UploadDrawingDto,
@@ -76,7 +75,12 @@ export class GameService {
       throw new GameNotFoundWsException()
     }
     if (player.id === room.admin.id) {
-      const gameEntity = this.gameRepository.create({ specs: gameSpecs, onGoing: true, room })
+      const gameEntity = this.gameRepository.create({
+        specs: gameSpecs,
+        onGoing: true,
+        room,
+        scores: [],
+      })
       const game = await this.gameRepository.save(gameEntity, { reload: true })
       room.currentGame = game
       await this.roomRepository.save(room, { reload: true })
@@ -199,13 +203,13 @@ export class GameService {
     }
     this.roomService.emitToRoom(room.id, data)
   }
-  async scorePlayerPoints(player: Player, room: Room, points: number, round: Round): Promise<void> {
+  async scorePlayerPoints(player: Player, game: Game, points: number, round: Round): Promise<void> {
     this.logger.debug('SCORE PLAYER POINTS')
     let score = await this.scoreRepository
       .createQueryBuilder('score')
-      .innerJoin('score.room', 'room')
+      .innerJoin('score.game', 'game')
       .innerJoin('score.player', 'player')
-      .where('room.id =:roomId', { roomId: room.id })
+      .where('game.id =:gameId', { gameId: game.id })
       .andWhere('player.id =:playerId', { playerId: player.id })
       .getOne()
     if (score != null) {
@@ -214,7 +218,7 @@ export class GameService {
       await this.scoreRepository.save(score)
     } else {
       this.logger.debug('NO SCORE FOUND WITH ROOM AND PLAYER')
-      const scoreEntity = this.scoreRepository.create({ player, room, points })
+      const scoreEntity = this.scoreRepository.create({ player, game, points })
       score = await this.scoreRepository.save(scoreEntity)
     }
     const playerInfo = this.playerService.generatePlayerInfoDto(
@@ -225,30 +229,11 @@ export class GameService {
       event: WSE.PLAYER_SCORED,
       arguments: { player: playerInfo, points },
     }
-    this.roomService.emitToRoom(room.id, data)
-  }
-  async sendScore(room: Room): Promise<void> {
-    try {
-      const data: ScoreListDto = {
-        event: WSE.SCORE_LIST,
-        arguments: {
-          scores: room.scores
-            ? room.scores.map((score) => ({
-                id: score.id,
-                player: score.player.id,
-                points: score.points,
-                room: room.id,
-              }))
-            : [],
-        },
-      }
-      this.roomService.emitToRoom(room.id, data)
-    } catch (error) {
-      this.logger.error(error)
-    }
+    this.roomService.emitToRoom(game.id, data)
   }
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
-    return (await this.scoreRepository.findOne({ where: { player, room } })).points
+    return (await this.scoreRepository.findOne({ where: { player, game: room.currentGame } }))
+      .points
   }
   async getLastOngoingORound(room: Room): Promise<Round | undefined> {
     if (!room) {
@@ -289,11 +274,16 @@ export class GameService {
         const { pointsMax, pointStep } = room.currentGame.specs
         await this.scorePlayerPoints(
           player,
-          room,
+          room.currentGame,
           pointsMax - currentRound.haveGuessed.length * pointStep,
           currentRound,
         )
-        await this.scorePlayerPoints(currentRound.artists[0], room, pointStep, currentRound)
+        await this.scorePlayerPoints(
+          currentRound.artists[0],
+          room.currentGame,
+          pointStep,
+          currentRound,
+        )
 
         // add player to guesser list
         currentRound.haveGuessed.push(player)
@@ -307,9 +297,25 @@ export class GameService {
     }
   }
   generateGameInfoDto(game: Game): GameInfoDto {
-    this.logger.debug('GENERATEGAMEINFO')
-    const { id, specs, roundDuration, onGoing } = game
-    return new GameInfoDto({ id, specs, roundDuration, onGoing, room: game.room.id })
+    try {
+      this.logger.debug('GENERATEGAMEINFO')
+      const { id, specs, roundDuration, onGoing, scores } = game
+      return new GameInfoDto({
+        id,
+        specs,
+        roundDuration,
+        onGoing,
+        scores: scores.length
+          ? scores.map((score) => ({
+              points: score.points,
+              player: score.player.id,
+            }))
+          : [],
+        room: game.room.id,
+      })
+    } catch (err) {
+      this.logger.error(err)
+    }
   }
   async resetGames(): Promise<void> {
     try {

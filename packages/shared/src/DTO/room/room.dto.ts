@@ -1,5 +1,5 @@
 import { PlayerInfoDto } from '../player/player.dto'
-import { GameInfoDto, ScoreDto } from '../game/game.dto'
+import { GameInfoDto, RoomScoreDto } from '../game/game.dto'
 
 export class RoomInfoDto {
   constructor(
@@ -9,7 +9,7 @@ export class RoomInfoDto {
       players: PlayerInfoDto[],
       limit: number,
       currentGame: GameInfoDto,
-      scores: ScoreDto[],
+      scores: RoomScoreDto[],
       chatMessages: ChatMessageDto[]
     }
   ) {
@@ -20,7 +20,7 @@ export class RoomInfoDto {
   players: PlayerInfoDto[]
   limit: number
   currentGame: GameInfoDto
-  scores: ScoreDto[]
+  scores: RoomScoreDto[]
   chatMessages: ChatMessageDto[]
 }
 

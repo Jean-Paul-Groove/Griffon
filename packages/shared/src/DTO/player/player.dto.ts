@@ -6,7 +6,8 @@ export class PlayerInfoDto {
         isGuest: boolean,
         isArtist:boolean,
         avatar?: string,
-        room?:string
+        room?:string,
+        isPlatformAdmin?:boolean
       }
     ) {
       Object.assign(this, props)
@@ -17,6 +18,7 @@ export class PlayerInfoDto {
   isArtist:boolean
   avatar?: string
   room?:string
+  isPlatformAdmin?:boolean
 }
 
 export class CreateGuestDto {

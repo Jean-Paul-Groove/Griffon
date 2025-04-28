@@ -10,6 +10,7 @@ import {
 import { GameSpecs } from './game.specs.entity'
 import { Round } from './round.entity'
 import { Room } from '../../room/entities/room.entity'
+import { Score } from './score.entity'
 
 @Entity()
 export class Game {
@@ -27,6 +28,9 @@ export class Game {
 
   @Column({ nullable: true })
   roundDuration: number
+
+  @OneToMany(() => Score, (score) => score.game, { orphanedRowAction: 'delete' })
+  scores: Score[]
 
   @Column()
   onGoing: boolean

@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm'
 import { Player } from '../../player/entities/player.entity'
-import { Room } from '../../room/entities/room.entity'
+import { Game } from './game.entity'
 
 @Entity()
 export class Score {
@@ -20,8 +20,8 @@ export class Score {
   @ManyToOne(() => Player, { onDelete: 'CASCADE' })
   player: Player
 
-  @ManyToOne(() => Room, (room) => room.scores, { onDelete: 'CASCADE' })
-  room: Room
+  @ManyToOne(() => Game, (game) => game.scores, { onDelete: 'CASCADE' })
+  game: Game
 
   @CreateDateColumn()
   createdAt: Date
