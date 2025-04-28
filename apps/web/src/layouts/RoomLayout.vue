@@ -1,24 +1,25 @@
 <template>
   <DefaultLayout>
     <ConfirmModal v-if="exitModal" @confirm="handleLeaveRoom" @close="exitModal = false"
-      >Êtes vous sûr de vouloir quitter cette Room ?
+      >Êtes vous sûr de vouloir quitter ce salon ?
     </ConfirmModal>
     <template #header-end>
       <CountDown />
-      <div
+      <button
         v-if="room"
         class="room-layout_disconnect"
-        title="Quitter la Room"
+        title="Quitter le salon"
         @click="exitModal = true"
       >
-        <FontAwesomeIcon
-          class="room-layout_disconnect_icon"
-          :icon="['fas', 'arrow-right-from-bracket']"
-        />
-      </div>
+        <FontAwesomeIcon class="room-layout_disconnect_icon" :icon="['fas', 'door-open']" />
+      </button>
     </template>
     <template #header-start>
-      <div class="room-layout_connexion-status" :class="{ connected: socket?.connected }"></div>
+      <div
+        class="room-layout_connexion-status"
+        :class="{ connected: socket?.connected }"
+        :title="socket?.connected ? 'Connecté' : 'Déconnecté'"
+      />
     </template>
     <div v-if="breakPoint === 'laptop'" class="room-layout laptop">
       <PlayerList />
@@ -94,14 +95,18 @@ watch(
   &_disconnect {
     position: absolute;
     right: 5%;
-    height: 100%;
-    color: var(--main-color);
+    top: 0.1rem;
+    color: var(--secondary-color);
+    padding: 0.3rem;
+    max-height: 3rem;
+    height: 70%;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     &:hover {
-      color: var(--secondary-color);
+      color: white;
+      background-color: var(--secondary-color);
     }
     &_icon {
       height: 70%;
@@ -116,6 +121,7 @@ watch(
     border-radius: 100%;
     &.connected {
       background-color: rgba(34, 207, 34, 0.573);
+      box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.214);
     }
   }
 }

@@ -1,40 +1,33 @@
 <template>
-  <div class="landing">
-    <p v-if="user" class="landing_welcome">Bienvenue {{ user.name }} !</p>
-    <form v-if="user" class="landing_form" @submit="(e) => e.preventDefault()">
-      <h2 class="landing_form_title">Rejoindre un salon</h2>
-      <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
-      <button class="landing_form_button" @click="joinRoom(roomId)">Rejoindre</button>
-      <DividerText color="var(--main-color)" text-color="var(--main-color)" text="ou" />
-      <button class="landing_form_button" @click="createNewRoom">Créer un salon</button>
-      <DividerText
-        v-if="user.room"
-        color="var(--main-color)"
-        text-color="var(--main-color)"
-        text="ou"
-      />
+  <form v-if="user" class="room-manager_form" @submit="(e) => e.preventDefault()">
+    <h2 class="room-manager_form_title">Rejoindre un salon</h2>
 
-      <button v-if="user.room" class="landing_form_button" @click="joinPrevious">
-        Rejoindre le salon précédent
-      </button>
-    </form>
-    <Login v-else />
+    <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
+    <button class="room-manager_form_button" @click="joinRoom(roomId)">Rejoindre</button>
+    <DividerText color="var(--main-color)" text-color="var(--main-color)" text="ou" />
+    <button class="room-manager_form_button" @click="createNewRoom">Créer un salon</button>
+    <DividerText
+      v-if="user.room"
+      color="var(--main-color)"
+      text-color="var(--main-color)"
+      text="ou"
+    />
 
-    <div class="landing_errors">
-      <p v-if="roomIdError && user">{{ roomIdError }}</p>
-    </div>
-  </div>
+    <button v-if="user.room" class="room-manager_form_button" @click="joinPrevious">
+      Rejoindre le salon précédent
+    </button>
+  </form>
 </template>
 
 <script setup lang="ts">
+import DividerText from '../Divider/DividerText.vue'
+import FormInput from '../form/FormInput.vue'
+
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore, useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { WSE } from 'shared'
-import FormInput from '../components/form/FormInput.vue'
-import Login from '../components/Login/LoginForm.vue'
-import DividerText from '../components/Divider/DividerText.vue'
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
@@ -97,7 +90,7 @@ function joinPrevious(): void {
 </script>
 
 <style lang="scss" scoped>
-.landing {
+.room-manager {
   height: 100%;
   width: 100%;
   display: flex;

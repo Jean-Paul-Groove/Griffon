@@ -7,6 +7,7 @@
         :is-current-player="player.id === currentPlayer?.id"
       />
     </li>
+    <li><InvitePlayer v-if="!room.currentGame && room.players.length < room.limit" /></li>
   </ul>
 </template>
 
@@ -14,7 +15,7 @@
 import { useSocketStore } from '../../stores'
 import { storeToRefs } from 'pinia'
 import PlayerCard from './PlayerCard.vue'
-
+import InvitePlayer from './InvitePlayer.vue'
 // Refs
 const { room, currentPlayer } = storeToRefs(useSocketStore())
 

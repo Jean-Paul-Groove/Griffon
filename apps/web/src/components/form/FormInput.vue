@@ -80,7 +80,7 @@ withDefaults(defineProps<{ label?: string; error?: boolean; type?: string }>(), 
     max-width: calc(100% - 2rem);
     flex-wrap: nowrap;
     max-height: 50%;
-    z-index: 1000;
+    z-index: 10;
   }
 }
 </style>

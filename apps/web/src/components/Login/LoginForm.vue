@@ -46,7 +46,7 @@ import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../../stores'
 import axios, { AxiosError } from 'axios'
 import FormInput from '../form/FormInput.vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useToast } from '../../composables/useToast'
 
 // Composables
@@ -54,6 +54,7 @@ const { user } = storeToRefs(useAuthStore())
 const { setToken } = useAuthStore()
 const $toast = useToast()
 const $route = useRoute()
+const $router = useRouter()
 // Constants
 const apiUrl = import.meta.env.VITE_API_ADDRESS
 const tabs = ['guest', 'connexion']
@@ -132,6 +133,7 @@ async function login(e: Event): Promise<void> {
       checkForErrors.value = false
       if (jwt) {
         setToken(jwt)
+        $router.push({ name: 'Accueil' })
       }
     }
   } catch {

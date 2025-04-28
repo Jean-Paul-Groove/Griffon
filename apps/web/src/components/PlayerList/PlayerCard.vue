@@ -1,6 +1,6 @@
 <template>
   <div class="player-card" @click="handleClick">
-    <img class="player-card_avatar" :src="player.avatar || defaultAvatar" alt="" />
+    <img class="player-card_avatar" :src="avatar" alt="avatar" />
     <div class="player-card_info">
       <span class="player-card_info_name">
         <FontAwesomeIcon v-if="isAdmin" icon="crown" />
@@ -35,7 +35,7 @@ import type { PlayerInfoDto } from 'shared'
 import pen from '@/assets/logos/pen.webp'
 import { useSocketStore } from '../../stores'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
 import defaultAvatar from '../../assets/avatar/default-avatar.webp'
@@ -46,11 +46,18 @@ interface PlayerCardProp {
 }
 const { getUserPoints, excludePlayer } = useSocketStore()
 const { isAdmin: currentPlayerAdmin } = storeToRefs(useSocketStore())
-defineProps<PlayerCardProp>()
+const props = defineProps<PlayerCardProp>()
 
+// Constants
+const apiUrl = import.meta.env.VITE_API_ADDRESS
 // Refs
 const optionDisplayed = ref<boolean>(false)
 const excludeModal = ref<boolean>(false)
+
+// Computeds
+const avatar = computed<string>(() => {
+  return props.player.avatar ? apiUrl + '/' + props.player.avatar : defaultAvatar
+})
 
 // Functions
 function handleClick(): void {

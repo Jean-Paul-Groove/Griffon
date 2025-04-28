@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory, type RouteLocationRaw } from 'vue-router'
-import { BaseLayout, RoomLayout } from '@/layouts'
-import { LandingView, GameView, NotFound, LobbyView } from '@/views'
+import { GameView, NotFound, LobbyView } from '@/views'
 import { useAuthStore, useSocketStore } from '../stores'
 import { useToast } from 'vue-toast-notification'
 import RegisterView from '../views/RegisterView.vue'
+import HomeView from '../views/HomeView.vue'
+import RoomLayout from '../layouts/RoomLayout.vue'
+import UserLayout from '../layouts/UserLayout.vue'
+import LoginView from '../views/LoginView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,22 +14,31 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: BaseLayout,
+      component: UserLayout,
       children: [
         {
           path: '/',
           name: 'Accueil',
-          component: LandingView,
+          component: HomeView,
           beforeEnter: (): RouteLocationRaw | undefined => {
             const { token } = useAuthStore()
             const { room } = useSocketStore()
-            if (token !== null && room?.id) {
-              return { name: 'Lobby', params: { roomId: room.id } }
+            if (token !== null) {
+              if (room?.id != null) {
+                return { name: 'Lobby', params: { roomId: room.id } }
+              }
+            } else {
+              return { name: 'Connexion' }
             }
           },
         },
         {
-          path: 'register',
+          path: '/notFound',
+          name: 'Page introuvable',
+          component: NotFound,
+        },
+        {
+          path: '/register',
           name: 'Inscription',
           component: RegisterView,
           beforeEnter: (): RouteLocationRaw | undefined => {
@@ -37,16 +49,20 @@ const router = createRouter({
             }
           },
         },
-      ],
-    },
-    {
-      path: '/notFound',
-      component: BaseLayout,
-      children: [
         {
-          path: '/',
-          name: 'Page introuvable',
-          component: NotFound,
+          path: '/login',
+          name: 'Connexion',
+          component: LoginView,
+          beforeEnter: (): RouteLocationRaw | undefined => {
+            console.log('BEFORE ENTERING LOGIN')
+            const { token } = useAuthStore()
+            const { room } = useSocketStore()
+            if (token !== null) {
+              if (room?.id != null) {
+                return { name: 'Lobby', params: { roomId: room.id } }
+              } else return { name: 'Accueil' }
+            }
+          },
         },
       ],
     },
@@ -85,7 +101,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.name === 'Accueil' || to.name === 'Inscription') {
+  console.log(to)
+  if (to.name === 'Accueil' || to.name === 'Inscription' || to.name === 'Connexion') {
     return true
   }
   const { token, setRequestedRoom } = useAuthStore()
@@ -95,7 +112,7 @@ router.beforeEach((to) => {
       setRequestedRoom(to.params.roomId)
       $toast.info('Connectez vous avant de rejoindre un salon', { position: 'top' })
     }
-    return { name: 'Accueil' }
+    return { name: 'Connexion' }
   }
 })
 

@@ -1,47 +1,49 @@
 <template>
-  <form class="sign-in-form">
-    <FormInput v-model="username" :error="errors.username != null" label="Pseudo" />
-    <FormInput
-      v-model="password"
-      type="password"
-      :error="errors.password != null"
-      label="Mot de passe"
-    />
-    <FormInput
-      v-model="confirmPassword"
-      type="password"
-      :error="errors.confirmPassword != null"
-      label="Confirmation"
-    />
-    <FormInput v-model="email" type="email" :error="errors.email != null" label="Email" />
-    <label for="avatar-input">
-      Avatar:
-      <input
-        id="avatar-input"
-        type="file"
-        accept="image/jpg,image/jpeg, image/png,image/webp"
-        capture
-        @change="onFileChanged"
+  <div>
+    <form class="sign-in-form">
+      <FormInput v-model="username" :error="errors.username != null" label="Pseudo" />
+      <FormInput
+        v-model="password"
+        type="password"
+        :error="errors.password != null"
+        label="Mot de passe"
       />
-      <button v-if="file" title="Supprimer le fichier" @click="handleDeleteFile">
-        <FontAwesomeIcon icon="xmark" />
-      </button>
-    </label>
-    <button class="sign-in-form_button" @click="registerUser">Inscription</button>
-    <DividerText color="var(--main-color)" text-color="var(--main-color)" text="Aperçu" />
-    <PlayerCard :player="playerInfo" :is-admin="false" :is-current-player="true" />
-    <div class="sign-in-form_errors">
-      <p
-        v-for="(error, index) of errors"
-        :key="index"
-        :style="{ display: error ? 'initial' : 'none' }"
-      >
-        {{ error }}
-      </p>
-    </div>
+      <FormInput
+        v-model="confirmPassword"
+        type="password"
+        :error="errors.confirmPassword != null"
+        label="Confirmation"
+      />
+      <FormInput v-model="email" type="email" :error="errors.email != null" label="Email" />
+      <label for="avatar-input">
+        Avatar:
+        <input
+          id="avatar-input"
+          type="file"
+          accept="image/jpg,image/jpeg, image/png,image/webp"
+          capture
+          @change="onFileChanged"
+        />
+        <button v-if="file" title="Supprimer le fichier" @click="handleDeleteFile">
+          <FontAwesomeIcon icon="xmark" />
+        </button>
+      </label>
+      <button class="sign-in-form_button" @click="registerUser">Inscription</button>
+      <DividerText color="var(--main-color)" text-color="var(--main-color)" text="Aperçu" />
+      <PlayerCard :player="playerInfo" :is-admin="false" :is-current-player="true" />
+      <div class="sign-in-form_errors">
+        <p
+          v-for="(error, index) of errors"
+          :key="index"
+          :style="{ display: error ? 'initial' : 'none' }"
+        >
+          {{ error }}
+        </p>
+      </div>
 
-    <RouterLink class="sign-in-form_link" to="/">Déjà inscrit ? Connectez vous !</RouterLink>
-  </form>
+      <RouterLink class="sign-in-form_link" to="/login">Déjà inscrit ? Connectez vous !</RouterLink>
+    </form>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -178,23 +180,20 @@ async function registerUser(e: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .sign-in-form {
-  margin-top: 2rem;
   display: flex;
   flex-direction: column;
   max-width: 30rem;
+  margin: auto;
   justify-content: center;
   align-items: center;
-  margin: 5rem auto;
   gap: 0.5rem;
-  height: fit-content;
   padding: 1.5rem 1rem;
   border-radius: 0.5rem;
   box-shadow: var(--light-shadow);
   background-color: white;
   position: relative;
   color: var(--main-color);
-  max-height: 100%;
-  overflow-y: auto;
+  height: fit-content;
   &_errors {
     display: flex;
     flex-direction: column;

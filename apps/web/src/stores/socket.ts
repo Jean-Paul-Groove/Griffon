@@ -15,7 +15,7 @@ import {
   PlayerListDto,
   PlayerScoredDto,
   RoomStateDto,
-  ScoreDto,
+  RoomScoreDto,
   ScoreListDto,
   StartGameDto,
   TimeLimitDto,
@@ -76,7 +76,7 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.FAIL_JOIN_ROOM]: (data: FailJoinRoomDto['arguments']): void => {
       if (data) {
         // Redirige vers la page d'accueil si n'y est pas déjà
-        if ($route.name !== 'Accueil') {
+        if ($route.name !== 'Accueil' && user.value) {
           $router.replace({ name: 'Accueil' })
         }
         // Toast d'erreur
@@ -111,6 +111,7 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.START_GAME]: (data: StartGameDto['arguments']) => {
       if (data && room.value) {
+        console.log(data)
         room.value.currentGame = data.game
         systemMessage(`Une partie de ${data.game.specs.title} commence !`)
       }
@@ -213,6 +214,7 @@ export const useSocketStore = defineStore('socket', () => {
       }
       // Redirect to game
       if (game != null && room.value?.id != null && currentRoute != game) {
+        console.log('redirecting to game')
         $router.replace({ name: game, params: { roomId: room.value.id } })
       }
     },
@@ -221,7 +223,11 @@ export const useSocketStore = defineStore('socket', () => {
     () => room.value,
     () => {
       if (room.value === null) {
-        $router.replace({ name: 'Accueil' })
+        if (user.value === null) {
+          $router.replace({ name: 'Connexion' })
+        } else {
+          $router.replace({ name: 'Accueil' })
+        }
       }
     },
   )
@@ -306,7 +312,7 @@ export const useSocketStore = defineStore('socket', () => {
       }
     }
   }
-  function updateScores(scores: ScoreDto[]): void {
+  function updateScores(scores: RoomScoreDto[]): void {
     if (room.value) {
       room.value.scores = [...scores]
     }
@@ -354,7 +360,7 @@ export const useSocketStore = defineStore('socket', () => {
     countDown.value = countDownDuration
     cdDuration.value = countDownDuration
     const id = setInterval(() => {
-      if (!countDown.value || countDown.value === 0 || timeLimit.value === null) {
+      if (!countDown.value || countDown.value <= 0 || timeLimit.value === null) {
         endCountDown()
         return
       }
@@ -372,7 +378,7 @@ export const useSocketStore = defineStore('socket', () => {
       return room.value.players.find((player) => player.id === id)
     }
   }
-  function getUserPoints(id: string): ScoreDto | undefined {
+  function getUserPoints(id: string): RoomScoreDto | undefined {
     if (room.value) {
       return room.value.scores.find((score) => score.player === id)
     }

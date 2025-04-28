@@ -28,11 +28,12 @@ const emit = defineEmits<{
     display: flex;
     justify-content: center;
     z-index: 10;
+    padding: 1rem;
     padding-top: 15%;
   }
   &_content {
     height: fit-content;
-    min-width: 20rem;
+    min-width: 15rem;
     background-color: white;
     border-radius: 1rem;
     display: flex;
