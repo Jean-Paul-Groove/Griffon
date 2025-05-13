@@ -59,11 +59,11 @@ watch(
     box-sizing: border-box;
     overflow: hidden;
     aspect-ratio: 1.4;
-    background-color: var(--light-bg);
-    box-shadow: var(--inside-shadow);
+    background-color: $light-bg;
+    box-shadow: $inside-shadow;
     &_img {
-      background-color: var(--light-bg);
-      box-shadow: var(--inside-shadow);
+      background-color: $light-bg;
+      box-shadow: $inside-shadow;
       display: block;
       height: 100%;
       max-width: 100%;

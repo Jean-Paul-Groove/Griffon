@@ -40,7 +40,7 @@ withDefaults(defineProps<{ label?: string; error?: boolean; type?: string }>(), 
   height: 3rem;
   justify-content: flex-end;
   width: 100%;
-  color: var(--main-color);
+  color: $main-color;
   &_input {
     background-color: rgba(255, 255, 255, 0.686);
     outline: none;
@@ -51,16 +51,16 @@ withDefaults(defineProps<{ label?: string; error?: boolean; type?: string }>(), 
     text-align: center;
     border: 0.1rem solid lightgray;
     &:focus {
-      outline: 0.2rem solid var(--main-color);
+      outline: 0.2rem solid $main-color;
       border-color: rgba(255, 255, 255, 0);
       box-shadow: none;
     }
     &.error {
-      outline: 0.2rem solid var(--secondary-color);
+      outline: 0.2rem solid $secondary-color;
       box-shadow: none;
       border-color: rgba(255, 255, 255, 0);
       & ~ .form-input_label {
-        color: var(--secondary-color);
+        color: $secondary-color;
       }
     }
     &:focus ~ .form-input_label {

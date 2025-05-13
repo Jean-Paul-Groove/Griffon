@@ -333,8 +333,8 @@ const debouncedSendDrawing = debounce(sendDrawing, 100, { immediate: true })
   box-sizing: border-box;
   overflow: hidden;
   aspect-ratio: 1.4;
-  background-color: var(--light-bg);
-  box-shadow: var(--inside-shadow);
+  background-color: $light-bg;
+  box-shadow: $inside-shadow;
   max-height: 100%;
   width: 100%;
   max-width: 600px;

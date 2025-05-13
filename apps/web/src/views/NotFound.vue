@@ -18,16 +18,16 @@ const $router = useRouter()
   justify-content: start;
   align-items: center;
   gap: 5rem;
-  color: var(--secondary-color);
+  color: $secondary-color;
   font-size: 2rem;
   width: 100%;
   height: 100%;
   &_back {
     padding: 0.5rem 1rem;
     background-color: white;
-    color: var(--main-color);
+    color: $main-color;
     border-radius: 0.3rem;
-    box-shadow: var(--light-shadow);
+    box-shadow: $light-shadow;
     text-decoration: none;
     &:hover {
       box-shadow: none;

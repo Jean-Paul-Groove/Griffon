@@ -15,10 +15,11 @@ import {
   PlayerListDto,
   PlayerScoredDto,
   RoomStateDto,
-  RoomScoreDto,
+  ScoreDto,
   ScoreListDto,
   StartGameDto,
   TimeLimitDto,
+  UserRole,
   WordToDrawDto,
   WSE,
   type PlayerInfoDto,
@@ -43,7 +44,7 @@ export const useSocketStore = defineStore('socket', () => {
   const SYSTEM: PlayerInfoDto = {
     id: 'SYSTEM',
     name: 'Griffon',
-    isGuest: false,
+    role: UserRole.ADMIN,
     isArtist: false,
   }
   const SYSTEM_ID = -1
@@ -60,7 +61,7 @@ export const useSocketStore = defineStore('socket', () => {
         resetToken()
       }
     },
-    [WSE.NEW_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
+    [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
         addMessage(data.chatMessage)
       }
@@ -293,8 +294,7 @@ export const useSocketStore = defineStore('socket', () => {
       content,
       sender: SYSTEM.id,
       sentAt: new Date(),
-      id: -1,
-      room: room.value?.id,
+      id: '-1',
     })
   }
   function setWordToDraw(word: string): void {
@@ -312,7 +312,7 @@ export const useSocketStore = defineStore('socket', () => {
       }
     }
   }
-  function updateScores(scores: RoomScoreDto[]): void {
+  function updateScores(scores: ScoreDto[]): void {
     if (room.value) {
       room.value.scores = [...scores]
     }
@@ -326,10 +326,8 @@ export const useSocketStore = defineStore('socket', () => {
       score.points += partialScore.points
     } else {
       room.value.scores.push({
-        id: '',
         points: partialScore.points,
         player: partialScore.player.id,
-        room: room.value.id,
       })
     }
   }
@@ -378,7 +376,7 @@ export const useSocketStore = defineStore('socket', () => {
       return room.value.players.find((player) => player.id === id)
     }
   }
-  function getUserPoints(id: string): RoomScoreDto | undefined {
+  function getUserPoints(id: string): ScoreDto | undefined {
     if (room.value) {
       return room.value.scores.find((score) => score.player === id)
     }
@@ -407,6 +405,16 @@ export const useSocketStore = defineStore('socket', () => {
       console.log(error)
     }
   }
+  function addFriend(playerId: string): void {
+    try {
+      if (!socket.value || !isAdmin.value) {
+        return
+      }
+      socket.value.emit(WSE.ASK_ADD_FRIEND, { playerId })
+    } catch (error) {
+      console.log(error)
+    }
+  }
   return {
     socket,
     room,
@@ -422,5 +430,6 @@ export const useSocketStore = defineStore('socket', () => {
     getUserPoints,
     leaveRoom,
     excludePlayer,
+    addFriend,
   }
 })

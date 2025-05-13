@@ -46,23 +46,19 @@ function handleDisconnect(): void {
 
 <style lang="scss" scoped>
 .user-layout {
-  gap: 0.2rem;
-  padding: 0.4rem;
-  max-height: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-rows: (60% 40%);
-  grid-template-columns: 1fr;
   &_router {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
     max-height: 100%;
     overflow-y: auto;
-    margin-top: 2rem;
   }
   &_disconnect {
     position: absolute;
     right: 5%;
     top: 0.1rem;
-    color: var(--secondary-color);
+    color: $secondary-color;
     padding: 0.3rem;
     max-height: 3rem;
     height: 70%;
@@ -72,38 +68,7 @@ function handleDisconnect(): void {
     align-items: center;
     &:hover {
       color: white;
-      background-color: var(--secondary-color);
-    }
-  }
-}
-
-.user-layout.laptop {
-  grid-template-columns: (20% 60% 20%);
-  grid-template-rows: 1fr;
-}
-.user-layout_router.laptop {
-  border-left-width: 0.1rem;
-  border-right-width: 0.1rem;
-  border-top-width: 0px;
-  border-bottom-width: 0px;
-}
-.user-layout_conbined-view {
-  position: relative;
-  height: 100%;
-  display: flex;
-  width: 100%;
-  justify-content: center;
-  &_button-container {
-    position: absolute;
-    display: flex;
-    gap: 0.5rem;
-    left: 0.5rem;
-    top: -2.5rem;
-    button {
-      &.selected {
-        background-color: var(--main-color);
-        color: white;
-      }
+      background-color: $secondary-color;
     }
   }
 }

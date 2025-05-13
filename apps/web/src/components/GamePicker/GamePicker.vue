@@ -22,15 +22,13 @@ import { WSE } from 'shared'
 import axios from 'axios'
 import { useToast } from '../../composables/useToast'
 import type { GameSpecs } from '../GameCard/types/gameSpecs'
+import { apiUrl } from '../../helpers'
 
 // Refs
 const games = ref<GameSpecs[]>([])
 // Stores
 const socketStore = useSocketStore()
 const { socket } = storeToRefs(socketStore)
-
-// Constants
-const apiUrl = import.meta.env.VITE_API_ADDRESS
 
 // Composables
 const $toast = useToast()
@@ -47,6 +45,7 @@ async function getAvailableGames(): Promise<void> {
     games.value = response.data
     console.log('GETTING AVAILABLE GAMES')
     console.log(games.value)
+    console.log(response)
   } catch (err) {
     console.log(err)
 

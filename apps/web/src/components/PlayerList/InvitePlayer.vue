@@ -20,7 +20,7 @@ function copyRoomLink(): void {
 
 <style scoped lang="scss">
 .invite-player {
-  color: var(--main-color);
+  color: $main-color;
   width: 100%;
   display: flex;
   justify-content: center;

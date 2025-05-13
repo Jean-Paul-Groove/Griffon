@@ -1,5 +1,5 @@
 <template>
-  <main class="layout">
+  <div class="layout">
     <HeaderLayout class="layout_header">
       <template #header-start>
         <slot name="header-start" />
@@ -12,7 +12,7 @@
       <slot></slot>
     </main>
     <FooterLayout class="layout_footer" />
-  </main>
+  </div>
 </template>
 
 <script setup lang="ts">

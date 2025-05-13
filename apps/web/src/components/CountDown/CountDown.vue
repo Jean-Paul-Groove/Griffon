@@ -11,7 +11,7 @@ const { countDown } = storeToRefs(useSocketStore())
 
 <style lang="scss">
 .countdown {
-  color: var(--secondary-color);
+  color: $secondary-color;
   font-weight: bolder;
   font-size: large;
   display: flex;
@@ -23,6 +23,6 @@ const { countDown } = storeToRefs(useSocketStore())
   padding: 0.1rem;
   background-color: white;
   border-radius: 100%;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid $secondary-color;
 }
 </style>

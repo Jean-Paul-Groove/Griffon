@@ -29,7 +29,7 @@
         </button>
       </label>
       <button class="sign-in-form_button" @click="registerUser">Inscription</button>
-      <DividerText color="var(--main-color)" text-color="var(--main-color)" text="Aperçu" />
+      <DividerText color="$main-color" text-color="$main-color" text="Aperçu" />
       <PlayerCard :player="playerInfo" :is-admin="false" :is-current-player="true" />
       <div class="sign-in-form_errors">
         <p
@@ -53,9 +53,10 @@ import FormInput from '../components/form/FormInput.vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast'
 import PlayerCard from '../components/PlayerList/PlayerCard.vue'
-import { PlayerInfoDto } from 'shared'
+import { PlayerInfoDto, UserRole } from 'shared'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DividerText from '../components/Divider/DividerText.vue'
+import { apiUrl } from '../helpers'
 // Types
 interface SignInErrors {
   username: null | string
@@ -69,7 +70,6 @@ const $toast = useToast()
 const $router = useRouter()
 
 // Constants
-const apiUrl = import.meta.env.VITE_API_ADDRESS
 const strongPasswordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[#?!@$%^&*-]).{8,}$/
 const emailPattern = /^[a-zà-ú-.]+@([\w-]+\.)+[\w-]{2,4}$/
 const acceptedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
@@ -119,7 +119,7 @@ const playerInfo = computed<PlayerInfoDto>(() => {
     id: 'preview',
     avatar: fileUrl.value || '',
     isArtist: false,
-    isGuest: false,
+    role: UserRole.REGISTERED_USER,
     name: username.value,
   })
 })
@@ -164,6 +164,7 @@ async function registerUser(e: Event): Promise<void> {
           password: password.value,
           email: email.value,
         })
+        $toast.success('Bienvenue chez les Griffoneurs !')
       }
       $router.push('/?tab=connexion')
     }
@@ -189,20 +190,20 @@ async function registerUser(e: Event): Promise<void> {
   gap: 0.5rem;
   padding: 1.5rem 1rem;
   border-radius: 0.5rem;
-  box-shadow: var(--light-shadow);
+  box-shadow: $light-shadow;
   background-color: white;
   position: relative;
-  color: var(--main-color);
+  color: $main-color;
   height: fit-content;
   &_errors {
     display: flex;
     flex-direction: column;
-    color: var(--secondary-color);
+    color: $secondary-color;
     gap: 0.3rem;
   }
   &_button {
     color: white;
-    background-color: var(--main-color);
+    background-color: $main-color;
     &:hover {
       box-shadow: none;
     }
@@ -211,7 +212,7 @@ async function registerUser(e: Event): Promise<void> {
     max-width: 50%;
   }
   &_link {
-    color: var(--main-color);
+    color: $main-color;
     text-decoration: none;
     &:hover {
       text-decoration: underline;

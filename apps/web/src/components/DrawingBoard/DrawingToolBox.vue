@@ -167,7 +167,7 @@ function setTool(newTool: DrawingTool): void {
     transform: scale(0.99);
     &:hover {
       transform: scale(1.1);
-      -webkit-text-stroke-color: var(--main-color);
+      -webkit-text-stroke-color: $main-color;
     }
     &:disabled {
       opacity: 0.2;
@@ -175,8 +175,8 @@ function setTool(newTool: DrawingTool): void {
     &_svg {
       width: 2rem;
       :hover {
-        stroke: var(--main-color);
-        fill: var(--main-color);
+        stroke: $main-color;
+        fill: $main-color;
       }
     }
   }

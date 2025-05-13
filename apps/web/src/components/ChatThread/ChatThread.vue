@@ -1,46 +1,54 @@
 <template>
-  <div v-if="chatMessages !== null && currentPlayer?.id" class="game-chat">
-    <div ref="thread" class="game-chat_thread">
-      <ChatMessage
-        v-for="(message, index) in chatMessages"
-        :key="'message-' + index"
-        :message="message"
-        :player-id="currentPlayer.id"
-      />
-    </div>
-    <form class="game-chat_form" @submit="(e) => sendMessage(e)">
-      <textarea
-        id="chat-message"
-        v-model="chatMessage"
-        class="game-chat_form_textarea"
-        name="chat-message"
-        @keydown="sendOnEnter"
-      ></textarea>
-      <button class="game-chat_form_submit" title="Envoyer">
-        <FontAwesomeIcon icon="envelope" />
-      </button>
-    </form>
+  <div v-if="user !== null" ref="thread" class="chat_thread">
+    <ChatMessage
+      v-for="message in sortedMessages"
+      :key="'message-' + message.id"
+      :message="message"
+      :player-id="user.id"
+    />
   </div>
+  <form class="chat_form" @submit="send">
+    <textarea
+      id="chat-message"
+      v-model="chatMessage"
+      class="chat_form_textarea"
+      name="chat-message"
+      @keydown="sendOnEnter"
+    ></textarea>
+    <button class="chat_form_submit" title="Envoyer">
+      <FontAwesomeIcon icon="envelope" />
+    </button>
+  </form>
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, useTemplateRef, watch } from 'vue'
-import { useSocketStore } from '../../stores'
-import { WSE } from 'shared'
-import { storeToRefs } from 'pinia'
+import { ChatMessageDto } from 'shared'
 import ChatMessage from './ChatMessage.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '../../stores'
 
+const props = defineProps<{
+  chatMessages: Array<ChatMessageDto & { seen?: boolean }>
+  sendMessage: (text: string) => void
+}>()
+
+const chatMessage = ref<string>('')
 // Stores
-const socketStore = useSocketStore()
+const { user } = storeToRefs(useAuthStore())
 // Refs
 const thread = useTemplateRef('thread')
-const chatMessage = ref<string>('')
-const { socket, chatMessages, currentPlayer } = storeToRefs(socketStore)
 
+// Computeds
+const sortedMessages = computed<Array<ChatMessageDto & { seen?: boolean }>>(() => {
+  return [...props.chatMessages].sort(
+    (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
+  )
+})
 // Watchers
 watch(
-  () => chatMessages.value,
+  () => props.chatMessages,
   async () => {
     await nextTick()
     if (!thread.value) return
@@ -48,14 +56,8 @@ watch(
   },
   { immediate: true, deep: true },
 )
+
 // Functions
-function sendMessage(e: Event | KeyboardEvent): void {
-  e.preventDefault()
-  if (chatMessage.value.trim() !== '' && socket.value !== null) {
-    socket.value.emit(WSE.NEW_MESSAGE, { message: chatMessage.value })
-    chatMessage.value = ''
-  }
-}
 function sendOnEnter(e: KeyboardEvent): void {
   if (e.key !== 'Enter') {
     return
@@ -63,12 +65,17 @@ function sendOnEnter(e: KeyboardEvent): void {
   if (e.shiftKey) {
     return
   }
-  sendMessage(e)
+  send(e)
+}
+function send(e: Event | KeyboardEvent): void {
+  e.preventDefault()
+  props.sendMessage(chatMessage.value)
+  chatMessage.value = ''
 }
 </script>
 
 <style lang="scss" scoped>
-.game-chat {
+.chat {
   width: 100%;
   background-color: rgba(0, 0, 0, 0.13);
   display: flex;
@@ -101,7 +108,7 @@ function sendOnEnter(e: KeyboardEvent): void {
       border-top-left-radius: 0.4rem;
       border-bottom-left-radius: 0.4rem;
       &:focus {
-        outline: ridge 0.1rem var(--secondary-color);
+        outline: ridge 0.1rem $secondary-color;
       }
     }
     &_submit {

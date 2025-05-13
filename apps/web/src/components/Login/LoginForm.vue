@@ -46,17 +46,16 @@ import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../../stores'
 import axios, { AxiosError } from 'axios'
 import FormInput from '../form/FormInput.vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useToast } from '../../composables/useToast'
+import { apiUrl } from '../../helpers'
 
 // Composables
 const { user } = storeToRefs(useAuthStore())
 const { setToken } = useAuthStore()
 const $toast = useToast()
 const $route = useRoute()
-const $router = useRouter()
 // Constants
-const apiUrl = import.meta.env.VITE_API_ADDRESS
 const tabs = ['guest', 'connexion']
 //Refs
 const checkForErrors = ref(false)
@@ -71,19 +70,19 @@ const guestNameErrors = computed<null | string>(() => {
   if (!checkForErrors.value) {
     return null
   }
-  return guestName.value.trim() === '' ? 'Veuiller entrer un email valide' : null
+  return guestName.value.trim() === '' ? 'Veuiller entrer un pseudo valide' : null
 })
 const emailError = computed<null | string>(() => {
   if (!checkForErrors.value) {
     return null
   }
-  return email.value.trim() === '' ? 'Veuiller entrer mot de passe' : null
+  return email.value.trim() === '' ? 'Veuiller entrer email' : null
 })
 const passwordError = computed<null | string>(() => {
   if (!checkForErrors.value) {
     return null
   }
-  return password.value.trim() === '' ? 'Veuiller entrer un pseudo valide' : null
+  return password.value.trim() === '' ? 'Veuillez entrer un mot de passe' : null
 })
 // Watchers
 watch(
@@ -133,7 +132,6 @@ async function login(e: Event): Promise<void> {
       checkForErrors.value = false
       if (jwt) {
         setToken(jwt)
-        $router.push({ name: 'Accueil' })
       }
     }
   } catch {
@@ -144,17 +142,13 @@ async function login(e: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .login-form {
+  @include white-card;
+  color: $main-color;
   margin-top: 2rem;
-  display: flex;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: var(--light-shadow);
-  background-color: white;
   position: relative;
-  color: var(--main-color);
   &_button {
     color: white;
-    background-color: var(--main-color);
+    background-color: $main-color;
     &:hover {
       box-shadow: none;
     }
@@ -162,7 +156,7 @@ async function login(e: Event): Promise<void> {
   &_errors {
     display: flex;
     flex-direction: column;
-    color: var(--secondary-color);
+    color: $secondary-color;
     gap: 0.3rem;
   }
   &_tabs {
@@ -186,7 +180,7 @@ async function login(e: Event): Promise<void> {
       border-top-right-radius: 0.5rem;
       border: 0.05rem solid rgba(211, 211, 211, 0);
       border-bottom: none;
-      color: var(--main-color);
+      color: $main-color;
       background-color: rgb(245, 245, 240);
       width: 100%;
       cursor: pointer;
@@ -203,7 +197,7 @@ async function login(e: Event): Promise<void> {
     gap: 1rem;
   }
   &_link {
-    color: var(--main-color);
+    color: $main-color;
     text-decoration: none;
     &:hover {
       text-decoration: underline;

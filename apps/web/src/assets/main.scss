@@ -7,27 +7,23 @@
   src: url('./fonts/MANUSCRIPT.otf') format('opentype');
 }
 
+@font-face {
+  font-family: 'RandomWednesday';
+  src: url('./fonts/Random_Wednesday.ttf') ;
+}
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 body {
-  font-family: 'Manuscript';
+  font-family: $global-font;
   height: 100vh;
   background-color: black;
-  --main-color: #da9f13;
-  --secondary-color: rgb(207, 81, 81);
-  --light-bg: rgba(250, 250, 250, 0.233);
-  --inside-shadow: inset 0 0 10px 1px rgba(128, 128, 128, 0.192);
-  --title-font:'Brush-king';
-  --global-font:'Manuscript';
-  --light-shadow: 1px 1px 5px rgba(0, 0, 0, 0.486);
-
 }
 h1 {
-  font-family: var(--title-font);
-  color: var(--main-color);
+  font-family: $title-font;
+  color: $main-color;
 }
 #app {
   width: 100%;
@@ -39,17 +35,18 @@ h1 {
   height: 100%;
 }
 button {
-  font-family: var(--global-font);
+  font-family: $global-font;
   cursor: pointer;
   font-weight: bold;
   padding: 0.5rem;
   background-color: white;
-  color: var(--main-color);
+  color: $main-color;
   border: none;
   border-radius: 0.3rem;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.432);
   &:hover {
-    background-color: var(--main-color);
+    background-color: $main-color;
     color: white;
   }
 }
+

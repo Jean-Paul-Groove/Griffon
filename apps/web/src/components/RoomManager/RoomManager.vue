@@ -4,12 +4,12 @@
 
     <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
     <button class="room-manager_form_button" @click="joinRoom(roomId)">Rejoindre</button>
-    <DividerText color="var(--main-color)" text-color="var(--main-color)" text="ou" />
+    <DividerText color="$main-color" text-color="$main-color" text="ou" />
     <button class="room-manager_form_button" @click="createNewRoom">Créer un salon</button>
     <DividerText
       v-if="user.room"
-      color="var(--main-color)"
-      text-color="var(--main-color)"
+      color="$main-color"
+      text-color="$main-color"
       text="ou"
     />
 
@@ -100,7 +100,7 @@ function joinPrevious(): void {
   margin-top: 5rem;
   align-items: center;
   &_welcome {
-    color: var(--main-color);
+    color: $main-color;
     font-size: 2rem;
     font-weight: bold;
   }
@@ -113,22 +113,22 @@ function joinPrevious(): void {
     padding: 1rem;
     min-width: 300px;
     border-radius: 0.5rem;
-    box-shadow: var(--light-shadow);
+    box-shadow: $light-shadow;
     background-color: white;
     position: relative;
-    color: var(--main-color);
+    color: $main-color;
     &_title {
-      color: var(--main-color);
+      color: $main-color;
       text-align: center;
     }
     &_button {
-      color: var(--main-color);
+      color: $main-color;
       background-color: white;
-      border: 1px solid var(--main-color);
+      border: 1px solid $main-color;
       &:hover {
         box-shadow: none;
         color: white;
-        background-color: var(--main-color);
+        background-color: $main-color;
       }
     }
   }
@@ -137,7 +137,7 @@ function joinPrevious(): void {
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
-    color: var(--secondary-color);
+    color: $secondary-color;
     font-weight: bold;
   }
 }

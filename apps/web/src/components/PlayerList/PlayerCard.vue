@@ -1,5 +1,5 @@
 <template>
-  <div class="player-card" @click="handleClick">
+  <article class="player-card" @click="handleClick">
     <img class="player-card_avatar" :src="avatar" alt="avatar" />
     <div class="player-card_info">
       <span class="player-card_info_name">
@@ -21,44 +21,65 @@
     >
       <FontAwesomeIcon icon="user-xmark" />
     </button>
+    <button
+      v-if="canAddAsFriend && optionDisplayed"
+      title="Ajouter en ami"
+      class="player-card_add"
+      @click="handleAddFriend"
+    >
+      <FontAwesomeIcon icon="user-plus" />
+    </button>
     <ConfirmModal
       v-if="excludeModal"
       @close="excludeModal = false"
       @confirm="excludePlayer(player.id)"
       >Voulez-vous vraiment exclure ce joueur ?
     </ConfirmModal>
-  </div>
+    <ConfirmModal
+      v-if="addFriendModal"
+      @close="addFriendModal = false"
+      @confirm="addFriend(player.id)"
+      >Voulez-vous ajouter {{ player.name }} comme ami ?
+    </ConfirmModal>
+  </article>
 </template>
 
 <script setup lang="ts">
-import type { PlayerInfoDto } from 'shared'
+import { UserRole, type PlayerInfoDto } from 'shared'
 import pen from '@/assets/logos/pen.webp'
-import { useSocketStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
 import defaultAvatar from '../../assets/avatar/default-avatar.webp'
+import { apiUrl } from '../../helpers'
 interface PlayerCardProp {
   player: PlayerInfoDto
   isAdmin: boolean
   isCurrentPlayer: boolean
 }
-const { getUserPoints, excludePlayer } = useSocketStore()
+const { getUserPoints, excludePlayer, addFriend } = useSocketStore()
 const { isAdmin: currentPlayerAdmin } = storeToRefs(useSocketStore())
+const { user } = storeToRefs(useAuthStore())
 const props = defineProps<PlayerCardProp>()
 
-// Constants
-const apiUrl = import.meta.env.VITE_API_ADDRESS
 // Refs
 const optionDisplayed = ref<boolean>(false)
 const excludeModal = ref<boolean>(false)
-
+const addFriendModal = ref<boolean>(false)
 // Computeds
 const avatar = computed<string>(() => {
   return props.player.avatar ? apiUrl + '/' + props.player.avatar : defaultAvatar
 })
 
+const isFriend = computed<boolean>(() => {
+  return user.value?.friends != null && user.value.friends.includes(props.player.id)
+})
+
+const canAddAsFriend = computed<boolean>(() => {
+  return !isFriend.value && props.player.role !== UserRole.GUEST && !props.isCurrentPlayer
+})
 // Functions
 function handleClick(): void {
   if (currentPlayerAdmin.value) {
@@ -69,29 +90,20 @@ function handleExclude(e: Event): void {
   e.stopPropagation()
   excludeModal.value = true
 }
+function handleAddFriend(e: Event): void {
+  e.stopPropagation()
+  addFriendModal.value = true
+}
 </script>
 
 <style lang="scss" scoped>
 .player-card {
-  width: 100%;
-  display: flex;
-  gap: 0.1rem;
-  padding: 0.2rem 0.4rem;
-  align-items: center;
-  background-color: white;
-  border-radius: 0.3rem;
-  height: 3rem;
-  box-shadow: var(--light-shadow);
-  cursor: pointer;
+  @include player-card;
   transform: scale(0.99);
   max-width: 25rem;
+  cursor: pointer;
   &_avatar {
-    height: 90%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 100%;
-    border: 3px solid var(--main-color);
-    margin-right: 1rem;
+    @include avatar;
   }
   &:hover {
     transform: scale(1);
@@ -115,10 +127,20 @@ function handleExclude(e: Event): void {
   &_exclude {
     height: 90%;
     padding: 0.2rem;
-    color: var(--secondary-color);
+    color: $secondary-color;
     box-shadow: none;
     &:hover {
-      background-color: var(--secondary-color);
+      background-color: $secondary-color;
+      color: white;
+    }
+  }
+  &_add {
+    height: 90%;
+    padding: 0.2rem;
+    color: green;
+    box-shadow: none;
+    &:hover {
+      background-color: green;
       color: white;
     }
   }

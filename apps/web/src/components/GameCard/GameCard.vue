@@ -23,7 +23,7 @@ defineProps<{ game: GameSpecs }>()
   flex-direction: column;
   width: 200px;
   height: 180px;
-  box-shadow: var(--light-shadow);
+  box-shadow: $light-shadow;
   padding: 1rem;
   text-align: center;
   background-color: white;

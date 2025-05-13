@@ -24,21 +24,27 @@
     <div v-if="breakPoint === 'laptop'" class="room-layout laptop">
       <PlayerList />
       <RouterView class="room-layout_router laptop" />
-      <ChatThread />
+      <RoomChat />
     </div>
     <div v-else class="room-layout">
       <RouterView class="room-layout_router" />
 
       <div class="room-layout_conbined-view">
         <div class="room-layout_conbined-view_button-container">
-          <button :class="{ selected: view === 'players' }" @click="view = 'players'">
-            <FontAwesomeIcon icon="trophy" />
-          </button>
-          <button :class="{ selected: view === 'chat' }" @click="view = 'chat'">
-            <FontAwesomeIcon icon="comment" />
-          </button>
+          <ButtonIcon
+            icon="trophy"
+            text="Joueurs"
+            :selected="view === 'players'"
+            @click="view = 'players'"
+          />
+          <ButtonIcon
+            icon="comment"
+            text="Chat"
+            :selected="view === 'chat'"
+            @click="view = 'chat'"
+          />
         </div>
-        <PlayerList v-if="view === 'players'" /> <ChatThread v-if="view === 'chat'" />
+        <PlayerList v-if="view === 'players'" /> <RoomChat v-if="view === 'chat'" />
       </div>
     </div>
   </DefaultLayout>
@@ -47,13 +53,15 @@
 <script setup lang="ts">
 import DefaultLayout from './components/DefaultLayout.vue'
 import { RouterView } from 'vue-router'
-import { ChatThread, PlayerList } from '@/components'
+import { PlayerList } from '@/components'
 import { useLayoutSize, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal.vue'
 import CountDown from '../components/CountDown/CountDown.vue'
+import ButtonIcon from '../components/ButtonIcon/ButtonIcon.vue'
+import RoomChat from '../components/RoomChat/RoomChat.vue'
 
 // Composables
 const socketStore = useSocketStore()
@@ -88,7 +96,7 @@ watch(
     height: 100%;
     max-height: 100%;
     overflow: hidden;
-    border: solid 0.1rem var(--main-color);
+    border: solid 0.1rem $main-color;
     border-left-width: 0px;
     border-right-width: 0px;
   }
@@ -96,7 +104,7 @@ watch(
     position: absolute;
     right: 5%;
     top: 0.1rem;
-    color: var(--secondary-color);
+    color: $secondary-color;
     padding: 0.3rem;
     max-height: 3rem;
     height: 70%;
@@ -106,7 +114,7 @@ watch(
     align-items: center;
     &:hover {
       color: white;
-      background-color: var(--secondary-color);
+      background-color: $secondary-color;
     }
     &_icon {
       height: 70%;
@@ -150,7 +158,7 @@ watch(
     top: -2.5rem;
     button {
       &.selected {
-        background-color: var(--main-color);
+        background-color: $main-color;
         color: white;
       }
     }

@@ -46,7 +46,7 @@ onMounted(() => {
   gap: 1rem;
   align-items: center;
   padding: 2rem;
-  color: var(--main-color);
+  color: $main-color;
   overflow-y: auto;
   &_invitation {
     display: flex;
