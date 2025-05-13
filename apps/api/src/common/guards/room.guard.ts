@@ -7,13 +7,14 @@ import {
 } from '@nestjs/common'
 import { PlayerService } from '../../player/player.service'
 import { Socket } from 'socket.io'
-import { RoomService } from '../room.service'
 import { Reflector } from '@nestjs/core'
 import { RoomNotFoundWsException } from '../../common/ws/exceptions/roomNotFound'
 import { AuthService } from '../../auth/auth.service'
-import { Room } from '../entities/room.entity'
 import { Player } from '../../player/entities/player.entity'
 import { WSE } from 'shared'
+import { CommonService } from '../../common/common.service'
+import { RoomService } from '../../room/room.service'
+import { Room } from '../../room/entities/room.entity'
 
 @Injectable()
 export class RoomGuard implements CanActivate {
@@ -21,6 +22,7 @@ export class RoomGuard implements CanActivate {
     private playerService: PlayerService,
     private authService: AuthService,
     private roomService: RoomService,
+    private commonService: CommonService,
     private reflector: Reflector,
   ) {}
   private readonly logger = new Logger(RoomGuard.name)
@@ -83,7 +85,7 @@ export class RoomGuard implements CanActivate {
       return true
     }
     // ROOM ADMIN RESTRICTED
-    if (requiredRoles.includes('admin')) {
+    if (requiredRoles.includes('room-admin')) {
       if (room.admin.id !== player.id) {
         return false
       }
@@ -97,7 +99,7 @@ export class RoomGuard implements CanActivate {
         !currentRound.artists ||
         !currentRound.artists.map((artist) => artist.id).includes(player.id)
       ) {
-        this.roomService.emitToPlayer(player, { event: WSE.STOP_DRAW, arguments: undefined })
+        this.commonService.emitToPlayer(player.id, { event: WSE.STOP_DRAW, arguments: undefined })
         return false
       }
     }

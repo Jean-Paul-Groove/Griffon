@@ -8,7 +8,7 @@ import jwtConfig from '../config/jwt.config'
 
 @Module({
   imports: [
-    CommonModule,
+    forwardRef(() => CommonModule),
     JwtModule.registerAsync({
       useFactory: jwtConfig,
     }),

@@ -1,19 +1,16 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomService } from '../room/room.service'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Room } from '../room/entities/room.entity'
 import { Repository } from 'typeorm'
 import { Server } from 'socket.io'
-import { Game } from './entities/game.entity'
-import { GameSpecs } from './entities/game.specs.entity'
 import { Round } from './entities/round.entity'
 import { sample } from 'lodash'
 import { GameService } from './game.service'
-import { Word } from './entities/word.entity'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { Player } from '../player/entities/player.entity'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
+import { CommonService } from '../common/common.service'
 
 @Injectable()
 export class GriffonaryService {
@@ -22,21 +19,14 @@ export class GriffonaryService {
     private gameService: GameService,
     @Inject(forwardRef(() => RoomService))
     private roomService: RoomService,
-    @InjectRepository(Room)
-    private roomRepository: Repository<Room>,
+    private commonService: CommonService,
     @InjectRepository(Player)
     private playerRepository: Repository<Player>,
-    @InjectRepository(Game)
-    private gameRepository: Repository<Game>,
-    @InjectRepository(GameSpecs)
-    private gameSpecsRepository: Repository<GameSpecs>,
     @InjectRepository(Round)
     private roundRepository: Repository<Round>,
-    @InjectRepository(Word)
-    private wordRepository: Repository<Word>,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {
-    this.io = this.roomService.io
+    this.io = this.commonService.io
   }
   public io: Server
   private readonly logger = new Logger(GriffonaryService.name, { timestamp: true })

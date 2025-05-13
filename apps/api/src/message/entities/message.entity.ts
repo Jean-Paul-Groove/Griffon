@@ -15,6 +15,9 @@ export class Message {
   @ManyToOne(() => Player, (player) => player.messagesReceived)
   receiver: Player
 
+  @Column()
+  seen: boolean
+
   @CreateDateColumn()
-  createdAt: Date
+  sentAt: Date
 }

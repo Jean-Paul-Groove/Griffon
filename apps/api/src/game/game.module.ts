@@ -18,7 +18,7 @@ import { AuthModule } from '../auth/auth.module'
   imports: [
     forwardRef(() => RoomModule),
     PlayerModule,
-    CommonModule,
+    forwardRef(() => CommonModule),
     AuthModule,
     TypeOrmModule.forFeature([Game, GameSpecs, Round, Word, Score]),
   ],

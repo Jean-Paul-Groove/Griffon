@@ -21,6 +21,7 @@ import { Chat } from './chat/entities/chat.entity'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { join } from 'path'
 import { ServeStaticModule } from '@nestjs/serve-static'
+import { MessageModule } from './message/message.module'
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ServeStaticModule } from '@nestjs/serve-static'
     PlayerModule,
     RoomModule,
     ChatModule,
+    MessageModule,
   ],
 })
 export class AppModule {}

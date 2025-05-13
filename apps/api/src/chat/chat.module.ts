@@ -11,9 +11,9 @@ import { GameModule } from '../game/game.module'
   imports: [
     TypeOrmModule.forFeature([Chat]),
     forwardRef(() => RoomModule),
-    CommonModule,
+    forwardRef(() => CommonModule),
     PlayerModule,
-    GameModule,
+    forwardRef(() => GameModule),
   ],
   providers: [ChatService],
   exports: [TypeOrmModule, ChatService],

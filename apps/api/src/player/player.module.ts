@@ -6,7 +6,11 @@ import { Player } from './entities/player.entity'
 import { CommonModule } from '../common/common.module'
 
 @Module({
-  imports: [forwardRef(() => AuthModule), TypeOrmModule.forFeature([Player]), CommonModule],
+  imports: [
+    forwardRef(() => AuthModule),
+    TypeOrmModule.forFeature([Player]),
+    forwardRef(() => CommonModule),
+  ],
   providers: [PlayerService],
   exports: [PlayerService, TypeOrmModule],
 })

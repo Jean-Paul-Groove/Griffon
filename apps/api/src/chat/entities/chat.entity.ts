@@ -4,8 +4,8 @@ import { Room } from '../../room/entities/room.entity'
 
 @Entity()
 export class Chat {
-  @PrimaryGeneratedColumn('increment')
-  id: number
+  @PrimaryGeneratedColumn('uuid')
+  id: string
 
   @Column()
   content: string

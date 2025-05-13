@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
-import { CreateGuestDto, CreateUserDto, PlayerInfoDto } from 'shared'
+import { CreateGuestDto, CreateUserDto, PlayerInfoDto, UserRole } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Player } from './entities/player.entity'
@@ -34,14 +34,14 @@ export class PlayerService {
     if (createGuestDto.name.trim() != '') {
       const userEntity = this.playerRepository.create({
         name: createGuestDto.name,
-        isGuest: true,
+        role: UserRole.GUEST,
       })
       const user = await this.playerRepository.save(userEntity)
       this.logger.log('GUEST CREATED')
       return user
     }
   }
-  async createUser(createUser: CreateUserDto, avatar?: MemoryStorageFile): Promise<Player> {
+  async createPlayer(createUser: CreateUserDto, avatar?: MemoryStorageFile): Promise<Player> {
     try {
       if (createUser.name.trim() != '') {
         const userEntity = this.playerRepository.create(createUser)
@@ -67,13 +67,13 @@ export class PlayerService {
       }
     }
   }
-  async get(playerId: string): Promise<Player | undefined> {
+  async get(playerId: string, includeFriends: boolean = false): Promise<Player | undefined> {
     try {
       const player = await this.playerRepository.findOne({
         where: {
           id: playerId,
         },
-        relations: { room: true },
+        relations: { room: true, friends: includeFriends },
       })
       return player
     } catch (err) {
@@ -81,19 +81,24 @@ export class PlayerService {
       throw new PlayerNotFoundWsException()
     }
   }
-  async getPlayerFromSocket(client: Socket): Promise<Player | undefined> {
+  async getPlayerFromSocket(client: Socket, includeFriends?: boolean): Promise<Player | undefined> {
     this.authService.validateWsConnexion(client)
-    const player = await this.get(client.data.playerId)
+    const player = await this.get(client.data.playerId, includeFriends)
     return player
   }
-  generatePlayerInfoDto(player: Player, artists: string[]): PlayerInfoDto {
+  generatePlayerInfoDto(
+    player: Player,
+    artists: string[],
+    includeFriends: boolean = false,
+  ): PlayerInfoDto {
     return new PlayerInfoDto({
       id: player.id,
       name: player.name,
       avatar: player.avatar,
       isArtist: artists.includes(player.id),
-      isGuest: player.isGuest,
+      role: player.role,
       room: player.room?.id,
+      friends: includeFriends ? player.friends.map((friend) => friend.id) : undefined,
     })
   }
   async resetPlayerRooms(): Promise<void> {
@@ -109,5 +114,22 @@ export class PlayerService {
       select: { password: true, id: true },
     })
     return player
+  }
+  async getPlayerEmail(id: string): Promise<Pick<Player, 'id' | 'email'>> {
+    const player = await this.playerRepository.findOne({
+      where: { id },
+      select: { email: true, id: true },
+    })
+    return player
+  }
+  async getFriendsInfo(friendsId: string[]): Promise<Array<PlayerInfoDto & { online: boolean }>> {
+    const friends = await this.playerRepository
+      .createQueryBuilder('player')
+      .where('player.id NOT IN (:friendsId)', { friendsId })
+      .getMany()
+    return friends.map((friend) => ({
+      ...this.generatePlayerInfoDto(friend, []),
+      online: this.commonService.getSocketFromPlayer(friend.id)?.connected ?? false,
+    }))
   }
 }

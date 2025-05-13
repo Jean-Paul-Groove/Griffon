@@ -2,14 +2,14 @@ import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@
 import { PlayerService } from '../player/player.service'
 import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
-import { CreateGuestDto, CreateUserDto } from 'shared'
+import { CreateGuestDto, CreateUserDto, UserRole } from 'shared'
 import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
-import { Request } from 'express'
 import { RegisterDto } from './validation/Register.dto'
 import { Token } from './types/Token'
 import * as bcrypt from 'bcrypt'
 import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 import { LoginDto } from './validation/Login.dto'
+import { FastifyRequest } from 'fastify'
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,7 +29,7 @@ export class AuthService {
     }
     return true
   }
-  getPlayerIdFromRequest(request: Request): string {
+  getPlayerIdFromRequest(request: FastifyRequest): string {
     const payload = this.jwtService.verify(request.headers?.authorization.split('bearer ')[1], {
       secret: process.env.JWT_SECRET,
     })
@@ -38,7 +38,7 @@ export class AuthService {
     }
   }
   async signUpAsGuest(name: string): Promise<Token> {
-    const guest: CreateGuestDto = { name: name, isGuest: true }
+    const guest: CreateGuestDto = { name: name, role: UserRole.GUEST }
     const player = await this.playerService.createGuest(guest)
     const payload = { id: player.id }
     return {
@@ -49,8 +49,13 @@ export class AuthService {
   async registerUser(userInfo: RegisterDto, avatar?: MemoryStorageFile): Promise<void> {
     const { username, email, password: toBeHashed } = userInfo
     const password = await bcrypt.hash(toBeHashed, 14)
-    const createUserDto: CreateUserDto = { name: username, email, password, isGuest: false }
-    await this.playerService.createUser(createUserDto, avatar)
+    const createUserDto: CreateUserDto = {
+      name: username,
+      email,
+      password,
+      role: UserRole.REGISTERED_USER,
+    }
+    await this.playerService.createPlayer(createUserDto, avatar)
   }
 
   async login(loginDto: LoginDto): Promise<Token> {
@@ -62,7 +67,8 @@ export class AuthService {
     if (!validPassword) {
       throw new UnauthorizedException()
     }
-    const payload = { id: player.id }
+    const payload: any = { id: player.id }
+
     return {
       access_token: this.jwtService.sign(payload),
     }

@@ -28,11 +28,13 @@ import { PlayerNotFoundWsException } from '../common/ws/exceptions/playerNotFoun
 import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { RoundNotFoundWsException } from '../common/ws/exceptions/roundNotFound'
+import { CommonService } from '../common/common.service'
 
 @Injectable()
 export class GameService {
   constructor(
     private playerService: PlayerService,
+    private commonService: CommonService,
     @Inject(forwardRef(() => RoomService))
     private roomService: RoomService,
     @Inject(forwardRef(() => GriffonaryService))
@@ -52,7 +54,7 @@ export class GameService {
     @InjectRepository(Word)
     private wordRepository: Repository<Word>,
   ) {
-    this.io = this.roomService.io
+    this.io = this.commonService.io
   }
   public io: Server
   private readonly logger = new Logger(GameService.name, { timestamp: true })
@@ -89,7 +91,7 @@ export class GameService {
         event: WSE.START_GAME,
         arguments: { game: this.generateGameInfoDto(game) },
       }
-      this.roomService.emitToRoom(room.id, data)
+      this.commonService.emitToRoom(room.id, data)
       this.griffonary.executeRound(room.id)
       return
     } else {
@@ -120,7 +122,7 @@ export class GameService {
           player: this.playerService.generatePlayerInfoDto(player, [player.id]),
         },
       }
-      this.roomService.emitToRoom(player.room.id, data)
+      this.commonService.emitToRoom(player.room.id, data)
     } catch (error) {
       this.logger.error(error)
       return { event: WSE.STOP_DRAW, data: undefined }
@@ -136,7 +138,7 @@ export class GameService {
         event: WSE.TIME_LIMIT,
         arguments: { time: round.timeLimit.getTime() },
       }
-      this.roomService.emitToPlayer(player, timeDto)
+      this.commonService.emitToPlayer(player.id, timeDto)
     }
     if (round.word && round.artists.map((artist) => artist.id).includes(player.id)) {
       this.sendWordToDraw(player, round.word)
@@ -174,14 +176,14 @@ export class GameService {
   sendTimeLimit(roomId: string, timestamp: number): void {
     this.logger.debug('SENDTIMELIMIT')
     const data: TimeLimitDto = { event: WSE.TIME_LIMIT, arguments: { time: timestamp } }
-    this.roomService.emitToRoom(roomId, data)
+    this.commonService.emitToRoom(roomId, data)
   }
   sendWordToDraw(artist: Player, word: Word): void {
     this.logger.debug('SENDWORDTODRAW')
     this.logger.debug(word.value)
 
     const data: WordToDrawDto = { event: WSE.WORD_TO_DRAW, arguments: { word: word.value } }
-    this.roomService.emitToPlayer(artist, data)
+    this.commonService.emitToPlayer(artist.id, data)
   }
   async sendPlayerList(round: Round, room: Room): Promise<void> {
     this.logger.debug('SEND PLAYERLIST')
@@ -201,7 +203,7 @@ export class GameService {
         ),
       },
     }
-    this.roomService.emitToRoom(room.id, data)
+    this.commonService.emitToRoom(room.id, data)
   }
   async scorePlayerPoints(player: Player, game: Game, points: number, round: Round): Promise<void> {
     this.logger.debug('SCORE PLAYER POINTS')
@@ -229,7 +231,7 @@ export class GameService {
       event: WSE.PLAYER_SCORED,
       arguments: { player: playerInfo, points },
     }
-    this.roomService.emitToRoom(game.id, data)
+    this.commonService.emitToRoom(game.id, data)
   }
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
     return (await this.scoreRepository.findOne({ where: { player, game: room.currentGame } }))

@@ -12,7 +12,6 @@ import {
 } from '@nestjs/websockets'
 
 import { Server, Socket } from 'socket.io'
-import { RoomService } from './room.service'
 import { AuthGuard } from '../auth/auth.guard'
 import { PlayerService } from '../player/player.service'
 import { GameName, PlayerConnectionSuccessDto, WSE } from 'shared'
@@ -20,11 +19,13 @@ import { GameService } from '../game/game.service'
 import { RoomGuard } from './guards/room.guard'
 import { ChatService } from '../chat/chat.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
-import { Roles } from './decorators/roles'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { WsFilter } from '../common/ws/ws.filter'
 import { Throttle } from '@nestjs/throttler'
 import { DrawingGuard } from './guards/drawing.guard'
+import { Roles } from '../common/decorators/roles'
+import { CommonService } from '../common/common.service'
+import { RoomService } from '../room/room.service'
 
 @UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
@@ -34,15 +35,16 @@ import { DrawingGuard } from './guards/drawing.guard'
   },
   pingTimeout: 120000,
 })
-export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private roomService: RoomService,
     private playerService: PlayerService,
     private gameService: GameService,
     private chatService: ChatService,
+    private commonService: CommonService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
-  private readonly logger = new Logger(RoomGateway.name)
+  private readonly logger = new Logger(CommonGateway.name)
 
   @WebSocketServer()
   io: Server
@@ -50,7 +52,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   afterInit(): void {
     this.playerService.resetPlayerRooms()
     this.gameService.resetGames()
-    this.roomService.io = this.io
+    this.commonService.io = this.io
     this.io.disconnectSockets()
     this.logger.log('Room gateway initialized')
   }
@@ -58,7 +60,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       // Chek that player is known
       this.logger.debug('HANDLE CONNECT', client.data)
-      const player = await this.playerService.getPlayerFromSocket(client)
+      const player = await this.playerService.getPlayerFromSocket(client, true)
       this.logger.debug(player?.name)
       // If player was to be removed for iddleness, cancel the timeout
       const timeOutName = `${player.id}::toBeRemoved`
@@ -70,7 +72,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       this.logger.debug(player)
       // Send the user info
-      const playerInfo = this.playerService.generatePlayerInfoDto(player, [])
+      const playerInfo = this.playerService.generatePlayerInfoDto(player, [], true)
       const data: PlayerConnectionSuccessDto = {
         event: WSE.CONNECTION_SUCCESS,
         arguments: { player: playerInfo },
@@ -143,7 +145,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage(WSE.ASK_EXCLUDE_PLAYER)
-  @Roles('admin')
+  @Roles('room-admin')
   async handleExcludePlayer(
     @MessageBody('playerId') playerId: string,
     @ConnectedSocket() client: Socket,
@@ -153,7 +155,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   // CHAT HANDLERS
   @UseGuards(RoomGuard)
-  @SubscribeMessage(WSE.NEW_MESSAGE)
+  @SubscribeMessage(WSE.NEW_CHAT_MESSAGE)
   async handleNewMessage(
     @MessageBody('message') message: string,
     @ConnectedSocket() client: Socket,
@@ -176,7 +178,7 @@ export class RoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @UseGuards(RoomGuard)
   @Throttle({ 'start-game': { ttl: 2000, limit: 1 } })
   @SubscribeMessage(WSE.ASK_START_GAME)
-  @Roles('admin')
+  @Roles('room-admin')
   async handleAskStartGame(
     @ConnectedSocket() client: Socket,
     @MessageBody('game') game: GameName,

@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Chat } from './entities/chat.entity'
 import { Repository } from 'typeorm'
 import { ChatMessageDto, NewChatMessageDto, WSE } from 'shared'
+import { CommonService } from '../common/common.service'
 
 @Injectable()
 export class ChatService {
@@ -14,11 +15,13 @@ export class ChatService {
     @Inject(forwardRef(() => RoomService))
     private roomService: RoomService,
     private playerService: PlayerService,
+    @Inject(forwardRef(() => GameService))
     private gameService: GameService,
+    private commonService: CommonService,
     @InjectRepository(Chat)
     private chatRepository: Repository<Chat>,
   ) {
-    this.io = this.roomService.io
+    this.io = this.commonService.io
   }
   public io: Server
   private readonly logger = new Logger(ChatService.name, { timestamp: true })
@@ -39,20 +42,19 @@ export class ChatService {
     const chat = await this.chatRepository.save(chatEntity, { reload: true })
 
     const data: NewChatMessageDto = {
-      event: WSE.NEW_MESSAGE,
+      event: WSE.NEW_CHAT_MESSAGE,
       arguments: { chatMessage: this.generateChatMessageDto(chat) },
     }
-    this.roomService.emitToRoom(room.id, data)
+    this.commonService.emitToRoom(room.id, data)
   }
 
   generateChatMessageDto(chat: Chat): ChatMessageDto {
-    const { id, content, sentAt, sender, room } = chat
+    const { id, content, sentAt, sender } = chat
     return new ChatMessageDto({
       id,
       content,
       sentAt,
       sender: sender?.id,
-      room: room?.id,
     })
   }
 }

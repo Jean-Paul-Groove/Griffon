@@ -7,10 +7,12 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinTable,
 } from 'typeorm'
 import { Message } from '../../message/entities/message.entity'
 import { Room } from '../../room/entities/room.entity'
 import { Chat } from '../../chat/entities/chat.entity'
+import { UserRole } from 'shared'
 
 @Entity()
 export class Player {
@@ -26,8 +28,12 @@ export class Player {
   @OneToMany(() => Chat, (message) => message.sender)
   chatMessages: Chat[]
 
-  @Column()
-  isGuest: boolean
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.GUEST,
+  })
+  role: UserRole
 
   @Column({ type: 'varchar', length: 20, unique: true, nullable: true, select: false })
   email: string
@@ -38,7 +44,8 @@ export class Player {
   @Column({ nullable: true })
   avatar: string
 
-  @ManyToMany(() => Player, (user) => user.friends, { nullable: true })
+  @ManyToMany(() => Player)
+  @JoinTable()
   friends: Player[]
 
   @OneToMany(() => Message, (message) => message.sender, { nullable: true })

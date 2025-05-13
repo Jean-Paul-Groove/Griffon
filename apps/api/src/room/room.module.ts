@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common'
 import { RoomService } from './room.service'
-import { RoomGateway } from './room.gateway'
 import { AuthModule } from '../auth/auth.module'
 import { PlayerModule } from '../player/player.module'
 import { CommonModule } from '../common/common.module'
@@ -12,13 +11,13 @@ import { ChatModule } from '../chat/chat.module'
 @Module({
   imports: [
     AuthModule,
-    CommonModule,
+    forwardRef(() => CommonModule),
     PlayerModule,
     forwardRef(() => GameModule),
     forwardRef(() => ChatModule),
     TypeOrmModule.forFeature([Room]),
   ],
-  providers: [RoomService, RoomGateway],
+  providers: [RoomService],
   exports: [RoomService, TypeOrmModule],
 })
 export class RoomModule {}

@@ -1,11 +1,9 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomOptions } from './types/room/RoomOptions'
-import { Server, Socket } from 'socket.io'
 import { PlayerService } from '../player/player.service'
 import { WsException, WsResponse } from '@nestjs/websockets'
 import {
   WSE,
-  SocketDto,
   RoomInfoDto,
   PlayerJoinedRoomSuccessDto,
   PlayerReconnectedDto,
@@ -14,6 +12,7 @@ import {
   RoomStateDto,
   ScoreListDto,
   ScoreDto,
+  UserRole,
 } from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -24,6 +23,8 @@ import { GameService } from '../game/game.service'
 import { SchedulerRegistry } from '@nestjs/schedule'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { Score } from '../game/entities/score.entity'
+import { Socket } from 'socket.io'
+import { CommonService } from '../common/common.service'
 
 @Injectable()
 export class RoomService {
@@ -32,6 +33,7 @@ export class RoomService {
     @Inject(forwardRef(() => GameService))
     private gameService: GameService,
     private chatService: ChatService,
+    private commonService: CommonService,
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
     @InjectRepository(Player)
@@ -39,7 +41,6 @@ export class RoomService {
     @InjectRepository(Score)
     private readonly scoreRepository: Repository<Score>,
   ) {}
-  public io: Server
   private readonly logger = new Logger(RoomService.name, { timestamp: true })
   private emptyRoomTime = 300000
   // Private methods
@@ -47,7 +48,7 @@ export class RoomService {
     this.logger.debug('ATTEMPTING TO CREATE A ROOM')
     // Room is historized if at least one player has an account
     let historized = false
-    if (options.owner && options.owner.isGuest === false) {
+    if (options.owner && options.owner.role !== UserRole.GUEST) {
       historized = true
     }
     const roomEntity = this.roomRepository.create({
@@ -125,7 +126,7 @@ export class RoomService {
       }
     }
     // Room is historized if at least one player has an account
-    if (player.isGuest === false && room.historized === false) {
+    if (player.role !== UserRole.GUEST && room.historized === false) {
       room.historized = true
     }
     await this.roomRepository.save(room)
@@ -168,8 +169,8 @@ export class RoomService {
     }
 
     // Disconnect socket from room
-    const playerSocket = this.getSocketFromPlayer(playerId)
-    this.removeSocketFromRoom(playerSocket, room.id)
+    const playerSocket = this.commonService.getSocketFromPlayer(playerId)
+    this.commonService.removeSocketFromRoom(playerSocket, room.id)
 
     // If no more players and room is not to be historized, set room to be deleted after 5mn
     if (room.players === null || (room.players.length === 0 && room.historized === false)) {
@@ -191,37 +192,7 @@ export class RoomService {
     }
     return room
   }
-  /**
-   * Subscribe the player's socket to the room events
-   * @param {Socket} client:Socket
-   * @param {string} newRoomId:string
-   * @returns {void}
-   */
-  private joinSocketToRoom(client: Socket, newRoomId: string): void {
-    // Leave previous socket room if any
-    if (client.data.roomId !== newRoomId) {
-      client.leave(client.data.roomId)
-      client.data.roomId = newRoomId
-    }
-    // Join new one
-    client.join(newRoomId)
-    this.logger.debug('PLAYER JOINED SOCKET')
-  }
-  /**
-   * Unsubscribe a socket from a room events
-   * @param {Socket} client:Socket Socket to unsubscribe
-   * @param {string} roomId:string Id of the room
-   * @returns {void}
-   */
-  private removeSocketFromRoom(client: Socket, roomId: string): void {
-    if (!client) {
-      return
-    }
-    if (client?.data?.roomId) {
-      client.data.roomId = null
-    }
-    client.leave(roomId)
-  }
+
   private async getRoomScores(room: Room): Promise<ScoreDto[]> {
     try {
       const scores: ScoreDto[] = await this.scoreRepository
@@ -249,7 +220,7 @@ export class RoomService {
           scores: roomScores,
         },
       }
-      this.emitToRoom(room.id, data)
+      this.commonService.emitToRoom(room.id, data)
     } catch (error) {
       this.logger.error(error)
     }
@@ -266,7 +237,7 @@ export class RoomService {
       const room = await this.create({ owner: player })
       // Join socket to room
       this.logger.debug('ROOM CREATED')
-      this.joinSocketToRoom(client, room.id)
+      this.commonService.joinSocketToRoom(client, room.id)
 
       return {
         event: WSE.USER_JOINED_ROOM_SUCCESS,
@@ -288,7 +259,7 @@ export class RoomService {
       this.logger.debug(player.name)
       this.logger.debug('In room' + roomId)
       this.addPlayerToRoom(roomId, player)
-      this.joinSocketToRoom(client, roomId)
+      this.commonService.joinSocketToRoom(client, roomId)
 
       this.logger.debug('FATCHED ROOM')
       const playerInfo = this.playerService.generatePlayerInfoDto(player, [])
@@ -300,20 +271,20 @@ export class RoomService {
           event: WSE.USER_RECONNECTED,
           arguments: { player: playerInfo },
         }
-        this.emitToRoom(roomId, reconnexionData)
+        this.commonService.emitToRoom(roomId, reconnexionData)
       }
 
       const userJoinedData: PlayerJoinedRoomDto = {
         event: WSE.USER_JOINED_ROOM,
         arguments: { player: playerInfo },
       }
-      this.emitToRoom(roomId, userJoinedData)
+      this.commonService.emitToRoom(roomId, userJoinedData)
     } catch (exception) {
       const data: FailJoinRoomDto = {
         event: WSE.FAIL_JOIN_ROOM,
         arguments: { reason: exception.message },
       }
-      this.emitToPlayer(player, data)
+      this.commonService.emitToPlayer(player.id, data)
       this.logger.error(exception)
     }
   }
@@ -350,20 +321,16 @@ export class RoomService {
       const room = await this.get(roomId)
       const updatedRoom = await this.removePlayerFromRoom(room, playerId)
       const player = await this.playerService.get(playerId)
-      this.emitToPlayer(player, { event: WSE.ROOM_STATE, arguments: { room: null } })
+      this.commonService.emitToPlayer(player.id, {
+        event: WSE.ROOM_STATE,
+        arguments: { room: null },
+      })
       this.sendRoomState(updatedRoom)
     } catch (error) {
       this.logger.error(error)
     }
   }
   // Services
-  getSocketFromPlayer(playerId: string): Socket | undefined {
-    const sockets = this.io.sockets.sockets
-
-    return (Array.from(sockets.values()) as Socket[]).find(
-      (socket) => socket.data.playerId === playerId,
-    )
-  }
   async generateRoomInfoDto(room: Room): Promise<RoomInfoDto> {
     this.logger.debug('GENERATEROOMINFODTO')
     let round = null
@@ -403,9 +370,9 @@ export class RoomService {
         event: WSE.ROOM_STATE,
         arguments: { room: await this.generateRoomInfoDto(room) },
       }
-      this.emitToRoom(room.id, data)
+      this.commonService.emitToRoom(room.id, data)
       if (player) {
-        this.emitToPlayer(player, data)
+        this.commonService.emitToPlayer(player.id, data)
       }
     } catch (error) {
       this.logger.error(error)
@@ -415,18 +382,5 @@ export class RoomService {
     if (player.room) {
       return await this.get(player.room.id)
     }
-  }
-  emitToRoom(roomId: string, data: SocketDto): void {
-    this.io.in(roomId).emit(data.event, data.arguments)
-  }
-  emitToPlayer(player: Player, data: SocketDto): void {
-    if (!player) {
-      return
-    }
-    const client = this.getSocketFromPlayer(player.id)
-    if (!client) {
-      return
-    }
-    client.emit(data.event, data.arguments)
   }
 }
