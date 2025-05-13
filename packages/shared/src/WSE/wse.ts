@@ -30,7 +30,14 @@ export enum WSE {
   PLAYER_SCORED = 'player-scored',
   SCORE_LIST='score-list',
   // CHAT
-  NEW_MESSAGE = 'new-message',
+  NEW_CHAT_MESSAGE = 'new-chat-message',
+  // MESSAGE
+  NEW_PRIVATE_MESSAGE = 'new-private-message',
+  // FRIENDS
+  ASK_ADD_FRIEND="ask-add-friend",
+  CONFIRM_FRIEND="confirm_friend",
+  REJECT_FRIEND="reject_friend",
+  REMOVE_FRIEND="remove_friend",
   // ERRORS
   FAIL_CREATE_ROOM='fail-create-room',
   FAIL_JOIN_ROOM='fail-join-room',

@@ -18,4 +18,6 @@ __exportStar(require("./player"), exports);
 __exportStar(require("./game"), exports);
 __exportStar(require("./room"), exports);
 __exportStar(require("./socket"), exports);
+__exportStar(require("./chat"), exports);
+__exportStar(require("./message"), exports);
 //# sourceMappingURL=index.js.map

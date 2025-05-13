@@ -10651,15 +10651,15 @@ __metadata:
 
 "shared@file:../../packages/shared::locator=api%40workspace%3Aapps%2Fapi":
   version: 1.0.0
-  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=e98090&locator=api%40workspace%3Aapps%2Fapi"
-  checksum: 10c0/91e868226118d5bafb6db14bd131ac7ad6f36a1b31bac26c3ffeade493d6a09d14ce7d2b01089a1eff3d192af6479b2ae9b998f45048aaf01610d3f9f531817a
+  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=ef8d02&locator=api%40workspace%3Aapps%2Fapi"
+  checksum: 10c0/22d3c683ab38d5bfc4196174815348be27b49a411ce91ef73dfb193c76022575bb26b0a370b3dcb29f7508d18bc26e05c65323f138b069d62649de8e0e7f3459
   languageName: node
   linkType: hard
 
 "shared@file:../../packages/shared::locator=web%40workspace%3Aapps%2Fweb":
   version: 1.0.0
-  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=e98090&locator=web%40workspace%3Aapps%2Fweb"
-  checksum: 10c0/91e868226118d5bafb6db14bd131ac7ad6f36a1b31bac26c3ffeade493d6a09d14ce7d2b01089a1eff3d192af6479b2ae9b998f45048aaf01610d3f9f531817a
+  resolution: "shared@file:../../packages/shared#../../packages/shared::hash=ef8d02&locator=web%40workspace%3Aapps%2Fweb"
+  checksum: 10c0/22d3c683ab38d5bfc4196174815348be27b49a411ce91ef73dfb193c76022575bb26b0a370b3dcb29f7508d18bc26e05c65323f138b069d62649de8e0e7f3459
   languageName: node
   linkType: hard
 

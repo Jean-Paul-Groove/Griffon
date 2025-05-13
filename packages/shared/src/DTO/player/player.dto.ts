@@ -1,33 +1,37 @@
+import { UserRole } from "../../roles"
+
 export class PlayerInfoDto {
    constructor(
       props: {
         id: string,
         name: string,
-        isGuest: boolean,
+        role: UserRole,
         isArtist:boolean,
         avatar?: string,
         room?:string,
-        isPlatformAdmin?:boolean
+        friends?: Array<PlayerInfoDto['id']>
       }
     ) {
       Object.assign(this, props)
     }
   id: string
   name: string
-  isGuest: boolean
+  role: UserRole
   isArtist:boolean
   avatar?: string
   room?:string
-  isPlatformAdmin?:boolean
+  friends?: Array<PlayerInfoDto['id']>
+
 }
 
 export class CreateGuestDto {
     name:string
-    isGuest:true
+    role:UserRole.GUEST
 }
 export class CreateUserDto {
   name:string
-  isGuest:false
+  role:UserRole.REGISTERED_USER
   email:string
   password:string
 }
+

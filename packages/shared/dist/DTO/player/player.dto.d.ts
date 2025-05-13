@@ -1,26 +1,29 @@
+import { UserRole } from "../../roles";
 export declare class PlayerInfoDto {
     constructor(props: {
         id: string;
         name: string;
-        isGuest: boolean;
+        role: UserRole;
         isArtist: boolean;
         avatar?: string;
         room?: string;
+        friends?: Array<PlayerInfoDto['id']>;
     });
     id: string;
     name: string;
-    isGuest: boolean;
+    role: UserRole;
     isArtist: boolean;
     avatar?: string;
     room?: string;
+    friends?: Array<PlayerInfoDto['id']>;
 }
 export declare class CreateGuestDto {
     name: string;
-    isGuest: true;
+    role: UserRole.GUEST;
 }
 export declare class CreateUserDto {
     name: string;
-    isGuest: false;
+    role: UserRole.REGISTERED_USER;
     email: string;
     password: string;
 }

@@ -17,4 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./WSE"), exports);
 __exportStar(require("./types"), exports);
 __exportStar(require("./DTO"), exports);
+__exportStar(require("./roles"), exports);
 //# sourceMappingURL=index.js.map

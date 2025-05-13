@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GameScoreDto = exports.RoomScoreDto = exports.SpecsDto = exports.GameInfoDto = void 0;
+exports.ScoreDto = exports.SpecsDto = exports.GameInfoDto = void 0;
 class GameInfoDto {
     constructor(props) {
         Object.assign(this, props);
@@ -13,16 +13,10 @@ class SpecsDto {
     }
 }
 exports.SpecsDto = SpecsDto;
-class RoomScoreDto {
+class ScoreDto {
     constructor(props) {
         Object.assign(this, props);
     }
 }
-exports.RoomScoreDto = RoomScoreDto;
-class GameScoreDto {
-    constructor(props) {
-        Object.assign(this, props);
-    }
-}
-exports.GameScoreDto = GameScoreDto;
+exports.ScoreDto = ScoreDto;
 //# sourceMappingURL=game.dto.js.map
