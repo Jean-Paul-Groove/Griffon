@@ -137,7 +137,6 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
     @include white-card;
     width: 100%;
     &_list {
-      list-style: none;
       width: 100%;
       &_item {
         width: 100%;
@@ -157,7 +156,6 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
     @include white-card;
     width: 100%;
     &_list {
-      list-style: none;
       width: 100%;
       &_item {
         width: 100%;

@@ -65,20 +65,10 @@ const avatar = computed<string>(() => {
     display: flex;
     gap: 0.5rem;
     & .add {
-      color: green;
-      border-color: green;
-      &:hover {
-        background-color: green;
-        color: white;
-      }
+      @include green-button;
     }
     & .remove {
-      color: $secondary-color;
-      border-color: $secondary-color;
-      &:hover {
-        background-color: $secondary-color;
-        color: white;
-      }
+      @include danger-button;
     }
   }
 }

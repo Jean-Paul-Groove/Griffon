@@ -49,3 +49,20 @@
   max-height: 100%;
   min-height: 0;
 }
+
+@mixin danger-button {
+  color: $secondary-color;
+      border-color: $secondary-color;
+      &:hover {
+        background-color: $secondary-color;
+        color: white;
+      }
+}
+@mixin green-button{
+   color: green;
+      border-color: green;
+      &:hover {
+        background-color: green;
+        color: white;
+      }
+}

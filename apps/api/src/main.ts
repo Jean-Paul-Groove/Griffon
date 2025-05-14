@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
     logger,
   })
 
-  app.enableCors({ origin: process.env.FRONT_URL })
+  app.enableCors({ origin: process.env.FRONT_URL, methods: 'GET,POST,PUT,DELETE,PATCH' })
   app.useGlobalPipes(new ValidationPipe())
   await app.register(multipart)
   app.register(fastifyCookie, { secret: process.env.COOKIE_SECRET })

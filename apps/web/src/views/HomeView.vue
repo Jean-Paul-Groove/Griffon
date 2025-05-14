@@ -22,22 +22,31 @@
           :selected="view === 'messages'"
           @click="view = 'messages'"
         />
-        <ButtonIcon
+        <!-- <ButtonIcon
           icon="clock"
           text="Historique"
           :selected="view === 'history'"
           @click="view = 'history'"
-        />
+        /> -->
         <ButtonIcon
           icon="user-gear"
           text="Profile"
           :selected="view === 'settings'"
           @click="view = 'settings'"
         />
+        <ButtonIcon
+          v-if="user?.role === UserRole.ADMIN"
+          class="administration"
+          icon="screwdriver-wrench"
+          text="Paramètres admin"
+          :selected="view === 'administration'"
+          @click="view = 'administration'"
+        />
       </nav>
       <RoomManager v-if="view === 'room'" />
       <FriendList v-if="view === 'friends'" @conversation="handleNewConversation" />
       <PrivateMessagery v-if="view === 'messages'" v-model="conversationContact" />
+      <AdminPanel v-if="view === 'administration' && user?.role === UserRole.ADMIN" />
     </div>
   </section>
 </template>
@@ -52,6 +61,7 @@ import { PlayerInfoDto, UserRole } from 'shared'
 import ButtonIcon from '../components/ButtonIcon/ButtonIcon.vue'
 import FriendList from '../components/FriendList/FriendList.vue'
 import PrivateMessagery from '../components/PrivateMessagery/PrivateMessagery.vue'
+import AdminPanel from '../components/AdminPanel/AdminPanel.vue'
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
@@ -63,7 +73,9 @@ const { user } = storeToRefs(authStore)
 const $router = useRouter()
 
 // Refs
-const view = ref<'room' | 'friends' | 'messages' | 'history' | 'settings'>('room')
+const view = ref<'room' | 'friends' | 'messages' | 'history' | 'settings' | 'administration'>(
+  'room',
+)
 const conversationContact = ref<PlayerInfoDto>()
 // Watchers
 watch(
@@ -124,10 +136,21 @@ function handleNewConversation(friend: PlayerInfoDto): void {
       display: flex;
       gap: 0.5rem;
       top: -0.5rem;
+      & .administration {
+        color: $secondary-color;
+        border-color: $secondary-color;
+        &:hover,
+        &.selected {
+          background-color: $secondary-color;
+          color: white;
+          box-shadow: none;
+        }
+      }
       button {
         &.selected {
           background-color: $main-color;
           color: white;
+          box-shadow: none;
         }
       }
     }

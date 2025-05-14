@@ -4,8 +4,8 @@
       <div class="confirm-modal_content">
         <slot></slot>
         <div class="confirm-modal_buttons">
-          <button @click="handleConfirm">Ok</button>
-          <button @click="emit('close')">Annuler</button>
+          <button class="confirm-modal_buttons_confirm" @click="handleConfirm">Ok</button>
+          <button class="confirm-modal_buttons_cancel" @click="emit('close')">Annuler</button>
         </div>
       </div>
     </div>
@@ -54,6 +54,12 @@ function handleConfirm(): void {
     width: 100%;
     display: flex;
     gap: 1rem;
+    &_cancel {
+      @include danger-button;
+    }
+    &_confirm {
+      @include green-button;
+    }
     & button {
       width: 100%;
     }

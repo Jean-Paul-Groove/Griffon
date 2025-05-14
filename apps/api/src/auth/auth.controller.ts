@@ -40,6 +40,7 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @UploadedFile(new ImageValidationPipe()) file?: MemoryStorageFile,
   ): Promise<void> {
+    console.log('REGISTER')
     return await this.authService.registerUser(registerDto, file)
   }
 

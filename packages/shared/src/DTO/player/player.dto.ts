@@ -34,7 +34,14 @@ export class CreateUserDto {
   email:string
   password:string
 }
-
+export class DetailedPlayerDto {
+  name:string
+  role:string
+  email:string
+  avatar:string
+  room:string
+  id:string
+}
 export class PendingRequestDto {
   accepted:boolean
   answered:boolean

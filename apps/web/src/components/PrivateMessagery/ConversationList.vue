@@ -17,6 +17,7 @@
         >
           <FriendCard
             v-if="getConversationContact(conversation)"
+            class="conversations_list_item_friend-card"
             :friend="getConversationContact(conversation)"
             :with-actions="false"
           />
@@ -85,7 +86,6 @@ function handleOpenConversation(conversation: MessageDto): void {
   width: 100%;
   align-items: center;
   &_list {
-    list-style: none;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -96,6 +96,12 @@ function handleOpenConversation(conversation: MessageDto): void {
     overflow-y: auto;
     &_item {
       width: 100%;
+      &_friend-card {
+        max-width: 15rem;
+        text-wrap: wrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
       &_link {
         font-size: large;
         cursor: pointer;

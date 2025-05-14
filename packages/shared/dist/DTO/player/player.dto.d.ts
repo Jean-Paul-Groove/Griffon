@@ -27,6 +27,14 @@ export declare class CreateUserDto {
     email: string;
     password: string;
 }
+export declare class DetailedPlayerDto {
+    name: string;
+    role: string;
+    email: string;
+    avatar: string;
+    room: string;
+    id: string;
+}
 export declare class PendingRequestDto {
     accepted: boolean;
     answered: boolean;

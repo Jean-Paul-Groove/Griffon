@@ -6,12 +6,14 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
 import {
   CreateGuestDto,
   CreateUserDto,
+  DetailedPlayerDto,
   PlayerInfoDto,
   UpdateFriendsInfoDto,
   UserRole,
@@ -82,7 +84,7 @@ export class PlayerService {
       if (error?.code === '23505') {
         throw new HttpException('Email already used', HttpStatus.BAD_REQUEST)
       } else {
-        throw new BadRequestException()
+        throw new BadRequestException(error)
       }
     }
   }
@@ -261,5 +263,82 @@ export class PlayerService {
       relations: { sender: true },
     })
     return pendingRequests
+  }
+
+  async getPlayers(
+    offset: number = 0,
+    size: number = 50,
+  ): Promise<[DetailedPlayerDto[], count: number]> {
+    const result = await this.playerRepository.findAndCount({
+      skip: offset,
+      take: size,
+      order: { name: 'ASC' },
+      relations: {
+        room: true,
+      },
+      select: { email: true, name: true, id: true, avatar: true, role: true, room: { id: true } },
+    })
+    const players = result[0].map((player) => ({
+      id: player.id,
+      name: player.name,
+      avatar: player.avatar,
+      role: player.role,
+      email: player.email,
+      room: player.room?.id,
+    }))
+    return [players, result[1]]
+  }
+
+  async editPlayer(editBody: Partial<Player>, avatar?: MemoryStorageFile): Promise<Player> {
+    const formerPlayer = await this.playerRepository.findOneBy({ id: editBody.id })
+    // VALIDATION
+    // ROLES
+    if (formerPlayer.role !== UserRole.GUEST && editBody.role === UserRole.GUEST) {
+      throw new BadRequestException("You can't demote a user to a guest Role")
+    }
+    if (formerPlayer.role === UserRole.GUEST && editBody.role && editBody.role !== UserRole.GUEST) {
+      throw new BadRequestException("You can't promote a guest user")
+    }
+    if (formerPlayer.role === UserRole.GUEST) {
+      delete editBody.email
+      delete editBody.password
+      delete editBody.role
+    }
+    // FIELDS VALIDITY
+    if (editBody.email) {
+      if (!this.authService.checkEmailValidity(editBody.email)) {
+        throw new BadRequestException('Incorrect email')
+      }
+    }
+    if (editBody.password) {
+      if (!this.authService.checkPasswordStrength(editBody.password)) {
+        throw new BadRequestException('Weak password')
+      }
+      editBody.password = await this.authService.hashPassword(editBody.password)
+    }
+    if (editBody.name && editBody.name.trim() === '') {
+      throw new BadRequestException('Player name can not be empty')
+    }
+
+    const newEntity = this.playerRepository.merge(formerPlayer, editBody)
+    if (avatar) {
+      const avatarUrl = await this.commonService.uploadImage(
+        avatar,
+        formerPlayer.id,
+        true,
+        'avatar',
+        300,
+      )
+      newEntity.avatar = avatarUrl
+    }
+    const editedPlayer = await this.playerRepository.save(newEntity)
+    return editedPlayer
+  }
+  async deletePlayer(playerId: string): Promise<void> {
+    const player = await this.playerRepository.findBy({ id: playerId })
+    if (!player) {
+      throw new NotFoundException()
+    }
+    await this.playerRepository.remove(player)
   }
 }

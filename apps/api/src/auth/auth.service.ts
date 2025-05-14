@@ -1,4 +1,11 @@
-import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { PlayerService } from '../player/player.service'
 import { JwtService } from '@nestjs/jwt'
 import { Socket } from 'socket.io'
@@ -10,6 +17,7 @@ import * as bcrypt from 'bcrypt'
 import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 import { LoginDto } from './validation/Login.dto'
 import { FastifyRequest } from 'fastify'
+import { emailPattern, strongPasswordPattern } from '../common/utils/regexp'
 @Injectable()
 export class AuthService {
   constructor(
@@ -48,13 +56,23 @@ export class AuthService {
 
   async registerUser(userInfo: RegisterDto, avatar?: MemoryStorageFile): Promise<void> {
     const { username, email, password: toBeHashed } = userInfo
-    const password = await bcrypt.hash(toBeHashed, 14)
+    if (!this.checkEmailValidity(email)) {
+      throw new BadRequestException('Incorrect email')
+    }
+    if (!this.checkPasswordStrength(toBeHashed)) {
+      throw new BadRequestException('Weak password')
+    }
+    if (username.trim() === '') {
+      throw new BadRequestException('Username can not be empty')
+    }
+    const password = await this.hashPassword(toBeHashed)
     const createUserDto: CreateUserDto = {
       name: username,
       email,
       password,
       role: UserRole.REGISTERED_USER,
     }
+    console.log('PASSED ALL SECURITY ISSUES')
     await this.playerService.createPlayer(createUserDto, avatar)
   }
 
@@ -72,5 +90,14 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     }
+  }
+  async hashPassword(toBeHashed: string): Promise<string> {
+    return await bcrypt.hash(toBeHashed, 14)
+  }
+  checkEmailValidity(email: string): boolean {
+    return emailPattern.test(email)
+  }
+  checkPasswordStrength(password: string): boolean {
+    return strongPasswordPattern.test(password)
   }
 }

@@ -34,7 +34,7 @@ export class Player {
   })
   role: UserRole
 
-  @Column({ type: 'varchar', length: 20, unique: true, nullable: true, select: false })
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true, select: false })
   email: string
 
   @Column({ select: false, nullable: true })

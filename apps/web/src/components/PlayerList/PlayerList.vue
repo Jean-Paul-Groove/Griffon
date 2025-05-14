@@ -26,7 +26,6 @@ const { room, currentPlayer } = storeToRefs(useSocketStore())
 
 <style lang="scss" scoped>
 .player-list {
-  list-style: none;
   width: 100%;
   height: 100%;
   overflow-y: auto;

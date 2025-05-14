@@ -31,6 +31,7 @@ $scrolls-height: calc(100vw / 20);
   background-size: 100vw 100vh;
   position: relative;
   overflow: hidden;
+  width: 100%;
   &_header {
     position: absolute;
     top: calc(-1 * $scrolls-height * 0.1);
@@ -50,6 +51,7 @@ $scrolls-height: calc(100vw / 20);
     padding-right: 4vw;
     max-height: 100%;
     height: 100%;
+    width: 100%;
   }
 }
 </style>
