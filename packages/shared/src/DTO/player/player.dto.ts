@@ -35,3 +35,14 @@ export class CreateUserDto {
   password:string
 }
 
+export class PendingRequestDto {
+  accepted:boolean
+  answered:boolean
+  id:string
+  sender:{
+    id:string,
+    name:string,
+    role:string,
+    avatar:string
+  }
+}

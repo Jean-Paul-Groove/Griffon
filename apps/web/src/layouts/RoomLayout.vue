@@ -9,6 +9,7 @@
         v-if="room"
         class="room-layout_disconnect"
         title="Quitter le salon"
+        aria-label="Quitter le salon"
         @click="exitModal = true"
       >
         <FontAwesomeIcon class="room-layout_disconnect_icon" :icon="['fas', 'door-open']" />

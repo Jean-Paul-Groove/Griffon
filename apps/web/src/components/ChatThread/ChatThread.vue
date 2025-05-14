@@ -15,14 +15,14 @@
       name="chat-message"
       @keydown="sendOnEnter"
     ></textarea>
-    <button class="chat_form_submit" title="Envoyer">
+    <button class="chat_form_submit" title="Envoyer" aria-label="Envoyer le message">
       <FontAwesomeIcon icon="envelope" />
     </button>
   </form>
 </template>
 
 <script setup lang="ts">
-import { ChatMessageDto } from 'shared'
+import { ChatMessageDto, MessageDto } from 'shared'
 import ChatMessage from './ChatMessage.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
@@ -30,7 +30,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../../stores'
 
 const props = defineProps<{
-  chatMessages: Array<ChatMessageDto & { seen?: boolean }>
+  chatMessages: ChatMessageDto[] | MessageDto[]
   sendMessage: (text: string) => void
 }>()
 
@@ -91,6 +91,7 @@ function send(e: Event | KeyboardEvent): void {
     padding: 0.2rem;
     gap: 0.2rem;
     max-height: 100%;
+    height: 100%;
   }
   &_form {
     width: 100%;

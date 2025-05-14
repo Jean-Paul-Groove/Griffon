@@ -33,6 +33,8 @@ export declare enum WSE {
     CONFIRM_FRIEND = "confirm_friend",
     REJECT_FRIEND = "reject_friend",
     REMOVE_FRIEND = "remove_friend",
+    ASK_FRIENDS_INFO = "ask-friends-info",
+    UPDATE_FRIENDS_INFO = "update-friends-info",
     FAIL_CREATE_ROOM = "fail-create-room",
     FAIL_JOIN_ROOM = "fail-join-room",
     FAIL_START_GAME = "fail-start-game",

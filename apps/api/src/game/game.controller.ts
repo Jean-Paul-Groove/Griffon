@@ -5,6 +5,7 @@ import { GameSpecs } from './entities/game.specs.entity'
 @Controller('game')
 export class GameController {
   constructor(private gameService: GameService) {}
+
   @HttpCode(HttpStatus.OK)
   @Get()
   getAvailableGames(): Promise<Partial<GameSpecs>[]> {

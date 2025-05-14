@@ -2,16 +2,16 @@
   <form v-if="user" class="room-manager_form" @submit="(e) => e.preventDefault()">
     <h2 class="room-manager_form_title">Rejoindre un salon</h2>
 
-    <FormInput v-model="roomId" :error="roomIdError != null" label="Id du salon" />
+    <FormInput
+      v-model="roomId"
+      input-id="room-id"
+      :error="roomIdError != null"
+      label="Id du salon"
+    />
     <button class="room-manager_form_button" @click="joinRoom(roomId)">Rejoindre</button>
     <DividerText color="$main-color" text-color="$main-color" text="ou" />
     <button class="room-manager_form_button" @click="createNewRoom">Créer un salon</button>
-    <DividerText
-      v-if="user.room"
-      color="$main-color"
-      text-color="$main-color"
-      text="ou"
-    />
+    <DividerText v-if="user.room" color="$main-color" text-color="$main-color" text="ou" />
 
     <button v-if="user.room" class="room-manager_form_button" @click="joinPrevious">
       Rejoindre le salon précédent

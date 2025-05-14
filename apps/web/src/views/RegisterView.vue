@@ -1,20 +1,33 @@
 <template>
   <div>
     <form class="sign-in-form">
-      <FormInput v-model="username" :error="errors.username != null" label="Pseudo" />
+      <FormInput
+        v-model="username"
+        input-id="register-username"
+        :error="errors.username != null"
+        label="Pseudo"
+      />
       <FormInput
         v-model="password"
+        input-id="register-password"
         type="password"
         :error="errors.password != null"
         label="Mot de passe"
       />
       <FormInput
         v-model="confirmPassword"
+        input-id="register-confirm-password"
         type="password"
         :error="errors.confirmPassword != null"
         label="Confirmation"
       />
-      <FormInput v-model="email" type="email" :error="errors.email != null" label="Email" />
+      <FormInput
+        v-model="email"
+        input-id="register-email"
+        type="email"
+        :error="errors.email != null"
+        label="Email"
+      />
       <label for="avatar-input">
         Avatar:
         <input
@@ -24,7 +37,12 @@
           capture
           @change="onFileChanged"
         />
-        <button v-if="file" title="Supprimer le fichier" @click="handleDeleteFile">
+        <button
+          v-if="file"
+          title="Supprimer le fichier"
+          aria-label="Supprimer le fichier"
+          @click="handleDeleteFile"
+        >
           <FontAwesomeIcon icon="xmark" />
         </button>
       </label>

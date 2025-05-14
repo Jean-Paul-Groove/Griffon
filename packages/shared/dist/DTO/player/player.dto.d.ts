@@ -27,3 +27,14 @@ export declare class CreateUserDto {
     email: string;
     password: string;
 }
+export declare class PendingRequestDto {
+    accepted: boolean;
+    answered: boolean;
+    id: string;
+    sender: {
+        id: string;
+        name: string;
+        role: string;
+        avatar: string;
+    };
+}

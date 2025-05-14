@@ -15,8 +15,9 @@
     </p>
     <button
       v-if="currentPlayerAdmin && optionDisplayed && !isAdmin"
-      title="Exclure ce joueur"
+      :title="'Exclure ' + player.name"
       class="player-card_exclude"
+      :aria-label="'Exclure ' + player.name"
       @click="handleExclude"
     >
       <FontAwesomeIcon icon="user-xmark" />
@@ -25,6 +26,7 @@
       v-if="canAddAsFriend && optionDisplayed"
       title="Ajouter en ami"
       class="player-card_add"
+      :aria-label="'Ajouter ' + player.name + ' en ami'"
       @click="handleAddFriend"
     >
       <FontAwesomeIcon icon="user-plus" />
@@ -82,7 +84,7 @@ const canAddAsFriend = computed<boolean>(() => {
 })
 // Functions
 function handleClick(): void {
-  if (currentPlayerAdmin.value) {
+  if (user.value?.role !== UserRole.GUEST) {
     optionDisplayed.value = !optionDisplayed.value
   }
 }

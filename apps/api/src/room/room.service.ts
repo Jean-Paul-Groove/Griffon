@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomOptions } from './types/room/RoomOptions'
 import { PlayerService } from '../player/player.service'
 import { WsException, WsResponse } from '@nestjs/websockets'
@@ -319,6 +319,9 @@ export class RoomService {
   async onExcludePlayer(playerId: string, roomId: string): Promise<void> {
     try {
       const room = await this.get(roomId)
+      if (!room) {
+        throw new WsException('bad request')
+      }
       const updatedRoom = await this.removePlayerFromRoom(room, playerId)
       const player = await this.playerService.get(playerId)
       this.commonService.emitToPlayer(player.id, {

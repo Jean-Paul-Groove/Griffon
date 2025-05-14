@@ -1,13 +1,23 @@
-import { PlayerInfoDto } from "../player";
+import { PlayerInfoDto } from '../player';
 export declare class ChatMessageDto {
     constructor(props: {
         id: string;
         content: string;
-        sender: PlayerInfoDto['id'];
+        sender: {
+            id: PlayerInfoDto['id'];
+            name: PlayerInfoDto['name'];
+            role: PlayerInfoDto['role'];
+            avatar?: PlayerInfoDto['avatar'];
+        };
         sentAt: Date;
     });
     id: string;
     content: string;
-    sender: PlayerInfoDto['id'];
+    sender: {
+        id: PlayerInfoDto['id'];
+        name: PlayerInfoDto['name'];
+        role: PlayerInfoDto['role'];
+        avatar?: PlayerInfoDto['avatar'];
+    };
     sentAt: Date;
 }

@@ -1,7 +1,8 @@
 <template>
   <div :class="messageClass">
     <p class="chat-message_sender">
-      {{ getUserById(message.sender)?.name }} ∙ {{ new Date(message.sentAt).toLocaleTimeString() }}
+      {{ message.sender.name }} ∙
+      {{ new Date(message.sentAt).toLocaleTimeString('fr-FR', { timeStyle: 'short' }) }}
     </p>
     <p class="chat-message_content">{{ message.content }}</p>
   </div>
@@ -9,23 +10,24 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useSocketStore } from '@/stores'
+import { useAuthStore, useSocketStore } from '@/stores'
 import type { ChatMessageDto } from 'shared'
+import { storeToRefs } from 'pinia'
 
-const { SYSTEM_ID, getUserById } = useSocketStore()
+const { user } = storeToRefs(useAuthStore())
+const { SYSTEM } = useSocketStore()
 
 interface ChatMessageProps {
   message: ChatMessageDto
-  playerId: string
 }
 const props = defineProps<ChatMessageProps>()
 
 // Computed
 const messageClass = computed<string>(() => {
   let newClass = 'chat-message'
-  if (props.message.sender === props.playerId) {
+  if (props.message.sender.id === user.value?.id) {
     newClass += ' isSender'
-  } else if (props.message.id === SYSTEM_ID) {
+  } else if (props.message.sender.id === SYSTEM.id) {
     newClass += ' isSystem'
   }
   return newClass
@@ -52,7 +54,7 @@ const messageClass = computed<string>(() => {
     width: 100%;
   }
   &_sender {
-    font-size: x-small;
+    font-size: small;
   }
   &_content {
     padding-left: 0.3rem;

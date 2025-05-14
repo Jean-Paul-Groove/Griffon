@@ -9,7 +9,7 @@
         <p v-else class="friend-card_status">Hors ligne</p>
       </template>
     </div>
-    <div class="friend-card_actions">
+    <div v-if="withActions" class="friend-card_actions">
       <ButtonIcon
         v-if="friend.room && friend.online"
         icon="dice"
@@ -34,7 +34,13 @@ import { apiUrl } from '../../helpers'
 import defaultAvatar from '../../assets/avatar/default-avatar.webp'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
 
-const props = defineProps<{ friend: PlayerInfoDto & { online: boolean } }>()
+const props = withDefaults(
+  defineProps<{
+    friend: Omit<PlayerInfoDto, 'isArtist'> & { online: boolean }
+    withActions: boolean
+  }>(),
+  { withActions: true },
+)
 const emit = defineEmits<{
   (e: 'join', roomId: string): void
   (e: 'message', playerId: string): void

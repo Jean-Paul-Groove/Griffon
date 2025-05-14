@@ -11,6 +11,7 @@
         v-if="user"
         class="user-layout_disconnect"
         title="Déconnexion"
+        aria-label="Se déconnecter"
         @click="disconnectModal = true"
       >
         <FontAwesomeIcon class="user-layout_disconnect_icon" :icon="['fas', 'user-xmark']" />

@@ -1,20 +1,21 @@
 <template>
   <div class="form-input">
     <input
+      :id="inputId"
       v-model="model"
       class="form-input_input"
       :class="{ error: error }"
       :type="type"
       placeholder="   "
     />
-    <label class="form-input_label">{{ label }} </label>
+    <label :for="inputId" class="form-input_label">{{ label }} </label>
   </div>
 </template>
 
 <script setup lang="ts">
 const model = defineModel<string>()
 
-withDefaults(defineProps<{ label?: string; error?: boolean; type?: string }>(), {
+withDefaults(defineProps<{ inputId: string; label?: string; error?: boolean; type?: string }>(), {
   type: 'text',
   label: '',
 })

@@ -1,22 +1,40 @@
-import { PlayerInfoDto } from "../player"
+import { PlayerInfoDto } from '../player'
 
 export class MessageDto {
-    constructor(
-      props: {
-        id: string
-        content: string
-        sender: PlayerInfoDto['id']
-        receiver:PlayerInfoDto['id']
-        seen:boolean,
-        sentAt: Date
-      }
-    ) {
-      Object.assign(this, props)
-    }
+  constructor(props: {
     id: string
     content: string
-    sender: PlayerInfoDto['id']
-    receiver:PlayerInfoDto['id']
-    seen:boolean
+    sender: {
+      id: PlayerInfoDto['id']
+      name: PlayerInfoDto['name']
+      role: PlayerInfoDto['role']
+      avatar?: PlayerInfoDto['avatar']
+    }
+    receiver: {
+      id: PlayerInfoDto['id']
+      name: PlayerInfoDto['name']
+      role: PlayerInfoDto['role']
+      avatar?: PlayerInfoDto['avatar']
+    }
+    seen: boolean
     sentAt: Date
+  }) {
+    Object.assign(this, props)
   }
+  id: string
+  content: string
+  sender: {
+    id: PlayerInfoDto['id']
+    name: PlayerInfoDto['name']
+    role: PlayerInfoDto['role']
+    avatar: PlayerInfoDto['avatar']
+  }
+  receiver: {
+    id: PlayerInfoDto['id']
+    name: PlayerInfoDto['name']
+    role: PlayerInfoDto['role']
+    avatar: PlayerInfoDto['avatar']
+  }
+  seen: boolean
+  sentAt: Date
+}

@@ -9,13 +9,22 @@ import {
 } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
-import { CreateGuestDto, CreateUserDto, PlayerInfoDto, UserRole } from 'shared'
+import {
+  CreateGuestDto,
+  CreateUserDto,
+  PlayerInfoDto,
+  UpdateFriendsInfoDto,
+  UserRole,
+  WSE,
+} from 'shared'
 import { Repository } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Player } from './entities/player.entity'
 import { PlayerNotFoundWsException } from '../common/ws/exceptions/playerNotFound'
 import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 import { CommonService } from '../common/common.service'
+import { FriendRequest } from './entities/friend.request.entity'
+import { UnauthorizedWsException } from '../common/ws/exceptions/unauthorized'
 
 // This should be a real class/interface representing a user entity
 
@@ -26,9 +35,19 @@ export class PlayerService {
     private authService: AuthService,
     @InjectRepository(Player)
     private playerRepository: Repository<Player>,
+    @InjectRepository(FriendRequest)
+    private friendRequestRepository: Repository<FriendRequest>,
     private commonService: CommonService,
   ) {}
   private logger = new Logger(PlayerService.name)
+  async onAskFriendsInfo(player: Player): Promise<void> {
+    const friends = await this.getFriendsOnlineStatus(player.friends)
+    const data: UpdateFriendsInfoDto = {
+      event: WSE.UPDATE_FRIENDS_INFO,
+      arguments: { friends },
+    }
+    this.commonService.emitToPlayer(player.id, data)
+  }
 
   async createGuest(createGuestDto: CreateGuestDto): Promise<Player> {
     if (createGuestDto.name.trim() != '') {
@@ -73,8 +92,27 @@ export class PlayerService {
         where: {
           id: playerId,
         },
-        relations: { room: true, friends: includeFriends },
+        relations: { room: true },
       })
+      if (includeFriends) {
+        const friends = await this.playerRepository.query(
+          ` SELECT id,name, role, avatar, "roomId" as room
+        FROM player P
+        WHERE P.id <> $1
+          AND EXISTS(
+            SELECT 1
+            FROM player_friends_player F
+            WHERE (F."playerId_1" = $1 AND F."playerId_2" = P.id )
+            OR (F."playerId_2" = $1 AND F."playerId_1" = P.id )
+            );  `,
+          [playerId],
+        )
+        friends.map((f) => {
+          f.room = { id: f.room }
+          return f
+        })
+        player.friends = friends
+      }
       return player
     } catch (err) {
       this.logger.error(err)
@@ -122,14 +160,106 @@ export class PlayerService {
     })
     return player
   }
-  async getFriendsInfo(friendsId: string[]): Promise<Array<PlayerInfoDto & { online: boolean }>> {
-    const friends = await this.playerRepository
-      .createQueryBuilder('player')
-      .where('player.id NOT IN (:friendsId)', { friendsId })
-      .getMany()
+  async getFriendsOnlineStatus(
+    friends: Player['friends'],
+  ): Promise<Array<PlayerInfoDto & { online: boolean }>> {
+    if (!friends) {
+      return []
+    }
     return friends.map((friend) => ({
       ...this.generatePlayerInfoDto(friend, []),
       online: this.commonService.getSocketFromPlayer(friend.id)?.connected ?? false,
     }))
+  }
+  async requestFriend(player: Player, newFriendId: Player['id']): Promise<void> {
+    try {
+      const newFriend = await this.get(newFriendId)
+      if (player.role === UserRole.GUEST || newFriend.role === UserRole.GUEST) {
+        throw new UnauthorizedWsException()
+      }
+      if (player.friends.map((friend) => friend.id).includes(newFriendId)) {
+        return
+      }
+      // Check if there is a pending request that current player hasn't accepted yet
+      const existingReceivedRequest = await this.friendRequestRepository.findOne({
+        where: { receiver: player, accepted: false },
+      })
+      if (existingReceivedRequest != undefined) {
+        this.acceptFriendRequest(player, existingReceivedRequest.id)
+        return
+      }
+      const existingSentRequest = await this.friendRequestRepository.findOne({
+        where: { sender: player, accepted: false },
+      })
+
+      if (existingSentRequest) {
+        return
+      }
+      const requestEntity = this.friendRequestRepository.create({
+        sender: player,
+        receiver: newFriend,
+        accepted: false,
+        answered: false,
+      })
+      await this.friendRequestRepository.save(requestEntity)
+    } catch (error) {
+      this.logger.error(error)
+      throw new BadRequestException()
+    }
+  }
+  async acceptFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
+    try {
+      const request = await this.friendRequestRepository.findOne({
+        where: {
+          id: requestId,
+        },
+        relations: { receiver: true, sender: true },
+      })
+      if (!request) {
+        return
+      }
+      if (request.receiver.id !== player.id) {
+        throw new UnauthorizedWsException()
+      }
+      request.answered = true
+      request.accepted = true
+      await this.friendRequestRepository.save(request)
+      const newFriend = await this.get(request.sender.id, true)
+      if (newFriend.friends.map((f) => f.id).includes(player.id)) {
+        return
+      }
+      if (player.friends === undefined) {
+        player.friends = []
+      }
+      player.friends.push(request.sender)
+      await this.playerRepository.save(player)
+      await this.onAskFriendsInfo(player)
+    } catch (err) {
+      this.logger.error(err)
+      throw new Error(err)
+    }
+  }
+  async refuseFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
+    try {
+      const request = await this.friendRequestRepository.findOneBy({ id: requestId })
+      if (!request) {
+        return
+      }
+      if (request.receiver.id !== player.id) {
+        throw new UnauthorizedWsException()
+      }
+      request.answered = true
+      request.accepted = false
+      await this.friendRequestRepository.save(request)
+    } catch (err) {
+      this.logger.error(err)
+    }
+  }
+  async getPendingRequest(player: Player): Promise<FriendRequest[]> {
+    const pendingRequests = await this.friendRequestRepository.find({
+      where: { receiver: player, accepted: false, answered: false },
+      relations: { sender: true },
+    })
+    return pendingRequests
   }
 }

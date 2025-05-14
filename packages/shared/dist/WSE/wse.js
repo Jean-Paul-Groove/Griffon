@@ -37,6 +37,8 @@ var WSE;
     WSE["CONFIRM_FRIEND"] = "confirm_friend";
     WSE["REJECT_FRIEND"] = "reject_friend";
     WSE["REMOVE_FRIEND"] = "remove_friend";
+    WSE["ASK_FRIENDS_INFO"] = "ask-friends-info";
+    WSE["UPDATE_FRIENDS_INFO"] = "update-friends-info";
     WSE["FAIL_CREATE_ROOM"] = "fail-create-room";
     WSE["FAIL_JOIN_ROOM"] = "fail-join-room";
     WSE["FAIL_START_GAME"] = "fail-start-game";

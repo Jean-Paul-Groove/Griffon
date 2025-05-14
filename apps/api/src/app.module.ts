@@ -22,6 +22,7 @@ import { ThrottlerModule } from '@nestjs/throttler'
 import { join } from 'path'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { MessageModule } from './message/message.module'
+import { FriendRequest } from './player/entities/friend.request.entity'
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { MessageModule } from './message/message.module'
       port: Number(process.env.DB_PORT ?? 5432),
       password: process.env.DB_PASSWORD,
       username: process.env.DB_USER,
-      entities: [Player, Room, Chat, Message, GameSpecs, Game, Round, Score, Word],
+      entities: [Player, FriendRequest, Room, Chat, Message, GameSpecs, Game, Round, Score, Word],
       database: process.env.DB_NAME ?? 'griffon',
       synchronize: true,
       logging: false,

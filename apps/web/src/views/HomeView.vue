@@ -17,6 +17,12 @@
           @click="view = 'friends'"
         />
         <ButtonIcon
+          icon="comment"
+          text="Messages"
+          :selected="view === 'messages'"
+          @click="view = 'messages'"
+        />
+        <ButtonIcon
           icon="clock"
           text="Historique"
           :selected="view === 'history'"
@@ -30,31 +36,35 @@
         />
       </nav>
       <RoomManager v-if="view === 'room'" />
-      <FriendList v-if="view === 'friends'" />
+      <FriendList v-if="view === 'friends'" @conversation="handleNewConversation" />
+      <PrivateMessagery v-if="view === 'messages'" v-model="conversationContact" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore, useSocketStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import RoomManager from '../components/RoomManager/RoomManager.vue'
-import { UserRole } from 'shared'
+import { PlayerInfoDto, UserRole } from 'shared'
 import ButtonIcon from '../components/ButtonIcon/ButtonIcon.vue'
 import FriendList from '../components/FriendList/FriendList.vue'
+import PrivateMessagery from '../components/PrivateMessagery/PrivateMessagery.vue'
 // Stores
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
 const { room } = storeToRefs(socketStore)
+const { askFriendsInfo } = socketStore
 const { user } = storeToRefs(authStore)
 
 // Composables
 const $router = useRouter()
-// Refs
-const view = ref<string>('room')
 
+// Refs
+const view = ref<'room' | 'friends' | 'messages' | 'history' | 'settings'>('room')
+const conversationContact = ref<PlayerInfoDto>()
 // Watchers
 watch(
   () => room.value?.id,
@@ -73,6 +83,19 @@ watch(
     }
   },
 )
+
+// Hooks
+onMounted(() => {
+  if (user.value && user.value.role !== UserRole.GUEST) {
+    askFriendsInfo()
+  }
+})
+
+// Functions
+function handleNewConversation(friend: PlayerInfoDto): void {
+  conversationContact.value = friend
+  view.value = 'messages'
+}
 </script>
 
 <style lang="scss" scoped>

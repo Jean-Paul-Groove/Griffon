@@ -1,17 +1,37 @@
-import { PlayerInfoDto } from "../player";
+import { PlayerInfoDto } from '../player';
 export declare class MessageDto {
     constructor(props: {
         id: string;
         content: string;
-        sender: PlayerInfoDto['id'];
-        receiver: PlayerInfoDto['id'];
+        sender: {
+            id: PlayerInfoDto['id'];
+            name: PlayerInfoDto['name'];
+            role: PlayerInfoDto['role'];
+            avatar?: PlayerInfoDto['avatar'];
+        };
+        receiver: {
+            id: PlayerInfoDto['id'];
+            name: PlayerInfoDto['name'];
+            role: PlayerInfoDto['role'];
+            avatar?: PlayerInfoDto['avatar'];
+        };
         seen: boolean;
         sentAt: Date;
     });
     id: string;
     content: string;
-    sender: PlayerInfoDto['id'];
-    receiver: PlayerInfoDto['id'];
+    sender: {
+        id: PlayerInfoDto['id'];
+        name: PlayerInfoDto['name'];
+        role: PlayerInfoDto['role'];
+        avatar: PlayerInfoDto['avatar'];
+    };
+    receiver: {
+        id: PlayerInfoDto['id'];
+        name: PlayerInfoDto['name'];
+        role: PlayerInfoDto['role'];
+        avatar: PlayerInfoDto['avatar'];
+    };
     seen: boolean;
     sentAt: Date;
 }

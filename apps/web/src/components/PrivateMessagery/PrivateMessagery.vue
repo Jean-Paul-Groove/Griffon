@@ -1,31 +1,57 @@
 <template>
-  <ChatThread :messages="sortedMessages" />
+  <section v-if="contact" class="private-messagery">
+    <div class="private-messagery_head">
+      <h2>Conversation avec {{ contact.name }}</h2>
+      <img :src="avatar" :alt="contact.name" />
+      <ButtonIcon
+        class="private-messagery_head_leave"
+        icon="xmark"
+        text="Quitter"
+        :selected="false"
+        @click="contact = undefined"
+      />
+    </div>
+
+    <p v-if="sortedMessages.length === 0">Pas encore de messages ...</p>
+    <ChatThread :chat-messages="sortedMessages" :send-message="sendMessage" />
+  </section>
+  <ConversationList v-else @conversation="(friend) => (contact = friend)" />
 </template>
 
 <script setup lang="ts">
 import axios from 'axios'
-import { MessageDto, NewMessageDto, WSE, type PlayerInfoDto } from 'shared'
+import { MessageDto, NewMessageDto, PlayerInfoDto, WSE } from 'shared'
 import { computed, onMounted, ref, watch } from 'vue'
 import { apiUrl } from '../../helpers'
 import { storeToRefs } from 'pinia'
-import { useSocketStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
+import ChatThread from '../ChatThread/ChatThread.vue'
+import ConversationList from './ConversationList.vue'
+import defaultAvatar from '../../assets/avatar/default-avatar.webp'
+import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
 
-const props = defineProps<{ contact: PlayerInfoDto }>()
 // Stores
 const { socket } = storeToRefs(useSocketStore())
+const { token } = storeToRefs(useAuthStore())
+// Models
+const contact = defineModel<PlayerInfoDto>()
 
 // Refs
 const messages = ref<MessageDto[]>([])
-
-// Refs
 const sortedMessages = computed<MessageDto[]>(() => {
   return [...messages.value].sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
 })
 
+// Computeds
+const avatar = computed<string>(() => {
+  return contact.value?.avatar ? apiUrl + '/' + contact.value.avatar : defaultAvatar
+})
+
 // Watchers
 watch(
-  () => props.contact,
+  () => contact.value,
   () => void fetchLastMessages(),
+  { immediate: true },
 )
 
 // Hooks
@@ -34,9 +60,17 @@ onMounted(() => {
 })
 
 // Function
-async function fetchLastMessages(): Promise<void> {
+async function fetchLastMessages(offset: number = 0): Promise<void> {
   try {
-    const response = await axios.get(apiUrl + '/messages?contact=' + props.contact.id)
+    if (!contact.value) {
+      return
+    }
+    const response = await axios.get(
+      `${apiUrl}/message/list/${contact.value.id}?offset=${offset}`,
+      {
+        headers: { Authorization: 'bearer ' + token.value },
+      },
+    )
     if (response.data) {
       messages.value = response.data
     }
@@ -52,8 +86,14 @@ function listenToNewMessages(): void {
   }
 }
 function onNewMessage(data: NewMessageDto['arguments']): void {
+  if (!contact.value) {
+    return
+  }
   if (data.message) {
-    if (data.message.receiver !== props.contact.id && data.message.sender !== props.contact.id) {
+    if (
+      data.message.receiver.id !== contact.value.id &&
+      data.message.sender.id !== contact.value.id
+    ) {
       return
     }
     if (messages.value.findIndex((message) => message.id === data.message.id) === -1) {
@@ -61,6 +101,47 @@ function onNewMessage(data: NewMessageDto['arguments']): void {
     }
   }
 }
+function sendMessage(text: string): void {
+  if (text.trim() !== '' && contact.value) {
+    if (socket.value) {
+      socket.value.emit(WSE.NEW_PRIVATE_MESSAGE, { message: text, receiver: contact.value.id })
+    }
+  }
+}
 </script>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.private-messagery {
+  @include chat-container;
+  height: 75%;
+  &_head {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    height: 3rem;
+    width: 100%;
+    position: relative;
+    & h2 {
+      text-align: center;
+      max-width: 70%;
+    }
+    & img {
+      @include avatar;
+      max-height: 3rem;
+      height: 100%;
+    }
+    &_leave {
+      width: fit-content;
+      justify-self: end;
+      color: $secondary-color;
+      position: absolute;
+      right: 0.5rem;
+      border-color: $secondary-color;
+      &:hover {
+        background-color: $secondary-color;
+      }
+    }
+  }
+}
+</style>

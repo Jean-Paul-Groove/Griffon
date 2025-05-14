@@ -29,13 +29,6 @@ function sendMessage(text: string): void {
 
 <style lang="scss" scoped>
 .room-chat {
-  width: 100%;
-  background-color: rgba(15, 12, 12, 0.13);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0.2rem;
-  max-height: 100%;
-  min-height: 0;
+  @include chat-container;
 }
 </style>

@@ -9,10 +9,10 @@ export class Message {
   @Column()
   content: string
 
-  @ManyToOne(() => Player, (player) => player.messagesSent)
+  @ManyToOne(() => Player)
   sender: Player
 
-  @ManyToOne(() => Player, (player) => player.messagesReceived)
+  @ManyToOne(() => Player)
   receiver: Player
 
   @Column()

@@ -4,7 +4,7 @@
       <div class="confirm-modal_content">
         <slot></slot>
         <div class="confirm-modal_buttons">
-          <button @click="emit('confirm')">Ok</button>
+          <button @click="handleConfirm">Ok</button>
           <button @click="emit('close')">Annuler</button>
         </div>
       </div>
@@ -17,6 +17,12 @@ const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'close'): void
 }>()
+
+// Functions
+function handleConfirm(): void {
+  emit('confirm')
+  emit('close')
+}
 </script>
 
 <style scoped lang="scss">

@@ -8,6 +8,7 @@ import { ChatModule } from '../chat/chat.module'
 import { AuthModule } from '../auth/auth.module'
 import { RoomModule } from '../room/room.module'
 import { PlayerModule } from '../player/player.module'
+import { MessageModule } from '../message/message.module'
 
 @Module({
   exports: [WsFilter, CommonService],
@@ -19,6 +20,7 @@ import { PlayerModule } from '../player/player.module'
     forwardRef(() => GameModule),
     forwardRef(() => ChatModule),
     forwardRef(() => RoomModule),
+    forwardRef(() => MessageModule),
   ],
 })
 export class CommonModule {}

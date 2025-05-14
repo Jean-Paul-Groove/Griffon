@@ -54,7 +54,7 @@ export class ChatService {
       id,
       content,
       sentAt,
-      sender: sender?.id,
+      sender: { id: sender.id, name: sender.name, role: sender.role, avatar: sender.avatar },
     })
   }
 }

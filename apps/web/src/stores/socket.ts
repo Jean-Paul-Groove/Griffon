@@ -19,6 +19,7 @@ import {
   ScoreListDto,
   StartGameDto,
   TimeLimitDto,
+  UpdateFriendsInfoDto,
   UserRole,
   WordToDrawDto,
   WSE,
@@ -46,8 +47,8 @@ export const useSocketStore = defineStore('socket', () => {
     name: 'Griffon',
     role: UserRole.ADMIN,
     isArtist: false,
+    avatar: undefined,
   }
-  const SYSTEM_ID = -1
   const socketListeners: ListenerRecord = {
     [WSE.INVALID_TOKEN]: resetToken,
     [WSE.CONNECTION_SUCCESS]: (data: PlayerConnectionSuccessDto['arguments']) => {
@@ -168,6 +169,13 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.UNAUTHORIZED]: (): void => {
       $toast.error("Vous n'êtes pas authorisé à faire ça...")
     },
+    // FRIENDS
+    [WSE.UPDATE_FRIENDS_INFO]: (data: UpdateFriendsInfoDto['arguments']): void => {
+      if (data.friends) {
+        console.log('DAAAATAAAAAAAAAAAAAAAAAAAAAAAAAA')
+        friends.value = [...data.friends]
+      }
+    },
   }
   // Refs
   const room = ref<RoomInfoDto | null>(null)
@@ -178,6 +186,7 @@ export const useSocketStore = defineStore('socket', () => {
   const countDown = ref<number | null>(null)
   const cdDuration = ref<number | null>(null)
   const countDownInterval = ref<number | null>(null)
+  const friends = ref<Array<PlayerInfoDto & { online: boolean }>>([])
   // Computeds
   const currentPlayer = computed<PlayerInfoDto | null>(() => {
     return room.value?.players.find((player) => player.id === user.value?.id) ?? null
@@ -292,7 +301,7 @@ export const useSocketStore = defineStore('socket', () => {
     }
     addMessage({
       content,
-      sender: SYSTEM.id,
+      sender: SYSTEM,
       sentAt: new Date(),
       id: '-1',
     })
@@ -368,14 +377,6 @@ export const useSocketStore = defineStore('socket', () => {
     }, 1000)
     countDownInterval.value = id
   }
-  function getUserById(id: string): PlayerInfoDto | undefined {
-    if (id === SYSTEM.id) {
-      return SYSTEM
-    }
-    if (room.value) {
-      return room.value.players.find((player) => player.id === id)
-    }
-  }
   function getUserPoints(id: string): ScoreDto | undefined {
     if (room.value) {
       return room.value.scores.find((score) => score.player === id)
@@ -407,29 +408,38 @@ export const useSocketStore = defineStore('socket', () => {
   }
   function addFriend(playerId: string): void {
     try {
-      if (!socket.value || !isAdmin.value) {
+      if (!socket.value || user.value?.role === UserRole.GUEST) {
         return
       }
+
       socket.value.emit(WSE.ASK_ADD_FRIEND, { playerId })
+      console.log('SENT REEQUEST')
     } catch (error) {
       console.log(error)
     }
   }
+  function askFriendsInfo(): void {
+    if (socket.value) {
+      socket.value.emit(WSE.ASK_FRIENDS_INFO)
+    }
+  }
+
   return {
     socket,
     room,
     chatMessages,
     wordToDraw,
-    SYSTEM_ID,
+    SYSTEM,
     countDown,
     isArtist,
     isAdmin,
     currentPlayer,
     handleConnection,
-    getUserById,
     getUserPoints,
     leaveRoom,
     excludePlayer,
     addFriend,
+    askFriendsInfo,
+    friends,
   }
 })

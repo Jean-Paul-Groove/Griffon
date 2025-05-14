@@ -2,7 +2,6 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import type { PlayerInfoDto } from 'shared'
-import axios from 'axios'
 
 export const useAuthStore = defineStore('auth', () => {
   const TOKEN_KEY = 'JWT'
@@ -17,15 +16,6 @@ export const useAuthStore = defineStore('auth', () => {
     (newToken) => {
       if (newToken === null) {
         $router.replace({ name: 'Connexion' })
-        axios.interceptors.request.use((req) => {
-          req.headers.Authorization = undefined
-          return req
-        })
-      } else {
-        axios.interceptors.request.use((req) => {
-          req.headers.Authorization = `Bearer ${token.value}`
-          return req
-        })
       }
     },
   )
@@ -44,7 +34,6 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
   function setPlayerInfo(playerInfo: PlayerInfoDto): void {
-    console.log(playerInfo)
     if (playerInfo != null) {
       user.value = playerInfo
     }

@@ -26,6 +26,9 @@ import { DrawingGuard } from './guards/drawing.guard'
 import { Roles } from '../common/decorators/roles'
 import { CommonService } from '../common/common.service'
 import { RoomService } from '../room/room.service'
+import { Player } from '../player/entities/player.entity'
+import { RegisteredGuard } from '../auth/guards/registered.guard'
+import { MessageService } from '../message/message.service'
 
 @UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
@@ -42,6 +45,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     private gameService: GameService,
     private chatService: ChatService,
     private commonService: CommonService,
+    private messageService: MessageService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
   private readonly logger = new Logger(CommonGateway.name)
@@ -156,13 +160,22 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   // CHAT HANDLERS
   @UseGuards(RoomGuard)
   @SubscribeMessage(WSE.NEW_CHAT_MESSAGE)
-  async handleNewMessage(
+  async handleNewChatMessage(
     @MessageBody('message') message: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     await this.chatService.onNewChatMessage(message, client)
   }
-
+  // MESSAGE HANDLERS
+  @UseGuards(RegisteredGuard)
+  @SubscribeMessage(WSE.NEW_PRIVATE_MESSAGE)
+  async handleNewPrivateMessage(
+    @MessageBody('message') message: string,
+    @MessageBody('receiver') receiver: string,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    await this.messageService.onNewMessage(message, client, receiver)
+  }
   // GAME HANDLERS
   @UseGuards(RoomGuard)
   @UseGuards(DrawingGuard)
@@ -188,5 +201,23 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     } catch (err) {
       client.emit(WSE.FAIL_START_GAME, { reson: err.message ?? 'An error occured' })
     }
+  }
+
+  // PLAYER HANDLERS
+  @SubscribeMessage(WSE.ASK_ADD_FRIEND)
+  async requestFriend(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('playerId') playerId: Player['id'],
+  ): Promise<void> {
+    const player = await this.playerService.getPlayerFromSocket(client, true)
+
+    await this.playerService.requestFriend(player, playerId)
+  }
+
+  @UseGuards(RegisteredGuard)
+  @SubscribeMessage(WSE.ASK_FRIENDS_INFO)
+  async getFriendsInfo(@ConnectedSocket() client: Socket): Promise<void> {
+    const player = await this.playerService.getPlayerFromSocket(client, true)
+    await this.playerService.onAskFriendsInfo(player)
   }
 }

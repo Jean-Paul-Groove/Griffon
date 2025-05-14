@@ -18,4 +18,5 @@ __exportStar(require("./common"), exports);
 __exportStar(require("./game"), exports);
 __exportStar(require("./chat"), exports);
 __exportStar(require("./connection"), exports);
+__exportStar(require("./player"), exports);
 //# sourceMappingURL=index.js.map

@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
   JoinTable,
 } from 'typeorm'
-import { Message } from '../../message/entities/message.entity'
 import { Room } from '../../room/entities/room.entity'
 import { Chat } from '../../chat/entities/chat.entity'
 import { UserRole } from 'shared'
@@ -47,12 +46,6 @@ export class Player {
   @ManyToMany(() => Player)
   @JoinTable()
   friends: Player[]
-
-  @OneToMany(() => Message, (message) => message.sender, { nullable: true })
-  messagesSent: Message[]
-
-  @OneToMany(() => Message, (message) => message.receiver, { nullable: true })
-  messagesReceived: Message[]
 
   @CreateDateColumn({ select: false })
   createdAt: Date

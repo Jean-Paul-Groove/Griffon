@@ -17,14 +17,20 @@
       </div>
     </div>
     <form v-if="activeTab === 'guest'" class="login-form_guest">
-      <FormInput v-model="guestName" label="Pseudo" :error="guestNameErrors != null" />
+      <FormInput
+        v-model="guestName"
+        input-id="guest-name"
+        label="Pseudo"
+        :error="guestNameErrors != null"
+      />
       <button class="login-form_button" @click="signIn">Continuer comme invité</button>
       <p v-if="guestNameErrors && !user">{{ guestNameErrors }}</p>
     </form>
     <form v-else class="login-form_user">
-      <FormInput v-model="email" :error="emailError != null" label="Email" />
+      <FormInput v-model="email" input-id="user-email" :error="emailError != null" label="Email" />
       <FormInput
         v-model="password"
+        input-id="user-password"
         type="password"
         :error="passwordError != null"
         label="Mot de passe"
