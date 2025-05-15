@@ -32,7 +32,6 @@ export class GriffonaryService {
   private readonly logger = new Logger(GriffonaryService.name, { timestamp: true })
   async executeRound(roomId: string): Promise<void> {
     try {
-      this.logger.debug('EXECUTE ROUND')
       const room = await this.roomService.get(roomId)
 
       if (!room) {
@@ -62,7 +61,6 @@ export class GriffonaryService {
         .andWhere('player.id NOT IN (' + formerArtists.getSql() + ')')
         .getMany()
       if (potentialArtist.length === 0) {
-        this.logger.debug('Everyone was an artist')
         this.gameService.endGame(room)
         if (
           this.schedulerRegistry?.doesExist !== undefined &&
@@ -76,10 +74,6 @@ export class GriffonaryService {
       const artist = sample(potentialArtist)
       const newWord = await this.gameService.getRandomWord()
       const timeLimit = Date.now() + drawingTime
-      this.logger.debug('artist', artist)
-      this.logger.debug('newWord', newWord)
-      this.logger.debug('drawingTime', drawingTime)
-      this.logger.debug('time', timeLimit)
       const round = this.roundRepository.create({
         game: room.currentGame,
         onGoing: true,
@@ -109,7 +103,6 @@ export class GriffonaryService {
   }
   async endRound(roomId: string): Promise<void> {
     try {
-      this.logger.debug('End round')
       const room = await this.roomService.get(roomId)
       const currentRound = await this.gameService.getLastOngoingORound(room)
       if (currentRound) {

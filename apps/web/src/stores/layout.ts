@@ -1,7 +1,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-export const useLayoutSize = defineStore('layout', () => {
+export const useLayoutStore = defineStore('layout', () => {
   // Composables
   const windowWidth = ref(window.innerWidth)
   const breakPoint = computed<'laptop' | 'tablet' | 'mobile'>(() => {

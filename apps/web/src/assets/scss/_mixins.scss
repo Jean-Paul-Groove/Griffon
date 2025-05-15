@@ -79,3 +79,12 @@
   gap: 0.5rem;
   width: 100%;
 }
+
+@mixin top-label {
+  transform: translateY(calc(-1 * (100% + 0.2rem)));
+  background-color: rgb(255, 255, 255);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border: 0.1rem solid lightgray;
+  border-bottom: none;
+}

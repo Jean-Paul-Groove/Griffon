@@ -1,54 +1,58 @@
 <template>
   <section class="home">
     <h2 v-if="user" class="home_welcome">Bienvenue {{ user.name }} !</h2>
-    <div v-if="user?.role === UserRole.GUEST"></div>
-    <div v-else class="home_conbined-view">
-      <nav class="home_conbined-view_button-container">
-        <ButtonIcon
-          icon="dice"
-          text="Salon de jeu"
-          :selected="view === 'room'"
-          @click="view = 'room'"
-        />
-        <ButtonIcon
-          icon="users"
-          text="Amis"
-          :selected="view === 'friends'"
-          @click="view = 'friends'"
-        />
-        <ButtonIcon
-          icon="comment"
-          text="Messages"
-          :selected="view === 'messages'"
-          @click="view = 'messages'"
-        />
-        <!-- <ButtonIcon
+    <div v-if="user?.role === UserRole.GUEST">
+      <RoomManager />
+    </div>
+    <template v-else>
+      <div class="home_conbined-view">
+        <nav class="home_conbined-view_button-container">
+          <ButtonIcon
+            icon="dice"
+            text="Salon de jeu"
+            :selected="view === 'room'"
+            @click="view = 'room'"
+          />
+          <ButtonIcon
+            icon="users"
+            text="Amis"
+            :selected="view === 'friends'"
+            @click="view = 'friends'"
+          />
+          <ButtonIcon
+            icon="comment"
+            text="Messages"
+            :selected="view === 'messages'"
+            @click="view = 'messages'"
+          />
+          <!-- <ButtonIcon
           icon="clock"
           text="Historique"
           :selected="view === 'history'"
           @click="view = 'history'"
         /> -->
-        <ButtonIcon
-          icon="user-gear"
-          text="Profile"
-          :selected="view === 'profile'"
-          @click="view = 'profile'"
-        />
-        <ButtonIcon
-          v-if="user?.role === UserRole.ADMIN"
-          class="administration"
-          icon="screwdriver-wrench"
-          text="Paramètres admin"
-          :selected="view === 'administration'"
-          @click="view = 'administration'"
-        />
-      </nav>
-      <RoomManager v-if="view === 'room'" />
-      <FriendList v-if="view === 'friends'" @conversation="handleNewConversation" />
-      <PrivateMessagery v-if="view === 'messages'" v-model="conversationContact" />
-      <AdminPanel v-if="view === 'administration' && user?.role === UserRole.ADMIN" />
-      <PlayerProfile v-if="view === 'profile'" />
-    </div>
+          <ButtonIcon
+            icon="user-gear"
+            text="Profile"
+            :selected="view === 'profile'"
+            @click="view = 'profile'"
+          />
+          <ButtonIcon
+            v-if="user?.role === UserRole.ADMIN"
+            class="administration"
+            icon="screwdriver-wrench"
+            text="Paramètres admin"
+            :selected="view === 'administration'"
+            @click="view = 'administration'"
+          />
+        </nav>
+        <RoomManager v-if="view === 'room'" />
+        <FriendList v-if="view === 'friends'" @conversation="handleNewConversation" />
+        <PrivateMessagery v-if="view === 'messages'" v-model="conversationContact" />
+        <AdminPanel v-if="view === 'administration' && user?.role === UserRole.ADMIN" />
+        <PlayerProfile v-if="view === 'profile'" />
+      </div>
+    </template>
   </section>
 </template>
 
@@ -70,7 +74,6 @@ const socketStore = useSocketStore()
 const { room } = storeToRefs(socketStore)
 const { askFriendsInfo } = socketStore
 const { user } = storeToRefs(authStore)
-
 // Composables
 const $router = useRouter()
 
@@ -117,7 +120,6 @@ function handleNewConversation(friend: PlayerInfoDto): void {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  justify-content: center;
   align-items: center;
   padding-bottom: 3rem;
   &_welcome {

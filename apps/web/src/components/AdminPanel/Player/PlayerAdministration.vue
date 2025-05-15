@@ -34,9 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { useAuthStore } from '../../../stores'
+import { useSocketStore } from '../../../stores'
 import { DetailedPlayerDto, UserRole } from 'shared'
 import { apiUrl } from '../../../helpers'
 import axios, { AxiosError } from 'axios'
@@ -61,9 +60,7 @@ const emptyPlayer: DetailedPlayerDto = {
 }
 
 // Store
-const authStore = useAuthStore()
-const { token } = storeToRefs(authStore)
-const { resetToken } = authStore
+const { handleDisconnect } = useSocketStore()
 
 // Composables
 const $toast = useToast()
@@ -95,7 +92,6 @@ async function fetchPlayers(): Promise<void> {
     const response = await axios.get(
       `${apiUrl}/player/admin/list?offset=${(currentPage.value - 1) * size.value}&size=${size.value}`,
       {
-        headers: { Authorization: 'bearer ' + token.value },
         withCredentials: true,
       },
     )
@@ -108,7 +104,7 @@ async function fetchPlayers(): Promise<void> {
     if (err instanceof AxiosError) {
       if (err.code && err.code === '401') {
         $toast.error("Vous n'avez pas les droits requis")
-        resetToken()
+        handleDisconnect()
       }
     }
   }

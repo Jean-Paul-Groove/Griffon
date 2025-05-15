@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { RoomOptions } from './types/room/RoomOptions'
 import { PlayerService } from '../player/player.service'
 import { WsException, WsResponse } from '@nestjs/websockets'
@@ -45,7 +45,6 @@ export class RoomService {
   private emptyRoomTime = 300000
   // Private methods
   private async create(options?: RoomOptions): Promise<Room> {
-    this.logger.debug('ATTEMPTING TO CREATE A ROOM')
     // Room is historized if at least one player has an account
     let historized = false
     if (options.owner && options.owner.role !== UserRole.GUEST) {
@@ -61,8 +60,6 @@ export class RoomService {
     return room
   }
   private async deleteRoom(id: string): Promise<void> {
-    this.logger.warn('DELETING ROOM')
-    this.logger.warn(id)
     const room = new Room()
     room.id = id
     await this.roomRepository.remove(room)
@@ -109,7 +106,6 @@ export class RoomService {
       throw new RoomNotFoundWsException()
     }
     if (this.hasPlayer(room, player.id)) {
-      this.logger.warn('Player already in Room')
     } else {
       // If room didn't have any admin, set user as new admin
       if (room.admin === null) {
@@ -154,12 +150,8 @@ export class RoomService {
    * @returns {Promise<Room>}
    */
   private async removePlayerFromRoom(room: Room, playerId: string): Promise<Room> {
-    this.logger.debug('REMOVING USER FROM ROOM')
-    this.logger.debug(room)
     // Remove player from room
     if (room.players) {
-      this.logger.debug('PLAYERS IN ROOM')
-      this.logger.debug(room.players)
       room.players = room.players.filter((player) => player.id !== playerId)
       // If was admin, set a new one
       if (room.admin.id === playerId) {
@@ -180,8 +172,6 @@ export class RoomService {
       ) {
         const timeOut = setTimeout(async () => {
           try {
-            this.logger.fatal('ROOM IS BEING DELETED')
-            this.logger.fatal(room.id)
             await this.deleteRoom(room.id)
           } catch (err) {
             this.logger.error(err)
@@ -236,7 +226,6 @@ export class RoomService {
       }
       const room = await this.create({ owner: player })
       // Join socket to room
-      this.logger.debug('ROOM CREATED')
       this.commonService.joinSocketToRoom(client, room.id)
 
       return {
@@ -255,17 +244,11 @@ export class RoomService {
       if (!room) {
         throw new RoomNotFoundWsException()
       }
-      this.logger.debug('JOINING ROOM')
-      this.logger.debug(player.name)
-      this.logger.debug('In room' + roomId)
       this.addPlayerToRoom(roomId, player)
       this.commonService.joinSocketToRoom(client, roomId)
-
-      this.logger.debug('FATCHED ROOM')
       const playerInfo = this.playerService.generatePlayerInfoDto(player, [])
       // Check if player already has a room
       if (player.room && player.room.id === roomId) {
-        this.logger.debug('PLAYER WAS IN ROOM')
         // If it's the same room, treat as reconnexion
         const reconnexionData: PlayerReconnectedDto = {
           event: WSE.USER_RECONNECTED,
@@ -289,15 +272,12 @@ export class RoomService {
     }
   }
   async onDisconnectedClient(client: Socket): Promise<void> {
-    this.logger.log(`Cliend id:${client.data.playerId} disconnected`)
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
       return
     }
     const room = await this.getRoomFromPlayer(player)
-    this.logger.debug('ON DISCONNECT')
     if (!room) {
-      this.logger.debug('NO ROOM')
       return
     }
     const updtatedRoom = await this.removePlayerFromRoom(room, player.id)
@@ -335,7 +315,6 @@ export class RoomService {
   }
   // Services
   async generateRoomInfoDto(room: Room): Promise<RoomInfoDto> {
-    this.logger.debug('GENERATEROOMINFODTO')
     let round = null
     if (room.currentGame != null) {
       const gameRoom = new Room()

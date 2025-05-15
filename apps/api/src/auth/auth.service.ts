@@ -23,6 +23,8 @@ import * as bcrypt from 'bcrypt'
 import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 import { LoginDto } from './validation/Login.dto'
 import { FastifyRequest } from 'fastify'
+import fastifyCookie from '@fastify/cookie'
+import { UnauthorizedWsException } from '../common/ws/exceptions/unauthorized'
 @Injectable()
 export class AuthService {
   constructor(
@@ -32,7 +34,12 @@ export class AuthService {
   ) {}
   private readonly logger = new Logger(AuthService.name)
   validateWsConnexion(client: Socket): boolean {
-    const payload = this.jwtService.verify(client.handshake.auth.token.split('bearer ')[1], {
+    const cookies = fastifyCookie.parse(client.handshake.headers.cookie || '')
+
+    if (!cookies.token) {
+      throw new UnauthorizedWsException()
+    }
+    const payload = this.jwtService.verify(cookies.token, {
       secret: process.env.JWT_SECRET,
     })
     if (payload.id.trim() !== '') {
@@ -43,7 +50,12 @@ export class AuthService {
     return true
   }
   getPlayerIdFromRequest(request: FastifyRequest): string {
-    const payload = this.jwtService.verify(request.headers?.authorization.split('bearer ')[1], {
+    const cookies = fastifyCookie.parse(request.headers.cookie || '')
+
+    if (!cookies.token) {
+      throw new UnauthorizedWsException()
+    }
+    const payload = this.jwtService.verify(cookies.token, {
       secret: process.env.JWT_SECRET,
     })
     if (payload.id.trim() !== '') {

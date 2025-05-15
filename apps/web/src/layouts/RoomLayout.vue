@@ -55,9 +55,9 @@
 import DefaultLayout from './components/DefaultLayout.vue'
 import { RouterView } from 'vue-router'
 import { PlayerList } from '@/components'
-import { useLayoutSize, useSocketStore } from '../stores'
+import { useLayoutStore, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal.vue'
 import CountDown from '../components/CountDown/CountDown.vue'
@@ -66,7 +66,7 @@ import RoomChat from '../components/RoomChat/RoomChat.vue'
 
 // Composables
 const socketStore = useSocketStore()
-const { breakPoint } = storeToRefs(useLayoutSize())
+const { breakPoint } = storeToRefs(useLayoutStore())
 const { room, socket } = storeToRefs(socketStore)
 const { leaveRoom } = socketStore
 // Refs
@@ -78,10 +78,6 @@ function handleLeaveRoom(): void {
   leaveRoom()
   exitModal.value = false
 }
-watch(
-  () => socket.value?.connected,
-  () => console.log('CHANGE ', socket.value?.connected),
-)
 </script>
 
 <style lang="scss" scoped>

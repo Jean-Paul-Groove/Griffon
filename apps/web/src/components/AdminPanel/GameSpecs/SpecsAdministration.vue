@@ -20,11 +20,10 @@ import { onMounted, ref } from 'vue'
 import type { GameSpecs } from '../../GameCard/types/gameSpecs'
 import { apiUrl } from '../../../helpers'
 import axios, { AxiosError } from 'axios'
-import { useAuthStore } from '../../../stores'
-import { storeToRefs } from 'pinia'
 import { useToast } from '../../../composables/useToast'
 import TableDisplay from '../../Table/TableDisplay.vue'
 import EditSpecsModal from './EditSpecsModal.vue'
+import { useSocketStore } from '../../../stores'
 
 // Constants
 const headers = [
@@ -38,9 +37,7 @@ const headers = [
 ]
 
 // Stores
-const authStore = useAuthStore()
-const { token } = storeToRefs(authStore)
-const { resetToken } = authStore
+const { handleDisconnect } = useSocketStore()
 
 // Composables
 const $toast = useToast()
@@ -58,7 +55,7 @@ onMounted(() => {
 async function fetchGames(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/game/admin/list', {
-      headers: { authorization: 'bearer ' + token.value },
+      withCredentials: true,
     })
 
     if (response.data) {
@@ -68,7 +65,7 @@ async function fetchGames(): Promise<void> {
     if (err instanceof AxiosError) {
       if (err.code && err.code === '401') {
         $toast.error("Vous n'avez pas les droits requis")
-        resetToken()
+        handleDisconnect()
       }
     }
     $toast.error('Une erreur est survenue')

@@ -22,14 +22,6 @@ withDefaults(defineProps<{ inputId: string; label?: string; error?: boolean; typ
 </script>
 
 <style lang="scss" scoped>
-@mixin top-label {
-  transform: translateY(calc(-1 * (100% + 0.2rem)));
-  background-color: rgb(255, 255, 255);
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
-  border: 0.1rem solid lightgray;
-  border-bottom: none;
-}
 .form-input {
   padding: 0.7rem;
   display: flex;
@@ -52,7 +44,7 @@ withDefaults(defineProps<{ inputId: string; label?: string; error?: boolean; typ
     text-align: center;
     border: 0.1rem solid lightgray;
     &:focus {
-      outline: 0.2rem solid $main-color;
+      outline: 0.2rem solid $second-color;
       border-color: rgba(255, 255, 255, 0);
       box-shadow: none;
     }

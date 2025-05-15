@@ -21,6 +21,7 @@ import { apiUrl } from '../../helpers'
 
 // Refs
 const games = ref<GameSpecs[]>([])
+
 // Stores
 const socketStore = useSocketStore()
 const { socket } = storeToRefs(socketStore)
@@ -38,9 +39,6 @@ async function getAvailableGames(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/game')
     games.value = response.data
-    console.log('GETTING AVAILABLE GAMES')
-    console.log(games.value)
-    console.log(response)
   } catch (err) {
     console.log(err)
 

@@ -12,7 +12,6 @@ import { Socket } from 'socket.io'
 import { AuthService } from '../auth/auth.service'
 import {
   CreateGuestDto,
-  CreateUserDto,
   DetailedPlayerDto,
   PlayerInfoDto,
   UpdateFriendsInfoDto,
@@ -58,7 +57,6 @@ export class PlayerService {
         role: UserRole.GUEST,
       })
       const user = await this.playerRepository.save(userEntity)
-      this.logger.log('GUEST CREATED')
       return user
     }
   }

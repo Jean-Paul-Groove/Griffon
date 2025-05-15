@@ -35,6 +35,7 @@ import { MessageService } from '../message/message.service'
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONT_URL,
+    credentials: true,
   },
   pingTimeout: 120000,
 })
@@ -63,9 +64,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   async handleConnection(client: Socket): Promise<void> {
     try {
       // Chek that player is known
-      this.logger.debug('HANDLE CONNECT', client.data)
       const player = await this.playerService.getPlayerFromSocket(client, true)
-      this.logger.debug(player?.name)
       // If player was to be removed for iddleness, cancel the timeout
       const timeOutName = `${player.id}::toBeRemoved`
       if (
@@ -74,7 +73,6 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       ) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
-      this.logger.debug(player)
       // Send the user info
       const playerInfo = this.playerService.generatePlayerInfoDto(player, [], true)
       const data: PlayerConnectionSuccessDto = {
@@ -83,7 +81,6 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       }
       client.emit(data.event, data.arguments)
     } catch (error) {
-      this.logger.debug('HANDLE CONNECT ')
       this.logger.error(error)
       client.emit(WSE.INVALID_TOKEN)
       client.disconnect()
@@ -94,16 +91,13 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       // Retrieve player associated with socket
       const player = await this.playerService.getPlayerFromSocket(client)
       if (!player) {
-        this.logger.warn('SOCKET DISCONNECT WITHOUT A USER')
         return
       }
       if (!player.room) {
-        this.logger.warn('PLAYER DISCONNECTED WITHOUT A ROOM')
         return
       }
       // Considered as iddle, player will be removed from room after timeout
       const timeOutName = `${player.id}::toBeRemoved`
-      this.logger.debug(this.schedulerRegistry.getTimeouts())
       if (
         this.schedulerRegistry?.doesExist !== undefined &&
         this.schedulerRegistry?.doesExist('timeout', timeOutName)
@@ -113,13 +107,12 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       const timeOut = setTimeout(() => this.roomService.onDisconnectedClient(client), 60000)
       this.schedulerRegistry.addTimeout(timeOutName, timeOut)
     } catch (err) {
-      this.logger.warn('HANDLE DISCONNECT', err)
+      this.logger.error('HANDLE DISCONNECT', err)
     }
   }
   // ROOM HANDLERS
   @SubscribeMessage(WSE.ASK_CREATE_ROOM)
   async handleCreateRoom(@ConnectedSocket() client: Socket): Promise<WsResponse> {
-    this.logger.debug('ASK CREATE ROOM')
     const player = await this.playerService.get(client.data.playerId)
     return this.roomService.onCreateRoom(player, client)
   }
@@ -141,7 +134,6 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    this.logger.debug('ASKED TO LEAVE')
     if (!roomId) {
       throw new RoomNotFoundWsException()
     }

@@ -7,7 +7,7 @@
       :player-id="user.id"
     />
   </div>
-  <form class="chat_form" @submit="send">
+  <form v-if="!isArtist" class="chat_form" @submit="send">
     <textarea
       id="chat-message"
       v-model="chatMessage"
@@ -19,6 +19,7 @@
       <FontAwesomeIcon icon="envelope" />
     </button>
   </form>
+  <p v-else class="chat_thread_mute">Vous ne pouvez pas envoyer de message en tant qu'artiste</p>
 </template>
 
 <script setup lang="ts">
@@ -27,7 +28,7 @@ import ChatMessage from './ChatMessage.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
 
 const props = defineProps<{
   chatMessages: ChatMessageDto[] | MessageDto[]
@@ -37,6 +38,7 @@ const props = defineProps<{
 const chatMessage = ref<string>('')
 // Stores
 const { user } = storeToRefs(useAuthStore())
+const { isArtist } = storeToRefs(useSocketStore())
 // Refs
 const thread = useTemplateRef('thread')
 
@@ -92,6 +94,15 @@ function send(e: Event | KeyboardEvent): void {
     gap: 0.2rem;
     max-height: 100%;
     height: 100%;
+    &_mute {
+      padding: 0.2rem;
+      border-radius: 0.4rem;
+      text-align: center;
+      background-color: rgba(51, 51, 51, 0.678);
+      color: $second-color;
+      width: 100%;
+      margin: auto;
+    }
   }
   &_form {
     width: 100%;

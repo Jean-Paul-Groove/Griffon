@@ -16,7 +16,6 @@ import GamePicker from '../components/GamePicker/GamePicker.vue'
 
 // Stores
 const socketStore = useSocketStore()
-const { handleConnection } = socketStore
 const { isAdmin, socket, room } = storeToRefs(socketStore)
 
 // Composables
@@ -26,9 +25,6 @@ const $router = useRouter()
 // Hooks
 onMounted(() => {
   const { roomId } = $route.params
-  if (!socket.value?.connected) {
-    handleConnection()
-  }
   if (!roomId && !room.value?.id) {
     $router.replace({ name: 'Accueil' })
   } else {

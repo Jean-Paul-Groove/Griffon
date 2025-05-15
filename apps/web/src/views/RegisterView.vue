@@ -79,7 +79,7 @@ import { emailPattern, PlayerInfoDto, strongPasswordPattern, UserRole } from 'sh
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DividerText from '../components/Divider/DividerText.vue'
 import { apiUrl } from '../helpers'
-import { useAuthStore } from '../stores'
+import { useSocketStore } from '../stores'
 // Types
 interface SignInErrors {
   username: null | string
@@ -88,8 +88,9 @@ interface SignInErrors {
   email: null | string
   file: null | string
 }
+
 // Stores
-const { setToken } = useAuthStore()
+const { allowReconnect } = useSocketStore()
 
 // Composables
 const $toast = useToast()
@@ -178,15 +179,13 @@ async function registerUser(e: Event): Promise<void> {
       formData.append('email', email.value)
       formData.append('password', password.value)
 
-      const response = await axios.post(apiUrl + '/auth/register', formData, {
+      await axios.post(apiUrl + '/auth/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        withCredentials: true,
       })
-      const jwt = response?.data?.access_token
-      if (jwt) {
-        setToken(jwt)
-      }
+      allowReconnect()
       $router.push('Accueil')
       $toast.success('Bienvenue chez les Griffoneurs !')
     }

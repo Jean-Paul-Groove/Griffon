@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { useAuthStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
 import axios, { AxiosError } from 'axios'
 import FormInput from '../form/FormInput.vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -58,7 +58,7 @@ import { apiUrl } from '../../helpers'
 
 // Composables
 const { user } = storeToRefs(useAuthStore())
-const { setToken } = useAuthStore()
+const { allowReconnect } = useSocketStore()
 const $toast = useToast()
 const $route = useRoute()
 // Constants
@@ -104,14 +104,13 @@ async function signIn(e: Event): Promise<void> {
     e.preventDefault()
     checkForErrors.value = true
     if (guestName.value.length > 0 && guestNameErrors.value === null) {
-      console.log('SEND REQUEST')
-      const response = await axios.post(apiUrl + '/auth/guest', { username: guestName.value })
+      await axios.post(
+        apiUrl + '/auth/guest',
+        { username: guestName.value },
+        { withCredentials: true },
+      )
       checkForErrors.value = false
-      console.log(response.headers)
-      const jwt = response?.data?.access_token
-      if (jwt) {
-        setToken(jwt)
-      }
+      allowReconnect()
     }
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -131,15 +130,16 @@ async function login(e: Event): Promise<void> {
     e.preventDefault()
     checkForErrors.value = true
     if (emailError.value === null && passwordError.value === null) {
-      const response = await axios.post(apiUrl + '/auth/login', {
-        email: email.value,
-        password: password.value,
-      })
-      const jwt = response?.data?.access_token
-      checkForErrors.value = false
-      if (jwt) {
-        setToken(jwt)
-      }
+      await axios.post(
+        apiUrl + '/auth/login',
+        {
+          email: email.value,
+          password: password.value,
+        },
+        { withCredentials: true },
+      )
+
+      allowReconnect()
     }
   } catch {
     $toast.error('Connexion impossible')

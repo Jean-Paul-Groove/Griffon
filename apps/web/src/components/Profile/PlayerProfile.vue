@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
 import { getImageUrl } from '../../helpers/avatars'
 import FormInput from '../form/FormInput.vue'
 import { computed, ref } from 'vue'
@@ -92,8 +92,9 @@ import { strongPasswordPattern } from 'shared'
 
 // Stores
 const authStore = useAuthStore()
-const { token, user } = storeToRefs(authStore)
-const { setPlayerInfo, resetToken } = authStore
+const { user } = storeToRefs(authStore)
+const { setPlayerInfo } = authStore
+const { handleDisconnect } = useSocketStore()
 
 // Types
 interface SignInErrors {
@@ -187,8 +188,8 @@ async function editPlayer(e: Event): Promise<void> {
       const response = await axios.patch(apiUrl + '/player/edit', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: 'bearer ' + token.value,
         },
+        withCredentials: true,
       })
       if (response.data) {
         setPlayerInfo(response.data)
@@ -203,11 +204,11 @@ async function editPlayer(e: Event): Promise<void> {
 async function handleDelete(): Promise<void> {
   try {
     await axios.delete(apiUrl + '/player/self', {
-      headers: { Authorization: 'bearer ' + token.value },
+      withCredentials: true,
     })
 
     $toast.success('Votre compte a bien été supprimé')
-    resetToken()
+    handleDisconnect()
   } catch {
     $toast.error("L'opération a échoué")
   }

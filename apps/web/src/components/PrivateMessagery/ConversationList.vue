@@ -39,7 +39,7 @@ import ChatMessage from '../ChatThread/ChatMessage.vue'
 import FriendCard from '../FriendList/FriendCard.vue'
 const emit = defineEmits<{ (e: 'conversation', friend: PlayerInfoDto): void }>()
 // Stores
-const { token, user } = storeToRefs(useAuthStore())
+const { user } = storeToRefs(useAuthStore())
 const { friends } = storeToRefs(useSocketStore())
 
 // Refs
@@ -54,7 +54,7 @@ onMounted(() => {
 async function fetchConversations(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/message/conversations', {
-      headers: { Authorization: 'bearer ' + token.value },
+      withCredentials: true,
     })
     if (response.data) {
       conversations.value = response.data

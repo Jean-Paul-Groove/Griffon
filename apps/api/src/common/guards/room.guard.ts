@@ -72,7 +72,6 @@ export class RoomGuard implements CanActivate {
         return this.checkRoles(room, player, context)
       }
     } catch (error) {
-      this.logger.debug('ERROR IN GUARD')
       this.logger.error(error)
       throw new UnauthorizedException()
     }

@@ -23,7 +23,6 @@ export class CommonService {
     if (!image) {
       return null
     }
-    this.logger.debug('UPLOAD')
     const filename = filePrefix + '-' + id + '.webp'
     let location = ''
     if (shared) {
@@ -32,9 +31,6 @@ export class CommonService {
       this.createDirectoryIfNotExist(path.join('uploads', 'private', id))
       location = path.join('uploads', 'private', id, filename)
     }
-    this.logger.debug(location)
-    this.logger.debug(filename)
-    this.logger.debug(image)
     const img = sharp(image.buffer).resize(size).webp()
     await img.toFile(location)
 
@@ -65,7 +61,6 @@ export class CommonService {
     }
     // Join new one
     client.join(newRoomId)
-    this.logger.debug('PLAYER JOINED SOCKET')
   }
 
   /**

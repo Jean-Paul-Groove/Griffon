@@ -102,8 +102,6 @@ import FormInput from '../../form/FormInput.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import axios, { AxiosError } from 'axios'
 import { useToast } from '../../../composables/useToast'
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '../../../stores'
 import ButtonIcon from '../../ButtonIcon/ButtonIcon.vue'
 import ConfirmModal from '../../ConfirmModal/ConfirmModal.vue'
 import { getImageUrl } from '../../../helpers/avatars'
@@ -122,9 +120,6 @@ interface SignInErrors {
   email: null | string
   file: null | string
 }
-
-// Stores
-const { token } = storeToRefs(useAuthStore())
 
 // Composables
 const $toast = useToast()
@@ -206,7 +201,6 @@ function handleDeleteFile(e: Event): void {
 
 async function handleConfirm(e: Event): Promise<void> {
   try {
-    console.log('HEYo')
     e.preventDefault()
     checkForErrors.value = true
     if (Object.values(errors.value).filter((error) => error != null).length === 0) {
@@ -237,24 +231,22 @@ async function handleConfirm(e: Event): Promise<void> {
           return
         }
       }
-      console.log('ADDED EVERYTHING')
-      console.log(formData)
 
       // Post or Patch according to edit mode
       if (props.editStyle === 'edit') {
         await axios.patch(apiUrl + '/player/admin/edit', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
-            Authorization: 'bearer ' + token.value,
           },
+          withCredentials: true,
         })
         $toast.success('Joueur édité avec succès !')
       } else {
         await axios.post(apiUrl + '/player/admin/create', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
-            Authorization: 'bearer ' + token.value,
           },
+          withCredentials: true,
         })
         $toast.success('Joueur créé avec succès !')
       }
@@ -274,7 +266,7 @@ async function handleConfirm(e: Event): Promise<void> {
 async function handleDelete(): Promise<void> {
   try {
     await axios.delete(apiUrl + '/player/admin/?id=' + props.player.id, {
-      headers: { Authorization: 'bearer ' + token.value },
+      withCredentials: true,
     })
 
     $toast.success('Joueur supprimé avec succès !')

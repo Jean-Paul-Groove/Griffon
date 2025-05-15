@@ -5,10 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import DefaultLayout from './components/DefaultLayout.vue'
 import { RouterView } from 'vue-router'
-onMounted(() => console.log('INSIDE BASE LAYOUT'))
 </script>
 
 <style lang="scss" scoped>

@@ -36,9 +36,6 @@ watch(
 // Hooks
 onMounted(() => {
   const { roomId } = $route.params
-  if (!socket.value?.connected) {
-    socketStore.handleConnection()
-  }
   if (!roomId && !room.value?.id) {
     $router.replace({ name: 'Accueil' })
   } else {
@@ -53,6 +50,7 @@ onMounted(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
+  padding-bottom: 2rem;
   ._countdown {
     height: 2rem;
   }

@@ -41,7 +41,6 @@ export class RegisteredGuard implements CanActivate {
       }
       return true
     } catch (error) {
-      this.logger.debug('ERROR IN GUARD')
       this.logger.error(error)
       throw new UnauthorizedException()
     }

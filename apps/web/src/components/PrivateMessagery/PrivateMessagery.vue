@@ -24,7 +24,7 @@ import { MessageDto, NewMessageDto, PlayerInfoDto, WSE } from 'shared'
 import { computed, onMounted, ref, watch } from 'vue'
 import { apiUrl } from '../../helpers'
 import { storeToRefs } from 'pinia'
-import { useAuthStore, useSocketStore } from '../../stores'
+import { useSocketStore } from '../../stores'
 import ChatThread from '../ChatThread/ChatThread.vue'
 import ConversationList from './ConversationList.vue'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
@@ -32,7 +32,6 @@ import { getImageUrl } from '../../helpers/avatars'
 
 // Stores
 const { socket } = storeToRefs(useSocketStore())
-const { token } = storeToRefs(useAuthStore())
 // Models
 const contact = defineModel<PlayerInfoDto>()
 
@@ -65,7 +64,7 @@ async function fetchLastMessages(offset: number = 0): Promise<void> {
     const response = await axios.get(
       `${apiUrl}/message/list/${contact.value.id}?offset=${offset}`,
       {
-        headers: { Authorization: 'bearer ' + token.value },
+        withCredentials: true,
       },
     )
     if (response.data) {

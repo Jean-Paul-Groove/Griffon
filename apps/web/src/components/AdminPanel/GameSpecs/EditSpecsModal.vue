@@ -3,7 +3,7 @@
     <div class="edit-specs-modal_wrapper">
       <div class="edit-specs-modal_content">
         <form class="edit-specs-form">
-          <p>{{ editedGame.title }}</p>
+          <p class="edit-specs-form_title">{{ editedGame.title }}</p>
           <label for="edit-specs-description">
             Description
             <textarea id="edit-specs-description" v-model="editedGame.description"></textarea>
@@ -63,7 +63,7 @@
           </div>
         </form>
         <p>Aperçu</p>
-        <GameCard :game="editedGame" />
+        <GameCard :game="editedGame" :img="fileUrl ?? undefined" />
         <div class="edit-specs-modal_buttons">
           <button class="edit-specs-modal_buttons_confirm" @click="handleConfirm">Ok</button>
           <button class="edit-specs-modal_buttons_cancel" @click="emit('close')">Annuler</button>
@@ -79,9 +79,6 @@ import { apiUrl } from '../../../helpers'
 import FormInput from '../../form/FormInput.vue'
 import axios from 'axios'
 import { useToast } from '../../../composables/useToast'
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '../../../stores'
-import { getImageUrl } from '../../../helpers/avatars'
 import type { GameSpecs } from '../../GameCard/types/gameSpecs'
 import GameCard from '../../GameCard/GameCard.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -101,9 +98,6 @@ interface EditSpecsError {
   pointsMax: null | string
   file: null | string
 }
-
-// Stores
-const { token } = storeToRefs(useAuthStore())
 
 // Composables
 const $toast = useToast()
@@ -159,7 +153,7 @@ const errors = computed<EditSpecsError>(() => {
 })
 const fileUrl = computed<string | null>(() => {
   if (file.value === null) {
-    return getImageUrl(editedGame.value.illustration, false)
+    return null
   }
   return URL.createObjectURL(file.value)
 })
@@ -176,9 +170,6 @@ function onFileChanged(e: Event): void {
         $toast.error('Votre image est trop volumineuse: 5mo max')
       }
     }
-  }
-  if (fileUrl.value) {
-    editedGame.value.illustration = fileUrl.value
   }
 }
 function handleDeleteFile(e: Event): void {
@@ -205,8 +196,8 @@ async function handleConfirm(e: Event): Promise<void> {
       await axios.patch(apiUrl + '/game/admin/edit', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: 'bearer ' + token.value,
         },
+        withCredentials: true,
       })
       $toast.success('Jeu édité avec succès !')
       emit('confirm')
@@ -265,10 +256,13 @@ async function handleConfirm(e: Event): Promise<void> {
   justify-content: center;
   align-items: center;
   gap: 0.7rem;
-  padding: 1.5rem 1rem;
+  padding: 2rem;
   position: relative;
   color: $main-color;
   height: fit-content;
+  &_title {
+    font-size: 2rem;
+  }
   & label {
     display: flex;
     flex-direction: column;
@@ -291,6 +285,14 @@ async function handleConfirm(e: Event): Promise<void> {
     }
   }
   &_illustration {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+    border: 0.2rem solid $second-color;
+    border-radius: 0.5rem;
+    padding: 0.3rem;
     &_remove {
       @include danger-button;
       width: fit-content;

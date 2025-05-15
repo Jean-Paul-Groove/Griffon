@@ -5,9 +5,7 @@ import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common'
 export class ImageValidationPipe implements PipeTransform {
   transform(value: MemoryStorageFile): MemoryStorageFile {
     //If no file we pass the validation
-    console.log(value)
     if (!value) {
-      console.log('IN HEEEERE')
       return undefined
     }
     // "value" is an object containing the file's attributes and metadata
@@ -17,8 +15,6 @@ export class ImageValidationPipe implements PipeTransform {
     if (value.size < fiveMo && acceptedTypes.includes(value.mimetype)) {
       return value
     } else {
-      console.log(value.size)
-      console.log(value.mimetype)
       throw new BadRequestException('Incorrect file')
     }
   }

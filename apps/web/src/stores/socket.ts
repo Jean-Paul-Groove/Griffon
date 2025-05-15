@@ -28,6 +28,8 @@ import {
 } from 'shared'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast'
+import axios from 'axios'
+import { apiUrl } from '../helpers'
 
 type ListenerRecord = {
   [key in WSE]?: (arg: any) => void
@@ -36,8 +38,8 @@ type ListenerRecord = {
 export const useSocketStore = defineStore('socket', () => {
   // Composables
   const authStore = useAuthStore()
-  const { resetToken, setPlayerInfo, setRequestedRoom } = authStore
-  const { token, user } = storeToRefs(authStore)
+  const { setPlayerInfo, setRequestedRoom, resetUser } = authStore
+  const { user } = storeToRefs(authStore)
   const $router = useRouter()
   const $route = useRoute()
   const $toast = useToast()
@@ -50,16 +52,17 @@ export const useSocketStore = defineStore('socket', () => {
     avatar: undefined,
   }
   const socketListeners: ListenerRecord = {
-    [WSE.INVALID_TOKEN]: resetToken,
+    [WSE.INVALID_TOKEN]: disconnectSocket,
     [WSE.CONNECTION_SUCCESS]: (data: PlayerConnectionSuccessDto['arguments']) => {
       if (data) {
         setPlayerInfo(data.player)
       }
     },
     [WSE.DISCONNECTION]: (reason) => {
-      // If server initialized disconnexion, reset token
+      // If server initialized disconnexion, disconnect and reset refs
+      console.log(reason)
       if (reason === 'io server disconnect') {
-        resetToken()
+        disconnectSocket()
       }
     },
     [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
@@ -113,7 +116,6 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.START_GAME]: (data: StartGameDto['arguments']) => {
       if (data && room.value) {
-        console.log(data)
         room.value.currentGame = data.game
         systemMessage(`Une partie de ${data.game.specs.title} commence !`)
       }
@@ -186,6 +188,7 @@ export const useSocketStore = defineStore('socket', () => {
   const cdDuration = ref<number | null>(null)
   const countDownInterval = ref<number | null>(null)
   const friends = ref<Array<PlayerInfoDto & { online: boolean }>>([])
+  const autoReconnect = ref<boolean>(true)
   // Computeds
   const currentPlayer = computed<PlayerInfoDto | null>(() => {
     return room.value?.players.find((player) => player.id === user.value?.id) ?? null
@@ -201,7 +204,6 @@ export const useSocketStore = defineStore('socket', () => {
     return false
   })
   // Watchers
-  watch(() => token.value, handleConnection, { immediate: true })
   watch(
     () => socket.value?.connected,
     () => {
@@ -223,7 +225,6 @@ export const useSocketStore = defineStore('socket', () => {
       }
       // Redirect to game
       if (game != null && room.value?.id != null && currentRoute != game) {
-        console.log('redirecting to game')
         $router.replace({ name: game, params: { roomId: room.value.id } })
       }
     },
@@ -242,25 +243,17 @@ export const useSocketStore = defineStore('socket', () => {
   )
   // Functions
   function handleConnection(): void {
-    if (!token.value) {
-      removeSocket()
-      return
+    if (autoReconnect.value) {
+      connectSocket()
+      setListeners(socketListeners)
     }
-    connectSocket()
-    setListeners(socketListeners)
   }
   function connectSocket(): void {
-    if (token.value === null) {
-      return
-    }
     if (socket.value == null) {
       socket.value = io(import.meta.env.VITE_API_ADDRESS, {
         autoConnect: true,
         transports: ['websocket', 'polling'],
         withCredentials: true,
-        auth: {
-          token: `bearer ${token.value}`,
-        },
         reconnectionAttempts: 20,
         timeout: 30000,
       })
@@ -389,6 +382,9 @@ export const useSocketStore = defineStore('socket', () => {
       }
       socket.value.emit(WSE.ASK_LEAVE_ROOM, { roomId: room.value?.id })
       room.value = null
+      if (user.value) {
+        setPlayerInfo({ ...user.value, room: undefined })
+      }
       chatMessages.value = []
       wordToDraw.value = ''
       setRequestedRoom(null)
@@ -413,7 +409,6 @@ export const useSocketStore = defineStore('socket', () => {
       }
 
       socket.value.emit(WSE.ASK_ADD_FRIEND, { playerId })
-      console.log('SENT REEQUEST')
     } catch (error) {
       console.log(error)
     }
@@ -423,7 +418,31 @@ export const useSocketStore = defineStore('socket', () => {
       socket.value.emit(WSE.ASK_FRIENDS_INFO)
     }
   }
-
+  function disconnectSocket(): void {
+    autoReconnect.value = false
+    friends.value = []
+    room.value = null
+    chatMessages.value = []
+    wordToDraw.value = ''
+    countDown.value = null
+    timeLimit.value = null
+    cdDuration.value = null
+    resetUser()
+    removeSocket()
+  }
+  function allowReconnect(): void {
+    autoReconnect.value = true
+    handleConnection()
+  }
+  async function handleDisconnect(): Promise<void> {
+    try {
+      await axios.delete(apiUrl + '/auth/logout', { withCredentials: true })
+      disconnectSocket()
+      $router.push('Connexion')
+    } catch (err) {
+      console.log(err)
+    }
+  }
   return {
     socket,
     room,
@@ -434,12 +453,14 @@ export const useSocketStore = defineStore('socket', () => {
     isArtist,
     isAdmin,
     currentPlayer,
+    friends,
     handleConnection,
     getUserPoints,
     leaveRoom,
     excludePlayer,
     addFriend,
     askFriendsInfo,
-    friends,
+    allowReconnect,
+    handleDisconnect,
   }
 })

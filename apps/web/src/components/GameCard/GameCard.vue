@@ -1,7 +1,11 @@
 <template>
   <a>
     <figure class="game-card">
-      <img class="game-card_illustration" :src="game.illustration" :alt="game.title" />
+      <img
+        class="game-card_illustration"
+        :src="img ?? getImageUrl(game.illustration, false)"
+        :alt="game.title"
+      />
       <figcaption class="game-card_text">
         <p class="game-card_text_title">{{ game.title }}</p>
       </figcaption>
@@ -11,8 +15,11 @@
 </template>
 
 <script setup lang="ts">
+import { getImageUrl } from '../../helpers/avatars'
+
 defineProps<{
   game: { id: string; illustration: string; title: string; description: string; rules: string }
+  img?: string
 }>()
 </script>
 

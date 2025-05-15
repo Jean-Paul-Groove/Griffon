@@ -51,11 +51,18 @@ const roomIdError = computed<null | string>(() => {
 watch(
   () => user.value,
   () => {
-    if (user.value !== null && requestedRoom.value) {
-      joinRoom(requestedRoom.value)
-      setRequestedRoom(null)
+    if (user.value !== null) {
+      if (requestedRoom.value) {
+        joinRoom(requestedRoom.value)
+        setRequestedRoom(null)
+        return
+      }
+      if (user.value.room) {
+        joinRoom(user.value.room)
+      }
     }
   },
+  { immediate: true },
 )
 watch(
   () => room.value?.id,

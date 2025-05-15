@@ -10,19 +10,19 @@
 import { onMounted } from 'vue'
 import PlayerAdministration from './Player/PlayerAdministration.vue'
 import SpecsAdministration from './GameSpecs/SpecsAdministration.vue'
-import { useAuthStore } from '../../stores'
+import { useAuthStore, useSocketStore } from '../../stores'
 import { UserRole } from 'shared'
 import { storeToRefs } from 'pinia'
 
 // Stores
 const authStore = useAuthStore()
-const { resetToken } = authStore
+const { handleDisconnect } = useSocketStore()
 const { user } = storeToRefs(authStore)
 
 // Hooks
 onMounted(() => {
   if (!user.value || user.value.role !== UserRole.ADMIN) {
-    resetToken()
+    handleDisconnect()
     return
   }
 })

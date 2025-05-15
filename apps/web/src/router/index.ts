@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory, type RouteLocationRaw } from 'vue-router'
 import { GameView, NotFound, LobbyView } from '@/views'
 import { useAuthStore, useSocketStore } from '../stores'
-import { useToast } from 'vue-toast-notification'
 import RegisterView from '../views/RegisterView.vue'
 import HomeView from '../views/HomeView.vue'
 import RoomLayout from '../layouts/RoomLayout.vue'
@@ -21,11 +20,14 @@ const router = createRouter({
           name: 'Accueil',
           component: HomeView,
           beforeEnter: (): RouteLocationRaw | undefined => {
-            const { token } = useAuthStore()
+            const { user, requestedRoom } = useAuthStore()
             const { room } = useSocketStore()
-            if (token !== null) {
+            if (user !== null) {
               if (room?.id != null) {
                 return { name: 'Lobby', params: { roomId: room.id } }
+              }
+              if (requestedRoom != null) {
+                return { name: 'Lobby', params: { roomId: requestedRoom } }
               }
             } else {
               return { name: 'Connexion' }
@@ -42,10 +44,13 @@ const router = createRouter({
           name: 'Inscription',
           component: RegisterView,
           beforeEnter: (): RouteLocationRaw | undefined => {
-            const { token } = useAuthStore()
+            const { user, requestedRoom } = useAuthStore()
             const { room } = useSocketStore()
-            if (token !== null && room?.id) {
+            if (user !== null && room?.id) {
               return { name: 'Lobby', params: { roomId: room.id } }
+            }
+            if (requestedRoom != null) {
+              return { name: 'Lobby', params: { roomId: requestedRoom } }
             }
           },
         },
@@ -54,13 +59,20 @@ const router = createRouter({
           name: 'Connexion',
           component: LoginView,
           beforeEnter: (): RouteLocationRaw | undefined => {
-            console.log('BEFORE ENTERING LOGIN')
-            const { token } = useAuthStore()
-            const { room } = useSocketStore()
-            if (token !== null) {
+            const { user, requestedRoom } = useAuthStore()
+            const { socket, handleConnection, room } = useSocketStore()
+
+            if (!socket?.connected) {
+              handleConnection()
+            }
+            if (user !== null) {
               if (room?.id != null) {
                 return { name: 'Lobby', params: { roomId: room.id } }
-              } else return { name: 'Accueil' }
+              }
+              if (requestedRoom != null) {
+                return { name: 'Lobby', params: { roomId: requestedRoom } }
+              }
+              return { name: 'Accueil' }
             }
           },
         },
@@ -101,16 +113,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  console.log(to)
+  const { socket, handleConnection } = useSocketStore()
+
+  if (!socket?.connected) {
+    handleConnection()
+  }
   if (to.name === 'Accueil' || to.name === 'Inscription' || to.name === 'Connexion') {
     return true
   }
-  const { token, setRequestedRoom } = useAuthStore()
-  const $toast = useToast()
-  if (token === null) {
+  const { user, setRequestedRoom } = useAuthStore()
+
+  if (user === null) {
     if (to.params.roomId != null && typeof to.params.roomId === 'string') {
       setRequestedRoom(to.params.roomId)
-      $toast.info('Connectez vous avant de rejoindre un salon', { position: 'top' })
     }
     return { name: 'Connexion' }
   }

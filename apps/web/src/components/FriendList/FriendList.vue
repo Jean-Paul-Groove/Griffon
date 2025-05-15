@@ -8,6 +8,7 @@
           <li v-for="friend of friends" :key="friend.id" class="friend-list_container_list_item">
             <FriendCard
               :friend="friend"
+              :with-actions="true"
               @join="handleJoin"
               @message="emit('conversation', friend)"
             />
@@ -41,7 +42,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useAuthStore, useSocketStore } from '../../stores'
+import { useSocketStore } from '../../stores'
 import { PendingRequestDto, WSE, type PlayerInfoDto } from 'shared'
 import { onMounted, ref } from 'vue'
 import FriendCard from './FriendCard.vue'
@@ -59,7 +60,6 @@ const $toast = useToast()
 const socketStore = useSocketStore()
 const { socket, friends } = storeToRefs(socketStore)
 const { askFriendsInfo } = socketStore
-const { token } = storeToRefs(useAuthStore())
 
 // Refs
 const friendRequests = ref<PendingRequestDto[]>([])
@@ -78,7 +78,7 @@ function handleJoin(roomId: string): void {
 async function fetchPendingRequest(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/player/friend-requests', {
-      headers: { Authorization: 'bearer ' + token.value },
+      withCredentials: true,
     })
     if (response.data) {
       friendRequests.value = response.data
@@ -93,7 +93,7 @@ async function acceptRequest(request: PendingRequestDto): Promise<void> {
       apiUrl + '/player/accept-request',
       { requestId: request.id },
       {
-        headers: { Authorization: 'bearer ' + token.value },
+        withCredentials: true,
       },
     )
     if (response.data) {
@@ -111,7 +111,7 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
       apiUrl + '/player/reject-request',
       { requestId: request.id },
       {
-        headers: { Authorization: 'bearer ' + token.value },
+        withCredentials: true,
       },
     )
     if (response.data) {

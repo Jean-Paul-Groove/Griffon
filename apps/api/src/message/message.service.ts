@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
 import { PlayerService } from '../player/player.service'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Brackets, Repository } from 'typeorm'
+import { Repository } from 'typeorm'
 import { MessageDto, NewMessageDto, WSE } from 'shared'
 import { CommonService } from '../common/common.service'
 import { Message } from './entities/message.entity'
@@ -43,7 +43,6 @@ export class MessageService {
     this.commonService.emitToPlayer(player.id, data)
   }
   generateMessageDto(message: Message): MessageDto {
-    console.log(message)
     const { id, content, sentAt, sender, receiver, seen } = message
     return new MessageDto({
       id,

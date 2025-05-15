@@ -68,7 +68,6 @@ export class GameService {
 
   // Handlers WS
   async onAskStartGame(client: Socket, gameId: GameSpecs['id']): Promise<void> {
-    this.logger.debug('OnaskStartGame ?')
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
       throw new PlayerNotFoundWsException()
@@ -76,7 +75,6 @@ export class GameService {
     const room = await this.roomService.getRoomFromPlayer(player)
 
     if (room.currentGame != null) {
-      this.logger.warn('Room already has a game going on')
       return
     }
     const gameSpecs = await this.gameSpecsRepository.findOneBy({ id: gameId })
@@ -96,7 +94,6 @@ export class GameService {
       // TODO handle different games
       this.griffonary.executeRound(room.id)
 
-      this.logger.debug(room.currentGame.id)
       const data: StartGameDto = {
         event: WSE.START_GAME,
         arguments: { game: this.generateGameInfoDto(game) },
@@ -139,7 +136,6 @@ export class GameService {
   }
   handleReconnexionDuringGame(player: Player, room: Room, round: Round): void {
     if (!player || !room || !round) {
-      this.logger.warn('No valid reconnexion during game')
       return
     }
     if (round.timeLimit) {
@@ -164,7 +160,6 @@ export class GameService {
   }
   // Services
   async endGame(room: Room): Promise<void> {
-    this.logger.debug('ENDGAME')
     const { currentGame: game } = room
     game.onGoing = false
     await this.gameRepository.save(game)
@@ -173,7 +168,6 @@ export class GameService {
     this.roomService.sendRoomState(room)
   }
   async getRandomWord(): Promise<Word> {
-    this.logger.debug('GETRANDOMWORD')
     const [word] = await this.wordRepository
       .createQueryBuilder()
       .select()
@@ -188,24 +182,18 @@ export class GameService {
     return wordEntity
   }
   sendTimeLimit(roomId: string, timestamp: number): void {
-    this.logger.debug('SENDTIMELIMIT')
     const data: TimeLimitDto = { event: WSE.TIME_LIMIT, arguments: { time: timestamp } }
     this.commonService.emitToRoom(roomId, data)
   }
   sendWordToDraw(artist: Player, word: Word): void {
-    this.logger.debug('SENDWORDTODRAW')
-    this.logger.debug(word.value)
-
     const data: WordToDrawDto = { event: WSE.WORD_TO_DRAW, arguments: { word: word.value } }
     this.commonService.emitToPlayer(artist.id, data)
   }
   async sendPlayerList(round: Round, room: Room): Promise<void> {
-    this.logger.debug('SEND PLAYERLIST')
     const playerList = await this.playerRepository
       .createQueryBuilder('player')
       .where('player.room.id = :id', { id: room.id })
       .getMany()
-    this.logger.debug(JSON.stringify(playerList))
     const data: PlayerListDto = {
       event: WSE.PLAYER_LIST,
       arguments: {
@@ -219,8 +207,13 @@ export class GameService {
     }
     this.commonService.emitToRoom(room.id, data)
   }
-  async scorePlayerPoints(player: Player, game: Game, points: number, round: Round): Promise<void> {
-    this.logger.debug('SCORE PLAYER POINTS')
+  async scorePlayerPoints(
+    player: Player,
+    game: Game,
+    points: number,
+    round: Round,
+    roomId: string,
+  ): Promise<void> {
     let score = await this.scoreRepository
       .createQueryBuilder('score')
       .innerJoin('score.game', 'game')
@@ -229,11 +222,9 @@ export class GameService {
       .andWhere('player.id =:playerId', { playerId: player.id })
       .getOne()
     if (score != null) {
-      this.logger.debug(score)
       score.points += points
       await this.scoreRepository.save(score)
     } else {
-      this.logger.debug('NO SCORE FOUND WITH ROOM AND PLAYER')
       const scoreEntity = this.scoreRepository.create({ player, game, points })
       score = await this.scoreRepository.save(scoreEntity)
     }
@@ -245,7 +236,7 @@ export class GameService {
       event: WSE.PLAYER_SCORED,
       arguments: { player: playerInfo, points },
     }
-    this.commonService.emitToRoom(game.id, data)
+    this.commonService.emitToRoom(roomId, data)
   }
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
     return (await this.scoreRepository.findOne({ where: { player, game: room.currentGame } }))
@@ -269,42 +260,41 @@ export class GameService {
   }
   async guessWord(word: string, player: Player, room: Room): Promise<boolean> {
     try {
-      this.logger.debug('Guess word')
       const currentRound = await this.getLastOngoingORound(room)
 
       // Can not guess if no round Ongoing or player has guessed or player is the artist
       if (!currentRound) {
-        this.logger.debug("Can't make a guess, message can be shared")
         return true
       }
       if (
         currentRound.haveGuessed.map((player) => player.id).includes(player.id) ||
         currentRound.artists.map((artist) => artist.id).includes(player.id)
       ) {
-        this.logger.debug("Can't make a guess, message can not be shared")
         return false
       }
       // Check if guess is correct
       if (word.toLowerCase() === currentRound.word.value.toLowerCase()) {
         // Set points for the player and the artist
+
         const { pointsMax, pointStep } = room.currentGame.specs
         await this.scorePlayerPoints(
           player,
           room.currentGame,
           pointsMax - currentRound.haveGuessed.length * pointStep,
           currentRound,
+          room.id,
         )
         await this.scorePlayerPoints(
           currentRound.artists[0],
           room.currentGame,
           pointStep,
           currentRound,
+          room.id,
         )
 
         // add player to guesser list
         currentRound.haveGuessed.push(player)
         await this.roundRepository.save(currentRound)
-        this.logger.debug('Has guessed correctly, message can not be shared')
         return false
       }
       return true
@@ -314,7 +304,6 @@ export class GameService {
   }
   generateGameInfoDto(game: Game): GameInfoDto {
     try {
-      this.logger.debug('GENERATEGAMEINFO')
       const { id, specs, roundDuration, onGoing, scores } = game
       return new GameInfoDto({
         id,
