@@ -1,6 +1,6 @@
 <template>
   <article class="player-card" @click="handleClick">
-    <img class="player-card_avatar" :src="avatar" alt="avatar" />
+    <img class="player-card_avatar" :src="getImageUrl(player.avatar)" alt="avatar" />
     <div class="player-card_info">
       <span class="player-card_info_name">
         <FontAwesomeIcon v-if="isAdmin" icon="crown" />
@@ -54,8 +54,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
-import defaultAvatar from '../../assets/avatar/default-avatar.webp'
-import { apiUrl } from '../../helpers'
+import { getImageUrl } from '../../helpers/avatars'
+
 interface PlayerCardProp {
   player: PlayerInfoDto
   isAdmin: boolean
@@ -70,10 +70,6 @@ const props = defineProps<PlayerCardProp>()
 const optionDisplayed = ref<boolean>(false)
 const excludeModal = ref<boolean>(false)
 const addFriendModal = ref<boolean>(false)
-// Computeds
-const avatar = computed<string>(() => {
-  return props.player.avatar ? apiUrl + '/' + props.player.avatar : defaultAvatar
-})
 
 const isFriend = computed<boolean>(() => {
   return user.value?.friends != null && user.value.friends.includes(props.player.id)
@@ -129,22 +125,14 @@ function handleAddFriend(e: Event): void {
   &_exclude {
     height: 90%;
     padding: 0.2rem;
-    color: $secondary-color;
     box-shadow: none;
-    &:hover {
-      background-color: $secondary-color;
-      color: white;
-    }
+    @include danger-button;
   }
   &_add {
     height: 90%;
     padding: 0.2rem;
-    color: green;
     box-shadow: none;
-    &:hover {
-      background-color: green;
-      color: white;
-    }
+    @include green-button;
   }
 }
 </style>

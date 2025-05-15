@@ -1,7 +1,7 @@
 <template>
   <section class="conversations">
     <h2>Conversations</h2>
-    <p v-if="conversations.length === 0">
+    <p v-if="conversations.length === 0" class="conversations_none">
       Vous n'avez aucune conversation en cours pour le moment ...
     </p>
     <ul v-else class="conversations_list">
@@ -41,6 +41,7 @@ const emit = defineEmits<{ (e: 'conversation', friend: PlayerInfoDto): void }>()
 // Stores
 const { token, user } = storeToRefs(useAuthStore())
 const { friends } = storeToRefs(useSocketStore())
+
 // Refs
 const conversations = ref<MessageDto[]>([])
 
@@ -85,6 +86,11 @@ function handleOpenConversation(conversation: MessageDto): void {
   flex-direction: column;
   width: 100%;
   align-items: center;
+  &_none {
+    @include white-card;
+    width: 100%;
+    max-width: 600px;
+  }
   &_list {
     width: 100%;
     display: flex;

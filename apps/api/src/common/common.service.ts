@@ -14,7 +14,7 @@ export class CommonService {
 
   async uploadImage(
     image: MemoryStorageFile,
-    playerId: string,
+    id: string,
     shared: boolean,
     filePrefix: string,
     pictureSize?: number,
@@ -24,13 +24,13 @@ export class CommonService {
       return null
     }
     this.logger.debug('UPLOAD')
-    const filename = filePrefix + '-' + playerId + '.webp'
+    const filename = filePrefix + '-' + id + '.webp'
     let location = ''
     if (shared) {
       location = path.join('uploads', 'public', filename)
     } else {
-      this.createDirectoryIfNotExist(path.join('uploads', 'private', playerId))
-      location = path.join('uploads', 'private', playerId, filename)
+      this.createDirectoryIfNotExist(path.join('uploads', 'private', id))
+      location = path.join('uploads', 'private', id, filename)
     }
     this.logger.debug(location)
     this.logger.debug(filename)

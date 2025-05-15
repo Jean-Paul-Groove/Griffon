@@ -1,7 +1,11 @@
 <template>
   <article class="friend-request">
     <div class="friend-request_info">
-      <img class="friend-request_img" :src="avatar" :alt="request.sender.name" />
+      <img
+        class="friend-request_img"
+        :src="getImageUrl(request.sender.avatar)"
+        :alt="request.sender.name"
+      />
       <p class="friend-request_name">{{ request.sender.name }}</p>
     </div>
     <div class="friend-request_actions">
@@ -25,20 +29,14 @@
 
 <script setup lang="ts">
 import { PendingRequestDto } from 'shared'
-import { apiUrl } from '../../helpers'
-import defaultAvatar from '../../assets/avatar/default-avatar.webp'
-import { computed } from 'vue'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
+import { getImageUrl } from '../../helpers/avatars'
 
-const props = defineProps<{ request: PendingRequestDto }>()
+defineProps<{ request: PendingRequestDto }>()
 const emit = defineEmits<{
   (e: 'accept'): void
   (e: 'refuse'): void
 }>()
-// Computeds
-const avatar = computed<string>(() => {
-  return props.request.sender.avatar ? apiUrl + '/' + props.request.sender.avatar : defaultAvatar
-})
 </script>
 
 <style scoped lang="scss">

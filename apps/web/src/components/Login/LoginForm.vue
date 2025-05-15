@@ -104,10 +104,11 @@ async function signIn(e: Event): Promise<void> {
     e.preventDefault()
     checkForErrors.value = true
     if (guestName.value.length > 0 && guestNameErrors.value === null) {
+      console.log('SEND REQUEST')
       const response = await axios.post(apiUrl + '/auth/guest', { username: guestName.value })
-      const jwt = response?.data?.access_token
       checkForErrors.value = false
-      console.log(jwt)
+      console.log(response.headers)
+      const jwt = response?.data?.access_token
       if (jwt) {
         setToken(jwt)
       }
@@ -153,8 +154,8 @@ async function login(e: Event): Promise<void> {
   margin-top: 2rem;
   position: relative;
   &_button {
-    color: white;
-    background-color: $main-color;
+    color: $main-color;
+    background-color: $second-color;
     &:hover {
       box-shadow: none;
     }
@@ -162,7 +163,7 @@ async function login(e: Event): Promise<void> {
   &_errors {
     display: flex;
     flex-direction: column;
-    color: $secondary-color;
+    color: $danger-color;
     gap: 0.3rem;
   }
   &_tabs {
@@ -176,7 +177,6 @@ async function login(e: Event): Promise<void> {
     padding: 0 0.5rem;
 
     &_tab {
-      background-color: white;
       height: 100%;
       display: flex;
       align-items: center;

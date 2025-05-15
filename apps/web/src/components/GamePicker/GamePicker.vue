@@ -2,12 +2,7 @@
   <div class="game-picker">
     <p>Choisissez un jeu !</p>
     <div class="game-picker_list">
-      <GameCard
-        v-for="game in games"
-        :key="game.id"
-        :game="game"
-        @click="requestGame(game.title)"
-      />
+      <GameCard v-for="game in games" :key="game.id" :game="game" @click="requestGame(game.id)" />
     </div>
   </div>
 </template>
@@ -52,9 +47,9 @@ async function getAvailableGames(): Promise<void> {
     $toast.error('Impossible de récupérer les infos sur les jeux')
   }
 }
-async function requestGame(title: string): Promise<void> {
+async function requestGame(id: string): Promise<void> {
   try {
-    socket.value?.emit(WSE.ASK_START_GAME, { game: title })
+    socket.value?.emit(WSE.ASK_START_GAME, { game: id })
   } catch (error) {
     console.log(error)
   }

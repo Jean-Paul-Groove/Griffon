@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
   function setPlayerInfo(playerInfo: PlayerInfoDto): void {
+    console.log(playerInfo)
     if (playerInfo != null) {
       user.value = playerInfo
     }

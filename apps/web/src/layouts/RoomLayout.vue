@@ -102,10 +102,10 @@ watch(
     border-right-width: 0px;
   }
   &_disconnect {
+    @include danger-button;
     position: absolute;
     right: 5%;
     top: 0.1rem;
-    color: $secondary-color;
     padding: 0.3rem;
     max-height: 3rem;
     height: 70%;
@@ -113,10 +113,6 @@ watch(
     display: flex;
     justify-content: center;
     align-items: center;
-    &:hover {
-      color: white;
-      background-color: $secondary-color;
-    }
     &_icon {
       height: 70%;
     }
@@ -160,7 +156,7 @@ watch(
     button {
       &.selected {
         background-color: $main-color;
-        color: white;
+        color: $second-color;
       }
     }
   }

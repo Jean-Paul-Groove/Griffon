@@ -13,10 +13,10 @@ export class FriendRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @ManyToOne(() => Player)
+  @ManyToOne(() => Player, { onDelete: 'CASCADE' })
   sender: Player
 
-  @ManyToOne(() => Player)
+  @ManyToOne(() => Player, { onDelete: 'CASCADE' })
   receiver: Player
 
   @Column()

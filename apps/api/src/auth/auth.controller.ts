@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Post,
-  HttpCode,
-  HttpStatus,
-  Logger,
-  UseInterceptors,
-  Res,
-} from '@nestjs/common'
+import { Body, Controller, Post, HttpCode, HttpStatus, UseInterceptors, Res } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { Token } from './types/Token'
 import { SignInAsGuestDto } from './validation/SignInAsGuest.dto'
@@ -19,7 +10,6 @@ import { FastifyReply } from 'fastify'
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-  private readonly logger = new Logger(AuthController.name)
 
   @HttpCode(HttpStatus.OK)
   @Post('guest')
@@ -28,19 +18,12 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.CREATED)
-  @Post('register')
-  async register(@Body() registerDto: RegisterDto): Promise<void> {
-    return this.authService.registerUser(registerDto)
-  }
-
-  @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('avatar'))
-  @Post('register_f')
+  @Post('register')
   async registerWithAvatar(
     @Body() registerDto: RegisterDto,
     @UploadedFile(new ImageValidationPipe()) file?: MemoryStorageFile,
-  ): Promise<void> {
-    console.log('REGISTER')
+  ): Promise<Token> {
     return await this.authService.registerUser(registerDto, file)
   }
 
@@ -48,10 +31,16 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: FastifyReply,
+    @Res({ passthrough: true }) res: FastifyReply,
   ): Promise<Token> {
     const token = await this.authService.login(loginDto)
-    response.setCookie('jwt', token.access_token)
+    res.cookie('token', token.access_token, {
+      sameSite: 'lax',
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === 'prod',
+      maxAge: 60 * 24,
+    })
+    console.log(token)
     return token
   }
 }

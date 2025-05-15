@@ -1,6 +1,6 @@
 <template>
-  <a class="game-card">
-    <figure>
+  <a>
+    <figure class="game-card">
       <img class="game-card_illustration" :src="game.illustration" :alt="game.title" />
       <figcaption class="game-card_text">
         <p class="game-card_text_title">{{ game.title }}</p>
@@ -11,23 +11,19 @@
 </template>
 
 <script setup lang="ts">
-import type { GameSpecs } from './types/gameSpecs'
-
-defineProps<{ game: GameSpecs }>()
+defineProps<{
+  game: { id: string; illustration: string; title: string; description: string; rules: string }
+}>()
 </script>
 
 <style lang="scss" scoped>
 .game-card {
+  @include white-card;
   width: 100%;
-  display: flex;
   flex-direction: column;
   width: 200px;
   height: 180px;
-  box-shadow: $light-shadow;
-  padding: 1rem;
   text-align: center;
-  background-color: white;
-  border-radius: 0.4rem;
   transform: scale(0.98);
   cursor: pointer;
   &:hover {
@@ -35,6 +31,8 @@ defineProps<{ game: GameSpecs }>()
   }
   &_illustration {
     width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   &_tooltip {
     display: none;

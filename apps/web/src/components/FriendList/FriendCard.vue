@@ -1,7 +1,7 @@
 <template>
   <article class="friend-card" :class="{ disconnected: !friend.online }">
     <div class="friend-card_info">
-      <img class="friend-card_img" :src="avatar" :alt="friend.name" />
+      <img class="friend-card_img" :src="getImageUrl(friend.avatar)" :alt="friend.name" />
       <p class="friend-card_name">{{ friend.name }}</p>
       <p v-if="friend.room && friend.online" class="friend-card_status connected">Dans un salon</p>
       <template v-else>
@@ -29,12 +29,10 @@
 
 <script setup lang="ts">
 import type { PlayerInfoDto } from 'shared'
-import { computed } from 'vue'
-import { apiUrl } from '../../helpers'
-import defaultAvatar from '../../assets/avatar/default-avatar.webp'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
+import { getImageUrl } from '../../helpers/avatars'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     friend: Omit<PlayerInfoDto, 'isArtist'> & { online: boolean }
     withActions: boolean
@@ -45,9 +43,6 @@ const emit = defineEmits<{
   (e: 'join', roomId: string): void
   (e: 'message', playerId: string): void
 }>()
-const avatar = computed<string>(() => {
-  return props.friend.avatar ? apiUrl + '/' + props.friend.avatar : defaultAvatar
-})
 </script>
 
 <style lang="scss" scoped>

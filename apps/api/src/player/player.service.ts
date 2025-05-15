@@ -62,23 +62,12 @@ export class PlayerService {
       return user
     }
   }
-  async createPlayer(createUser: CreateUserDto, avatar?: MemoryStorageFile): Promise<Player> {
+  async createPlayer(createPlayer: Partial<Player>, avatar?: MemoryStorageFile): Promise<Player> {
+    let player: Player
     try {
-      if (createUser.name.trim() != '') {
-        const userEntity = this.playerRepository.create(createUser)
-        const user = await this.playerRepository.save(userEntity)
-        if (avatar) {
-          const avatarUrl = await this.commonService.uploadImage(
-            avatar,
-            user.id,
-            true,
-            'avatar',
-            300,
-          )
-          user.avatar = avatarUrl
-          await this.playerRepository.save(user)
-        }
-        return user
+      if (createPlayer.name.trim() != '') {
+        const playerEntity = this.playerRepository.create(createPlayer)
+        player = await this.playerRepository.save(playerEntity)
       }
     } catch (error) {
       if (error?.code === '23505') {
@@ -87,7 +76,27 @@ export class PlayerService {
         throw new BadRequestException(error)
       }
     }
+    try {
+      if (avatar) {
+        const avatarUrl = await this.commonService.uploadImage(
+          avatar,
+          player.id,
+          true,
+          'avatar',
+          300,
+        )
+        player.avatar = avatarUrl
+        await this.playerRepository.save(player)
+      }
+    } catch (err) {
+      if (player != undefined) {
+        await this.playerRepository.remove(player)
+        throw err
+      }
+    }
+    return player
   }
+
   async get(playerId: string, includeFriends: boolean = false): Promise<Player | undefined> {
     try {
       const player = await this.playerRepository.findOne({
@@ -264,7 +273,6 @@ export class PlayerService {
     })
     return pendingRequests
   }
-
   async getPlayers(
     offset: number = 0,
     size: number = 50,
@@ -288,7 +296,6 @@ export class PlayerService {
     }))
     return [players, result[1]]
   }
-
   async editPlayer(editBody: Partial<Player>, avatar?: MemoryStorageFile): Promise<Player> {
     const formerPlayer = await this.playerRepository.findOneBy({ id: editBody.id })
     // VALIDATION

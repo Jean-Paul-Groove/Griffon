@@ -1,20 +1,31 @@
 <template>
   <section class="player-administration">
-    <h3>Players</h3>
-
-    <TableDisplay :headers="headers" :elements="players" :row-click="onPlayerClicked" />
-    <nav aria-label="pagination">
-      <button
-        v-for="page in pages"
-        :key="page"
-        :class="{ selected: currentPage === page }"
-        @click="currentPage = page"
-      >
-        {{ page }}
-      </button>
-    </nav>
+    <h3>Joueurs</h3>
+    <article class="player-administration_content">
+      <div class="player-administration_content_table-container">
+        <TableDisplay :headers="headers" :elements="players" :row-click="onPlayerClicked" />
+      </div>
+      <nav class="player-administration_content_pagination" aria-label="pagination">
+        <button
+          v-for="page in pages"
+          :key="page"
+          :class="{ selected: currentPage === page }"
+          @click="currentPage = page"
+        >
+          {{ page }}
+        </button>
+      </nav>
+      <ButtonIcon
+        class="player-administration_add"
+        icon="plus"
+        text="Ajouter un joueur"
+        :selected="false"
+        @click="handleNewPlayer"
+      />
+    </article>
     <EditPlayerModal
       v-if="playerToEdit && editModal"
+      :edit-style="editStyle"
       :player="playerToEdit"
       @close="editModal = false"
       @confirm="fetchPlayers"
@@ -24,26 +35,39 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../../../stores'
 import { DetailedPlayerDto, UserRole } from 'shared'
 import { apiUrl } from '../../../helpers'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import TableDisplay from '../../Table/TableDisplay.vue'
 import EditPlayerModal from './EditPlayerModal.vue'
-
-// Store
-const authStore = useAuthStore()
-const { user, token } = storeToRefs(useAuthStore())
-const { resetToken } = authStore
+import ButtonIcon from '../../ButtonIcon/ButtonIcon.vue'
+import { useToast } from '../../../composables/useToast'
 // Constants
 const headers = [
   { title: 'Name', key: 'name' },
   { title: 'Email', key: 'email' },
   { title: 'Avatar', key: 'avatar' },
   { title: 'Role', key: 'role' },
-  { title: 'Salon', key: 'room' },
 ]
+const emptyPlayer: DetailedPlayerDto = {
+  email: '',
+  id: '',
+  name: '',
+  room: '',
+  avatar: '',
+  role: UserRole.REGISTERED_USER,
+}
+
+// Store
+const authStore = useAuthStore()
+const { token } = storeToRefs(authStore)
+const { resetToken } = authStore
+
+// Composables
+const $toast = useToast()
+
 // Refs
 const players = ref<DetailedPlayerDto[]>([])
 const totalCount = ref<number>(0)
@@ -51,7 +75,7 @@ const currentPage = ref<number>(1)
 const size = ref<number>(10)
 const playerToEdit = ref<DetailedPlayerDto>()
 const editModal = ref<boolean>(false)
-
+const editStyle = ref<'new' | 'edit'>('edit')
 // Computed
 const pages = computed<number[]>(() => {
   const maxPage = Math.ceil(totalCount.value / size.value)
@@ -60,13 +84,6 @@ const pages = computed<number[]>(() => {
     pages.push(i)
   }
   return pages
-})
-// Hooks
-onMounted(() => {
-  if (!user.value || user.value.role !== UserRole.ADMIN) {
-    resetToken()
-    return
-  }
 })
 
 // Watchers
@@ -79,6 +96,7 @@ async function fetchPlayers(): Promise<void> {
       `${apiUrl}/player/admin/list?offset=${(currentPage.value - 1) * size.value}&size=${size.value}`,
       {
         headers: { Authorization: 'bearer ' + token.value },
+        withCredentials: true,
       },
     )
     if (response.data) {
@@ -87,30 +105,60 @@ async function fetchPlayers(): Promise<void> {
       players.value = playersResults
     }
   } catch (err) {
-    console.log(err)
+    if (err instanceof AxiosError) {
+      if (err.code && err.code === '401') {
+        $toast.error("Vous n'avez pas les droits requis")
+        resetToken()
+      }
+    }
   }
 }
 function onPlayerClicked(player: any): void {
+  editStyle.value = 'edit'
   playerToEdit.value = player
+  editModal.value = true
+}
+function handleNewPlayer(): void {
+  editStyle.value = 'new'
+  playerToEdit.value = emptyPlayer
   editModal.value = true
 }
 </script>
 
 <style lang="scss" scoped>
 .player-administration {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-  & nav {
-    display: flex;
-    gap: 0.5rem;
+  @include admin-section;
+  position: relative;
+  &_content {
     width: 100%;
-    justify-content: center;
-    & .selected {
-      color: white;
-      background-color: $main-color;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    &_table-container {
+      width: 100%;
+      overflow: auto;
+      display: flex;
+      max-height: 50rem;
+      flex-direction: column;
     }
+    &_pagination {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: center;
+      & .selected {
+        color: $second-color;
+        background-color: $main-color;
+      }
+    }
+  }
+  &_add {
+    @include green-button;
+    width: fit-content;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
   }
 }
 </style>

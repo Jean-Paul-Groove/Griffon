@@ -1,4 +1,11 @@
-import { forwardRef, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { RoomService } from '../room/room.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Room } from '../room/entities/room.entity'
@@ -6,7 +13,6 @@ import { Repository } from 'typeorm'
 import { Server, Socket } from 'socket.io'
 import {
   GameInfoDto,
-  GameName,
   PlayerListDto,
   PlayerScoredDto,
   StartGameDto,
@@ -29,6 +35,7 @@ import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { RoundNotFoundWsException } from '../common/ws/exceptions/roundNotFound'
 import { CommonService } from '../common/common.service'
+import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 
 @Injectable()
 export class GameService {
@@ -60,7 +67,7 @@ export class GameService {
   private readonly logger = new Logger(GameService.name, { timestamp: true })
 
   // Handlers WS
-  async onAskStartGame(client: Socket, gameName: GameName): Promise<void> {
+  async onAskStartGame(client: Socket, gameId: GameSpecs['id']): Promise<void> {
     this.logger.debug('OnaskStartGame ?')
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
@@ -72,7 +79,7 @@ export class GameService {
       this.logger.warn('Room already has a game going on')
       return
     }
-    const gameSpecs = await this.gameSpecsRepository.findOneBy({ title: gameName })
+    const gameSpecs = await this.gameSpecsRepository.findOneBy({ id: gameId })
     if (!gameSpecs) {
       throw new GameNotFoundWsException()
     }
@@ -86,13 +93,15 @@ export class GameService {
       const game = await this.gameRepository.save(gameEntity, { reload: true })
       room.currentGame = game
       await this.roomRepository.save(room, { reload: true })
+      // TODO handle different games
+      this.griffonary.executeRound(room.id)
+
       this.logger.debug(room.currentGame.id)
       const data: StartGameDto = {
         event: WSE.START_GAME,
         arguments: { game: this.generateGameInfoDto(game) },
       }
       this.commonService.emitToRoom(room.id, data)
-      this.griffonary.executeRound(room.id)
       return
     } else {
       throw new UnauthorizedException()
@@ -145,8 +154,13 @@ export class GameService {
     }
   }
   // Handlers HTTP
-  async getAvailableGames(): Promise<Partial<GameSpecs[]>> {
-    return await this.gameSpecsRepository.find()
+  async getAvailableGames(detailed: boolean = false): Promise<Partial<GameSpecs[]>> {
+    if (detailed) {
+      return await this.gameSpecsRepository.find()
+    }
+    return await this.gameSpecsRepository.find({
+      select: { id: true, title: true, description: true, illustration: true, rules: true },
+    })
   }
   // Services
   async endGame(room: Room): Promise<void> {
@@ -326,5 +340,29 @@ export class GameService {
     } catch (error) {
       this.logger.error(error)
     }
+  }
+
+  async editGameSpecs(
+    editBody: Partial<GameSpecs>,
+    illustration: MemoryStorageFile,
+  ): Promise<GameSpecs> {
+    const currentSpecs = await this.gameSpecsRepository.findOneBy({ id: editBody.id })
+    if (!currentSpecs) {
+      throw new NotFoundException('Game specs not found')
+    }
+    const newSpecs = this.gameSpecsRepository.merge(currentSpecs, editBody)
+    if (illustration) {
+      const illustrationUrl = await this.commonService.uploadImage(
+        illustration,
+        newSpecs.id,
+        true,
+        'game',
+        300,
+      )
+      newSpecs.illustration = illustrationUrl
+    }
+
+    await this.gameSpecsRepository.save(newSpecs)
+    return newSpecs
   }
 }

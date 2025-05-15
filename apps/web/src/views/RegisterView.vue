@@ -8,6 +8,13 @@
         label="Pseudo"
       />
       <FormInput
+        v-model="email"
+        input-id="register-email"
+        type="email"
+        :error="errors.email != null"
+        label="Email"
+      />
+      <FormInput
         v-model="password"
         input-id="register-password"
         type="password"
@@ -21,13 +28,7 @@
         :error="errors.confirmPassword != null"
         label="Confirmation"
       />
-      <FormInput
-        v-model="email"
-        input-id="register-email"
-        type="email"
-        :error="errors.email != null"
-        label="Email"
-      />
+
       <label for="avatar-input">
         Avatar:
         <input
@@ -39,6 +40,7 @@
         />
         <button
           v-if="file"
+          class="sign-in-form_remove-file"
           title="Supprimer le fichier"
           aria-label="Supprimer le fichier"
           @click="handleDeleteFile"
@@ -59,7 +61,9 @@
         </p>
       </div>
 
-      <RouterLink class="sign-in-form_link" to="/login">Déjà inscrit ? Connectez vous !</RouterLink>
+      <RouterLink class="sign-in-form_link" to="/login?tab=connexion"
+        >Déjà inscrit ? Connectez vous !</RouterLink
+      >
     </form>
   </div>
 </template>
@@ -71,10 +75,11 @@ import FormInput from '../components/form/FormInput.vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useToast } from '../composables/useToast'
 import PlayerCard from '../components/PlayerList/PlayerCard.vue'
-import { PlayerInfoDto, UserRole } from 'shared'
+import { emailPattern, PlayerInfoDto, strongPasswordPattern, UserRole } from 'shared'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DividerText from '../components/Divider/DividerText.vue'
 import { apiUrl } from '../helpers'
+import { useAuthStore } from '../stores'
 // Types
 interface SignInErrors {
   username: null | string
@@ -83,13 +88,14 @@ interface SignInErrors {
   email: null | string
   file: null | string
 }
+// Stores
+const { setToken } = useAuthStore()
+
 // Composables
 const $toast = useToast()
 const $router = useRouter()
 
 // Constants
-const strongPasswordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[#?!@$%^&*-]).{8,}$/
-const emailPattern = /^[a-zà-ú-.]+@([\w-]+\.)+[\w-]{2,4}$/
 const acceptedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
 //Refs
 const checkForErrors = ref(false)
@@ -164,29 +170,27 @@ async function registerUser(e: Event): Promise<void> {
     e.preventDefault()
     checkForErrors.value = true
     if (Object.values(errors.value).filter((error) => error != null).length === 0) {
+      const formData = new FormData()
       if (file.value) {
-        const formData = new FormData()
-        formData.append('avatar', file.value || '')
-        formData.append('username', username.value)
-        formData.append('email', email.value)
-        formData.append('password', password.value)
-
-        await axios.post(apiUrl + '/auth/register_f', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-      } else {
-        await axios.post(apiUrl + '/auth/register', {
-          username: username.value,
-          password: password.value,
-          email: email.value,
-        })
-        $toast.success('Bienvenue chez les Griffoneurs !')
+        formData.append('avatar', file.value)
       }
-      $router.push('/?tab=connexion')
+      formData.append('username', username.value)
+      formData.append('email', email.value)
+      formData.append('password', password.value)
+
+      const response = await axios.post(apiUrl + '/auth/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      const jwt = response?.data?.access_token
+      if (jwt) {
+        setToken(jwt)
+      }
+      $router.push('Accueil')
+      $toast.success('Bienvenue chez les Griffoneurs !')
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof AxiosError) {
       if (err.response?.data?.message && err.response?.data?.message === 'Email already used') {
         $toast.error('Cet email est déjà utilisé')
@@ -199,28 +203,27 @@ async function registerUser(e: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .sign-in-form {
-  display: flex;
+  @include white-card;
   flex-direction: column;
   max-width: 30rem;
   margin: auto;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  padding: 1.5rem 1rem;
-  border-radius: 0.5rem;
-  box-shadow: $light-shadow;
-  background-color: white;
   position: relative;
   color: $main-color;
   height: fit-content;
   &_errors {
     display: flex;
     flex-direction: column;
-    color: $secondary-color;
+    color: $danger-color;
     gap: 0.3rem;
   }
+  &_remove-file {
+    @include danger-button;
+  }
   &_button {
-    color: white;
+    color: $second-color;
     background-color: $main-color;
     &:hover {
       box-shadow: none;

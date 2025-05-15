@@ -38,12 +38,9 @@ function handleConfirm(): void {
     padding-top: 15%;
   }
   &_content {
+    @include white-card;
     height: fit-content;
     min-width: 15rem;
-    background-color: white;
-    border-radius: 1rem;
-    display: flex;
-    padding: 1rem;
     flex-direction: column;
     justify-content: space-between;
     gap: 1rem;

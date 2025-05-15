@@ -18,13 +18,13 @@ const $router = useRouter()
   justify-content: start;
   align-items: center;
   gap: 5rem;
-  color: $secondary-color;
+  color: $danger-color;
   font-size: 2rem;
   width: 100%;
   height: 100%;
   &_back {
     padding: 0.5rem 1rem;
-    background-color: white;
+    background-color: $second-color;
     color: $main-color;
     border-radius: 0.3rem;
     box-shadow: $light-shadow;

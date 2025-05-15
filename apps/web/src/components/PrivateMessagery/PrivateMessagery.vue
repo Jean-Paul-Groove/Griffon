@@ -2,7 +2,7 @@
   <section v-if="contact" class="private-messagery">
     <div class="private-messagery_head">
       <h2>Conversation avec {{ contact.name }}</h2>
-      <img :src="avatar" :alt="contact.name" />
+      <img :src="getImageUrl(contact.avatar)" :alt="contact.name" />
       <ButtonIcon
         class="private-messagery_head_leave"
         icon="xmark"
@@ -27,8 +27,8 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore, useSocketStore } from '../../stores'
 import ChatThread from '../ChatThread/ChatThread.vue'
 import ConversationList from './ConversationList.vue'
-import defaultAvatar from '../../assets/avatar/default-avatar.webp'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
+import { getImageUrl } from '../../helpers/avatars'
 
 // Stores
 const { socket } = storeToRefs(useSocketStore())
@@ -38,13 +38,10 @@ const contact = defineModel<PlayerInfoDto>()
 
 // Refs
 const messages = ref<MessageDto[]>([])
-const sortedMessages = computed<MessageDto[]>(() => {
-  return [...messages.value].sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
-})
 
 // Computeds
-const avatar = computed<string>(() => {
-  return contact.value?.avatar ? apiUrl + '/' + contact.value.avatar : defaultAvatar
+const sortedMessages = computed<MessageDto[]>(() => {
+  return [...messages.value].sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
 })
 
 // Watchers
@@ -134,13 +131,9 @@ function sendMessage(text: string): void {
     &_leave {
       width: fit-content;
       justify-self: end;
-      color: $secondary-color;
       position: absolute;
       right: 0.5rem;
-      border-color: $secondary-color;
-      &:hover {
-        background-color: $secondary-color;
-      }
+      @include danger-button;
     }
   }
 }

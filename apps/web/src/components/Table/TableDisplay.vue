@@ -26,12 +26,9 @@ table {
   background-color: white;
   border-radius: 0.5rem;
   padding: 0.5rem;
-  overflow: auto;
-  max-width: 100%;
-  max-height: 100%;
   & thead {
     background-color: $main-color;
-    color: white;
+    color: $second-color;
   }
   & td {
     background-color: rgb(238, 238, 238);

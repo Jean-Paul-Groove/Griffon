@@ -172,7 +172,6 @@ export const useSocketStore = defineStore('socket', () => {
     // FRIENDS
     [WSE.UPDATE_FRIENDS_INFO]: (data: UpdateFriendsInfoDto['arguments']): void => {
       if (data.friends) {
-        console.log('DAAAATAAAAAAAAAAAAAAAAAAAAAAAAAA')
         friends.value = [...data.friends]
       }
     },
@@ -258,6 +257,7 @@ export const useSocketStore = defineStore('socket', () => {
       socket.value = io(import.meta.env.VITE_API_ADDRESS, {
         autoConnect: true,
         transports: ['websocket', 'polling'],
+        withCredentials: true,
         auth: {
           token: `bearer ${token.value}`,
         },

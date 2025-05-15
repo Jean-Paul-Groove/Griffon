@@ -2,46 +2,40 @@
   <section class="admin-panel">
     <h2>Administration</h2>
     <PlayerAdministration />
+    <SpecsAdministration />
   </section>
 </template>
 
 <script setup lang="ts">
-import axios from 'axios'
-import { onMounted, ref } from 'vue'
-import type { GameSpecs } from '../GameCard/types/gameSpecs'
-import { useToast } from '../../composables/useToast'
-import { apiUrl } from '../../helpers'
+import { onMounted } from 'vue'
 import PlayerAdministration from './Player/PlayerAdministration.vue'
+import SpecsAdministration from './GameSpecs/SpecsAdministration.vue'
+import { useAuthStore } from '../../stores'
+import { UserRole } from 'shared'
+import { storeToRefs } from 'pinia'
 
-// Composables
-const $toast = useToast()
-
-// Refs
-const games = ref<GameSpecs[]>([])
+// Stores
+const authStore = useAuthStore()
+const { resetToken } = authStore
+const { user } = storeToRefs(authStore)
 
 // Hooks
 onMounted(() => {
-  getAvailableGames()
-})
-
-// Functions
-async function getAvailableGames(): Promise<void> {
-  try {
-    const response = await axios.get(apiUrl + '/game')
-    games.value = response.data
-    console.log('GETTING AVAILABLE GAMES')
-    console.log(games.value)
-  } catch (err) {
-    console.log(err)
-
-    $toast.error('Impossible de récupérer les infos sur les jeux')
+  if (!user.value || user.value.role !== UserRole.ADMIN) {
+    resetToken()
+    return
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>
 .admin-panel {
   width: 100%;
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.3rem;
+  padding-bottom: 3rem;
 }
 </style>

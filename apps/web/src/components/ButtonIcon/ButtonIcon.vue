@@ -15,18 +15,18 @@ defineProps<{ icon: string; text?: string; selected: boolean }>()
 <style lang="scss" scoped>
 .button-icon {
   color: $main-color;
-  background-color: white;
+  background-color: $second-color;
   border: 1px solid $main-color;
   display: flex;
   gap: 0.5rem;
   &:hover {
     box-shadow: none;
-    color: white;
+    color: $second-color;
     background-color: $main-color;
   }
   &.selected {
     background-color: $main-color;
-    color: white;
+    color: $second-color;
   }
   &_text {
     @include screen-reader-only;

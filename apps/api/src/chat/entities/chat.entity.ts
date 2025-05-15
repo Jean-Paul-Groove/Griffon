@@ -10,7 +10,7 @@ export class Chat {
   @Column()
   content: string
 
-  @ManyToOne(() => Player, (player) => player.chatMessages, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Player, { onDelete: 'CASCADE' })
   sender: Player
 
   @ManyToOne(() => Room, (Room) => Room.chatMessages, { onDelete: 'CASCADE' })

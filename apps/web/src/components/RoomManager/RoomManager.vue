@@ -105,16 +105,12 @@ function joinPrevious(): void {
     font-weight: bold;
   }
   &_form {
+    @include white-card;
     flex-direction: column;
     gap: 1rem;
     height: fit-content;
     margin-top: 2rem;
-    display: flex;
-    padding: 1rem;
     min-width: 300px;
-    border-radius: 0.5rem;
-    box-shadow: $light-shadow;
-    background-color: white;
     position: relative;
     color: $main-color;
     &_title {
@@ -123,12 +119,11 @@ function joinPrevious(): void {
     }
     &_button {
       color: $main-color;
-      background-color: white;
+      background-color: $second-color;
       border: 1px solid $main-color;
       &:hover {
         box-shadow: none;
-        color: white;
-        background-color: $main-color;
+        border-color: $second-color;
       }
     }
   }
@@ -137,7 +132,7 @@ function joinPrevious(): void {
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
-    color: $secondary-color;
+    color: $danger-color;
     font-weight: bold;
   }
 }

@@ -59,7 +59,6 @@ function handleDisconnect(): void {
     position: absolute;
     right: 5%;
     top: 0.1rem;
-    color: $secondary-color;
     padding: 0.3rem;
     max-height: 3rem;
     height: 70%;
@@ -67,10 +66,7 @@ function handleDisconnect(): void {
     display: flex;
     justify-content: center;
     align-items: center;
-    &:hover {
-      color: white;
-      background-color: $secondary-color;
-    }
+    @include danger-button;
   }
 }
 </style>

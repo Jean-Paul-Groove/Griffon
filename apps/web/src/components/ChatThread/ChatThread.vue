@@ -109,7 +109,7 @@ function send(e: Event | KeyboardEvent): void {
       border-top-left-radius: 0.4rem;
       border-bottom-left-radius: 0.4rem;
       &:focus {
-        outline: ridge 0.1rem $secondary-color;
+        outline: ridge 0.1rem $main-color;
       }
     }
     &_submit {

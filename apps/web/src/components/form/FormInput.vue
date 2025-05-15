@@ -57,11 +57,11 @@ withDefaults(defineProps<{ inputId: string; label?: string; error?: boolean; typ
       box-shadow: none;
     }
     &.error {
-      outline: 0.2rem solid $secondary-color;
+      outline: 0.2rem solid $danger-color;
       box-shadow: none;
       border-color: rgba(255, 255, 255, 0);
       & ~ .form-input_label {
-        color: $secondary-color;
+        color: $danger-color;
       }
     }
     &:focus ~ .form-input_label {

@@ -1,0 +1,100 @@
+<template>
+  <section class="specs-administration">
+    <h3>Paramètres des jeux</h3>
+    <article class="specs-administration_content">
+      <div class="specs-administration_content_table-container">
+        <TableDisplay :headers="headers" :elements="games" :row-click="onGameClicked" />
+      </div>
+    </article>
+    <EditSpecsModal
+      v-if="editGameModal && gameToEdit"
+      :game="gameToEdit"
+      @close="editGameModal = false"
+      @confirm="fetchGames"
+    />
+  </section>
+</template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import type { GameSpecs } from '../../GameCard/types/gameSpecs'
+import { apiUrl } from '../../../helpers'
+import axios, { AxiosError } from 'axios'
+import { useAuthStore } from '../../../stores'
+import { storeToRefs } from 'pinia'
+import { useToast } from '../../../composables/useToast'
+import TableDisplay from '../../Table/TableDisplay.vue'
+import EditSpecsModal from './EditSpecsModal.vue'
+
+// Constants
+const headers = [
+  { title: 'Titre', key: 'title' },
+  { title: 'Description', key: 'description' },
+  { title: 'Règles', key: 'rules' },
+  { title: 'Illustration', key: 'illustration' },
+  { title: 'Durée de tour', key: 'defaultRoundDuration' },
+  { title: 'Différence de points', key: 'pointStep' },
+  { title: 'Points maximum', key: 'pointsMax' },
+]
+
+// Stores
+const authStore = useAuthStore()
+const { token } = storeToRefs(authStore)
+const { resetToken } = authStore
+
+// Composables
+const $toast = useToast()
+
+// Refs
+const games = ref<GameSpecs[]>([])
+const editGameModal = ref<boolean>(false)
+const gameToEdit = ref<GameSpecs | null>()
+// Hooks
+onMounted(() => {
+  void fetchGames()
+})
+
+// Function
+async function fetchGames(): Promise<void> {
+  try {
+    const response = await axios.get(apiUrl + '/game/admin/list', {
+      headers: { authorization: 'bearer ' + token.value },
+    })
+
+    if (response.data) {
+      games.value = response.data
+    }
+  } catch (err) {
+    if (err instanceof AxiosError) {
+      if (err.code && err.code === '401') {
+        $toast.error("Vous n'avez pas les droits requis")
+        resetToken()
+      }
+    }
+    $toast.error('Une erreur est survenue')
+  }
+}
+function onGameClicked(el: GameSpecs): void {
+  gameToEdit.value = el
+  editGameModal.value = true
+}
+</script>
+<style scoped lang="scss">
+.specs-administration {
+  @include admin-section;
+  &_content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    &_table-container {
+      width: 100%;
+      overflow: auto;
+      display: flex;
+      max-height: 50rem;
+      flex-direction: column;
+    }
+  }
+}
+</style>

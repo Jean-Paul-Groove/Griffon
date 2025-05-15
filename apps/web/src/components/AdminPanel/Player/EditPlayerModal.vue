@@ -6,6 +6,7 @@
           >Êtes vous sûr de vouloir supprimer définitivement {{ player.name }} ?</ConfirmModal
         >
         <ButtonIcon
+          v-if="editStyle === 'edit'"
           class="edit-player-modal_content_delete"
           icon="trash"
           text="Supprimer l'utilisateur"
@@ -48,7 +49,7 @@
                 <option>{{ UserRole.ADMIN }}</option>
               </select>
             </label>
-            <label for="avatar-input">
+            <label class="edit-player-form_avatar" for="avatar-input">
               Avatar:
               <input
                 id="avatar-input"
@@ -59,6 +60,7 @@
               />
               <button
                 v-if="file"
+                class="edit-player-form_avatar_remove"
                 title="Supprimer le fichier"
                 aria-label="Supprimer le fichier"
                 @click="handleDeleteFile"
@@ -68,7 +70,7 @@
             </label>
             <img
               v-if="fileUrl"
-              class="edit-player-form_avatar-preview"
+              class="edit-player-form_avatar_preview"
               :src="fileUrl"
               alt="Avatar"
             />
@@ -84,7 +86,7 @@
           </div>
         </form>
         <div class="edit-player-modal_buttons">
-          <button class="edit-player-modal_buttons_confirm" @click="editPlayer">Ok</button>
+          <button class="edit-player-modal_buttons_confirm" @click="handleConfirm">Ok</button>
           <button class="edit-player-modal_buttons_cancel" @click="emit('close')">Annuler</button>
         </div>
       </div>
@@ -94,8 +96,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { UserRole, type DetailedPlayerDto } from 'shared'
-import defaultAvatar from '../../../assets/avatar/default-avatar.webp'
+import { emailPattern, strongPasswordPattern, UserRole, type DetailedPlayerDto } from 'shared'
 import { apiUrl } from '../../../helpers'
 import FormInput from '../../form/FormInput.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -105,8 +106,9 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../../../stores'
 import ButtonIcon from '../../ButtonIcon/ButtonIcon.vue'
 import ConfirmModal from '../../ConfirmModal/ConfirmModal.vue'
+import { getImageUrl } from '../../../helpers/avatars'
 
-const props = defineProps<{ player: DetailedPlayerDto }>()
+const props = defineProps<{ player: DetailedPlayerDto; editStyle: 'new' | 'edit' }>()
 const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'close'): void
@@ -128,8 +130,6 @@ const { token } = storeToRefs(useAuthStore())
 const $toast = useToast()
 
 // Constants
-const strongPasswordPattern = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[#?!@$%^&*-]).{8,}$/
-const emailPattern = /^[a-zà-ú-.]+@([\w-]+\.)+[\w-]{2,4}$/
 const acceptedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
 //Refs
 const checkForErrors = ref(false)
@@ -159,7 +159,8 @@ const errors = computed<SignInErrors>(() => {
     errorObject.file = null
   } else {
     errorObject.password =
-      strongPasswordPattern.test(password.value) || password.value.length === 0
+      strongPasswordPattern.test(password.value) ||
+      (props.editStyle === 'edit' && password.value.length === 0)
         ? null
         : 'Le mot de passe doit comporter 8 charactères, 1 majuscule, 1 minuscule et 1 charactère spécial'
     errorObject.confirmPassword =
@@ -179,10 +180,7 @@ const errors = computed<SignInErrors>(() => {
 })
 const fileUrl = computed<string | null>(() => {
   if (file.value === null) {
-    if (editedPlayer.value.avatar) {
-      return apiUrl + '/' + editedPlayer.value.avatar
-    }
-    return defaultAvatar
+    return getImageUrl(editedPlayer.value.avatar)
   }
   return URL.createObjectURL(file.value)
 })
@@ -206,51 +204,64 @@ function handleDeleteFile(e: Event): void {
   file.value = null
 }
 
-async function editPlayer(e: Event): Promise<void> {
+async function handleConfirm(e: Event): Promise<void> {
   try {
+    console.log('HEYo')
     e.preventDefault()
     checkForErrors.value = true
     if (Object.values(errors.value).filter((error) => error != null).length === 0) {
-      if (file.value) {
-        const formData = new FormData()
-        if (editedPlayer.value.role === UserRole.GUEST) {
-          $toast.error("Un invité ne peut pas avoir d'avatar")
-          return
-        }
-        formData.append('role', editedPlayer.value.role)
-        formData.append('avatar', file.value || '')
-        formData.append('name', editedPlayer.value.name)
+      const formData = new FormData()
+      // Add ID if in edit mode
+      if (props.editStyle === 'edit') {
         formData.append('id', editedPlayer.value.id)
-        formData.append('email', editedPlayer.value.email)
-        if (password.value.length > 0) {
-          formData.append('password', password.value)
+      }
+
+      formData.append('name', editedPlayer.value.name)
+
+      if (editedPlayer.value.role !== UserRole.GUEST) {
+        // Add fields for registered_users
+        formData.append('role', editedPlayer.value.role)
+        if (editedPlayer.value.email.length > 0) {
+          formData.append('email', editedPlayer.value.email)
         }
 
-        await axios.patch(apiUrl + '/player/admin/edit_f', formData, {
+        if (password.value.length > 0 || props.editStyle === 'new') {
+          formData.append('password', password.value)
+        }
+        if (file.value) {
+          formData.append('avatar', file.value)
+        }
+      } else {
+        if (props.editStyle === 'new') {
+          $toast.error('You can not create a guest player')
+          return
+        }
+      }
+      console.log('ADDED EVERYTHING')
+      console.log(formData)
+
+      // Post or Patch according to edit mode
+      if (props.editStyle === 'edit') {
+        await axios.patch(apiUrl + '/player/admin/edit', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: 'bearer ' + token.value,
           },
         })
+        $toast.success('Joueur édité avec succès !')
       } else {
-        const data: Partial<DetailedPlayerDto> & { password?: string } = {
-          id: editedPlayer.value.id,
-          name: editedPlayer.value.name,
-          role: editedPlayer.value.role,
-          email: editedPlayer.value.email,
-        }
-        if (password.value.length > 0) {
-          data.password = password.value
-        }
-        await axios.patch(apiUrl + '/player/admin/edit', data, {
-          headers: { Authorization: 'bearer ' + token.value },
+        await axios.post(apiUrl + '/player/admin/create', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: 'bearer ' + token.value,
+          },
         })
+        $toast.success('Joueur créé avec succès !')
       }
-      $toast.success('Joueur édité avec succès !')
       emit('confirm')
       emit('close')
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof AxiosError) {
       if (err.response?.data?.message && err.response?.data?.message === 'Email already used') {
         $toast.error('Cet email est déjà utilisé')
@@ -288,12 +299,9 @@ async function handleDelete(): Promise<void> {
     padding-top: 15%;
   }
   &_content {
+    @include white-card;
     height: fit-content;
     min-width: 15rem;
-    background-color: white;
-    border-radius: 1rem;
-    display: flex;
-    padding: 1rem;
     flex-direction: column;
     justify-content: space-between;
     gap: 1rem;
@@ -321,7 +329,7 @@ async function handleDelete(): Promise<void> {
   }
 }
 .edit-player-form {
-  display: flex;
+  @include white-card;
   flex-direction: column;
   max-width: 30rem;
   margin: auto;
@@ -329,29 +337,29 @@ async function handleDelete(): Promise<void> {
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 1rem;
-  border-radius: 0.5rem;
-  box-shadow: $light-shadow;
-  background-color: white;
   position: relative;
   color: $main-color;
   height: fit-content;
   &_errors {
     display: flex;
     flex-direction: column;
-    color: $secondary-color;
+    color: $danger-color;
     gap: 0.3rem;
   }
   &_button {
-    color: white;
+    color: $second-color;
     background-color: $main-color;
     &:hover {
       box-shadow: none;
     }
   }
-  &_avatar-preview {
-    max-width: 3rem;
-    aspect-ratio: 1;
-    border-radius: 100%;
+  &_avatar {
+    &_remove {
+      @include danger-button;
+    }
+    &_preview {
+      @include avatar;
+    }
   }
   &_link {
     color: $main-color;

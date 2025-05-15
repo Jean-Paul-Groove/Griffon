@@ -18,4 +18,5 @@ __exportStar(require("./WSE"), exports);
 __exportStar(require("./types"), exports);
 __exportStar(require("./DTO"), exports);
 __exportStar(require("./roles"), exports);
+__exportStar(require("./regexp"), exports);
 //# sourceMappingURL=index.js.map

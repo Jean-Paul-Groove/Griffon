@@ -24,9 +24,6 @@ export class Player {
   @ManyToOne(() => Room, (room) => room.players, { nullable: true, onDelete: 'SET NULL' })
   room: Room
 
-  @OneToMany(() => Chat, (message) => message.sender)
-  chatMessages: Chat[]
-
   @Column({
     type: 'enum',
     enum: UserRole,
