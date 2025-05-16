@@ -67,7 +67,6 @@ jobs:
          cp -r yarn.lock ./apps/web
          cp -r packages ./apps/web
          cp -r .yarnrc.yml ./apps/web
-         echo $(ls -la ./apps/web)
 
           
       - name: login
