@@ -2,7 +2,7 @@
   <teleport to="#modal">
     <div class="edit-specs-modal_wrapper">
       <div class="edit-specs-modal_content">
-        <form class="edit-specs-form">
+        <form ref="form" class="edit-specs-form">
           <p class="edit-specs-form_title">{{ editedGame.title }}</p>
           <label for="edit-specs-description">
             Description
@@ -16,7 +16,7 @@
             v-model="editedGame.defaultRoundDuration"
             input-id="edit-specs-duration"
             :error="errors.duration != null"
-            label="Durée de tour (ms)"
+            label="Durée du tour"
             type="number"
           />
           <FormInput
@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { apiUrl } from '../../../helpers'
 import FormInput from '../../form/FormInput.vue'
 import axios from 'axios'
@@ -117,6 +117,7 @@ const editedGame = ref({
   pointsMax: props.game.pointsMax.toString(),
   illustration: props.game.illustration,
 })
+const form = ref()
 // Computeds
 const errors = computed<EditSpecsError>(() => {
   const errorObject: EditSpecsError = {
@@ -158,6 +159,11 @@ const fileUrl = computed<string | null>(() => {
   return URL.createObjectURL(file.value)
 })
 
+// Hooks
+onMounted(() => {
+  form.value.focus()
+})
+
 // Functions
 function onFileChanged(e: Event): void {
   const target = e.target as HTMLInputElement
@@ -189,7 +195,10 @@ async function handleConfirm(e: Event): Promise<void> {
       formData.append('description', editedGame.value.description)
       formData.append('id', editedGame.value.id)
       formData.append('rules', editedGame.value.rules)
-      formData.append('defaultRoundDuration', editedGame.value.defaultRoundDuration)
+      formData.append(
+        'defaultRoundDuration',
+        (+editedGame.value.defaultRoundDuration * 1000).toString(),
+      )
       formData.append('pointStep', editedGame.value.pointStep)
       formData.append('pointsMax', editedGame.value.pointsMax)
 
@@ -230,7 +239,7 @@ async function handleConfirm(e: Event): Promise<void> {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    max-height: 80%;
+    max-height: 95%;
     overflow-y: auto;
   }
   &_buttons {
@@ -249,7 +258,7 @@ async function handleConfirm(e: Event): Promise<void> {
   }
 }
 .edit-specs-form {
-  @include white-card;
+  display: flex;
   flex-direction: column;
   width: 100%;
   margin: auto;
@@ -257,6 +266,7 @@ async function handleConfirm(e: Event): Promise<void> {
   align-items: center;
   gap: 0.7rem;
   padding: 2rem;
+  padding-bottom: 0;
   position: relative;
   color: $main-color;
   height: fit-content;

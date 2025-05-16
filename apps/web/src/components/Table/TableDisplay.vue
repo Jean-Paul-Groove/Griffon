@@ -6,7 +6,13 @@
       </tr>
     </thead>
     <tbody v-if="elements.length">
-      <tr v-for="(el, index) in elements" :key="'row-' + index" @click="rowClick(el)">
+      <tr
+        v-for="(el, index) in elements"
+        :key="'row-' + index"
+        tabindex="0"
+        @keydown.enter="rowClick(el)"
+        @click="rowClick(el)"
+      >
         <td v-for="h in headers" :key="h.key + index">{{ el[h.key] }}</td>
       </tr>
     </tbody>

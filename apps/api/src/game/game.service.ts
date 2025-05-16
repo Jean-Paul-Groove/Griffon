@@ -18,6 +18,7 @@ import {
   StartGameDto,
   TimeLimitDto,
   UploadDrawingDto,
+  WordSolutionDto,
   WordToDrawDto,
   WSE,
 } from 'shared'
@@ -67,6 +68,13 @@ export class GameService {
   private readonly logger = new Logger(GameService.name, { timestamp: true })
 
   // Handlers WS
+
+  /**
+   * Handle the request to start a specific game
+   * @param {Socket} client The client socket who sent the request
+   * @param {string} gameId The Id of the game to start.
+   * @returns {Promise<void> }
+   */
   async onAskStartGame(client: Socket, gameId: GameSpecs['id']): Promise<void> {
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
@@ -104,6 +112,13 @@ export class GameService {
       throw new UnauthorizedException()
     }
   }
+
+  /**
+   * Handle the upload of a drawing to a room
+   * @param {Socket} client The client socket who sent the drawing
+   * @param {Buffer} drawing The buffer containing the drawing
+   * @returns {Promise<void | WsResponse<UploadDrawingDto['arguments'] | undefined>>} Returns the drawing if allowed
+   */
   async onDrawingUpload(
     client: Socket,
     drawing: Buffer,
@@ -134,6 +149,15 @@ export class GameService {
       return { event: WSE.STOP_DRAW, data: undefined }
     }
   }
+
+  /**
+   * Handle the reconnexion of a player during a game
+   * Sends him the related informations
+   * @param {Player} player The Player who reconnected
+   * @param {Room} room The Room of the player
+   * @param {Round} round The current Round of the game
+   * @returns {void}
+   */
   handleReconnexionDuringGame(player: Player, room: Room, round: Round): void {
     if (!player || !room || !round) {
       return
@@ -149,7 +173,12 @@ export class GameService {
       this.sendWordToDraw(player, round.word)
     }
   }
-  // Handlers HTTP
+
+  /**
+   * Sends the list of available game and their specs
+   * @param {boolean=false} detailed If the full specs should be retrieved
+   * @returns {Promise<Partial<GameSpecs[]>>}
+   */
   async getAvailableGames(detailed: boolean = false): Promise<Partial<GameSpecs[]>> {
     if (detailed) {
       return await this.gameSpecsRepository.find()
@@ -158,7 +187,44 @@ export class GameService {
       select: { id: true, title: true, description: true, illustration: true, rules: true },
     })
   }
+
+  /**
+   * Edits a gamespecs entity
+   * @param {Partial<GameSpecs>} editBody The info to update
+   * @param {MemoryStorageFile} illustration? The image for the illustration of the game
+   * @returns {Promise<GameSpecs>}
+   */
+  async editGameSpecs(
+    editBody: Partial<GameSpecs>,
+    illustration?: MemoryStorageFile,
+  ): Promise<GameSpecs> {
+    const currentSpecs = await this.gameSpecsRepository.findOneBy({ id: editBody.id })
+    if (!currentSpecs) {
+      throw new NotFoundException('Game specs not found')
+    }
+    const newSpecs = this.gameSpecsRepository.merge(currentSpecs, editBody)
+    if (illustration) {
+      const illustrationUrl = await this.commonService.uploadImage(
+        illustration,
+        newSpecs.id,
+        true,
+        'game',
+        300,
+      )
+      newSpecs.illustration = illustrationUrl
+    }
+
+    await this.gameSpecsRepository.save(newSpecs)
+    return newSpecs
+  }
+
   // Services
+  /**
+   * End the current game of a room
+   * The game is no more onGoing and the room currentGame is null
+   * @param {Room} room The room
+   * @returns { Promise<void> }
+   */
   async endGame(room: Room): Promise<void> {
     const { currentGame: game } = room
     game.onGoing = false
@@ -167,6 +233,11 @@ export class GameService {
     await this.roomRepository.save(room)
     this.roomService.sendRoomState(room)
   }
+
+  /**
+   * Pick a random word from the word table
+   * @returns {Promise<Word>}
+   */
   async getRandomWord(): Promise<Word> {
     const [word] = await this.wordRepository
       .createQueryBuilder()
@@ -181,14 +252,46 @@ export class GameService {
     wordEntity.updatedAt = word.Word_updatedAt
     return wordEntity
   }
+
+  /**
+   * Sends the round timeLimit to the player of a room
+   * @param {string} roomId The Id of the room
+   * @param {number} timestamp The timeLimit
+   * @returns {void}
+   */
   sendTimeLimit(roomId: string, timestamp: number): void {
     const data: TimeLimitDto = { event: WSE.TIME_LIMIT, arguments: { time: timestamp } }
     this.commonService.emitToRoom(roomId, data)
   }
+
+  /**
+   * Send the word to draw to an artist Player
+   * @param {Player} artist The player who should draw
+   * @param {Word} word The word to draw
+   * @returns {void}
+   */
   sendWordToDraw(artist: Player, word: Word): void {
     const data: WordToDrawDto = { event: WSE.WORD_TO_DRAW, arguments: { word: word.value } }
     this.commonService.emitToPlayer(artist.id, data)
   }
+
+  /**
+   * Send the solution of a word to guess to a Room
+   * @param {string} roomId The Room Id
+   * @param {Word} word The word to draw
+   * @returns {void}
+   */
+  sendWordSolution(roomId: Room['id'], word: Word): void {
+    const data: WordSolutionDto = { event: WSE.WORD_SOLUTION, arguments: { word: word.value } }
+    this.commonService.emitToRoom(roomId, data)
+  }
+
+  /**
+   * Send the list of players of a Room, specifying if they are artist
+   * @param {Round} round The current Round of the Room currentGame
+   * @param {Room} room The Room
+   * @returns {Promise<void>}
+   */
   async sendPlayerList(round: Round, room: Room): Promise<void> {
     const playerList = await this.playerRepository
       .createQueryBuilder('player')
@@ -207,6 +310,16 @@ export class GameService {
     }
     this.commonService.emitToRoom(room.id, data)
   }
+
+  /**
+   * Set the scores of a player and send it to the its Room
+   * @param {Player} player The Player who scored
+   * @param {Game} game The current Game
+   * @param {number} points The points scored
+   * @param {Round} round The current Round
+   * @param {string} roomId The Id of the Room
+   * @returns { Promise<void>}
+   */
   async scorePlayerPoints(
     player: Player,
     game: Game,
@@ -238,26 +351,54 @@ export class GameService {
     }
     this.commonService.emitToRoom(roomId, data)
   }
+
+  /**
+   * Get the points of a player for the Room CurrentGame
+   * @param {Player} player The Player
+   * @param {Room} room The Room of the Player
+   * @returns {Promise<number>}
+   */
   async getPlayerPoints(player: Player, room: Room): Promise<number> {
     return (await this.scoreRepository.findOne({ where: { player, game: room.currentGame } }))
       .points
   }
+
+  /**
+   * Retrieve the last onGoing Round of the currentGame of a Room
+   * @param {Room} room The Room
+   * @returns {Promise<Round | undefined>}
+   */
   async getLastOngoingORound(room: Room): Promise<Round | undefined> {
     if (!room) {
       throw new RoomNotFoundWsException()
     }
-    if (!room.currentGame) {
-      throw new GameNotFoundWsException()
-    }
-    const round = room.currentGame.rounds[0]
-    // Check that round time limit isn't over
-    if (round && round.timeLimit.getTime() < Date.now()) {
-      round.onGoing = false
-      await this.roundRepository.save(round)
-      return undefined
+    const round = new Round()
+    const [roundResult] = await this.roundRepository
+      .createQueryBuilder('round')
+      .innerJoin('round.game', 'game')
+      .innerJoin('game.room', 'room')
+      .where('room.id =:roomId', { roomId: room.id })
+      .andWhere('round.onGoing = true')
+      .orderBy('round."createdAt"', 'DESC')
+      .take(1)
+      .execute()
+    if (roundResult) {
+      round.id = roundResult.round_id
+      round.onGoing = roundResult.round_onGoing
+      round.timeLimit = new Date(roundResult.round_timeLimit)
+      round.game = { ...round.game, id: roundResult.round_gameId }
+      round.word = { ...round.word, id: roundResult.round_wordId }
     }
     return round
   }
+
+  /**
+   * Handle a guess attempt of a word
+   * @param {string} word The guess
+   * @param {Player} player The player guessing
+   * @param {Room} room The Room of the Player
+   * @returns {Promise<boolean>} Return if the chat message should be displayed
+   */
   async guessWord(word: string, player: Player, room: Room): Promise<boolean> {
     try {
       const currentRound = await this.getLastOngoingORound(room)
@@ -302,6 +443,12 @@ export class GameService {
       this.logger.error(error)
     }
   }
+
+  /**
+   * Generate the GameDto from a Game entity
+   * @param {Game} game The Game entity
+   * @returns {GameInfoDto}
+   */
   generateGameInfoDto(game: Game): GameInfoDto {
     try {
       const { id, specs, roundDuration, onGoing, scores } = game
@@ -322,6 +469,11 @@ export class GameService {
       this.logger.error(err)
     }
   }
+
+  /**
+   * Sets all games and Round as not Ongoing
+   * @returns {Promise<void>}
+   */
   async resetGames(): Promise<void> {
     try {
       await this.roundRepository.update({ onGoing: true }, { onGoing: false })
@@ -331,27 +483,14 @@ export class GameService {
     }
   }
 
-  async editGameSpecs(
-    editBody: Partial<GameSpecs>,
-    illustration: MemoryStorageFile,
-  ): Promise<GameSpecs> {
-    const currentSpecs = await this.gameSpecsRepository.findOneBy({ id: editBody.id })
-    if (!currentSpecs) {
-      throw new NotFoundException('Game specs not found')
-    }
-    const newSpecs = this.gameSpecsRepository.merge(currentSpecs, editBody)
-    if (illustration) {
-      const illustrationUrl = await this.commonService.uploadImage(
-        illustration,
-        newSpecs.id,
-        true,
-        'game',
-        300,
-      )
-      newSpecs.illustration = illustrationUrl
-    }
+  /**
+   * Retrieve the word to guess of a round
+   * @param {Round} round The round
+   * @returns {Promise<Word | undefined>}
+   */
+  async getWordFromRound(round: Round): Promise<Word | undefined> {
+    const word = await this.wordRepository.findOneBy({ id: round.word.id })
 
-    await this.gameSpecsRepository.save(newSpecs)
-    return newSpecs
+    return word
   }
 }

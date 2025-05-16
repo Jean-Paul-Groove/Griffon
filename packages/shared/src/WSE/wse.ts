@@ -29,6 +29,7 @@ export enum WSE {
   STOP_GUESS = 'stop-guess',//
   PLAYER_SCORED = 'player-scored',
   SCORE_LIST='score-list',
+  WORD_SOLUTION='word-solution',
   // CHAT
   NEW_CHAT_MESSAGE = 'new-chat-message',
   // MESSAGE

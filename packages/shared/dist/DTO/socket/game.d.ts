@@ -28,6 +28,12 @@ export declare class WordToDrawDto extends SocketDto {
         word: string;
     };
 }
+export declare class WordSolutionDto extends SocketDto {
+    event: WSE.WORD_SOLUTION;
+    arguments: {
+        word: string;
+    };
+}
 export declare class UploadDrawingDto extends SocketDto {
     event: WSE.UPLOAD_DRAWING;
     arguments: {

@@ -1,12 +1,13 @@
 <template>
   <section class="friend-list">
-    <h2>Amis</h2>
+    <h3>Amis</h3>
     <div class="friend-list_container">
       <p v-if="friends.length === 0">Vous n'avez aucun ami pour le moment ...</p>
       <template v-else>
         <ul class="friend-list_container_list">
           <li v-for="friend of friends" :key="friend.id" class="friend-list_container_list_item">
             <FriendCard
+              class="friend-list_container_list_item_card"
               :friend="friend"
               :with-actions="true"
               @join="handleJoin"
@@ -18,7 +19,7 @@
     </div>
   </section>
   <section v-if="friendRequests.length > 0" class="friend-request">
-    <h2>Demande d'ami</h2>
+    <h3>Demande d'ami</h3>
     <div class="friend-request_container">
       <p v-if="friendRequests.length === 0">Vous n'avez aucune demande en attente</p>
       <template v-else>
@@ -130,7 +131,7 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
   max-width: 600px;
   height: 100%;
   overflow-y: auto;
-  & h2 {
+  & h3 {
     text-align: center;
   }
   &_container {
@@ -138,8 +139,14 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
     width: 100%;
     &_list {
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
       &_item {
         width: 100%;
+        &_card {
+          width: 100%;
+        }
       }
     }
   }

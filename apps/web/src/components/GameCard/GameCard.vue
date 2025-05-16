@@ -1,5 +1,5 @@
 <template>
-  <a>
+  <a :aria-label="'Lancer ' + game.title">
     <figure class="game-card">
       <img
         class="game-card_illustration"

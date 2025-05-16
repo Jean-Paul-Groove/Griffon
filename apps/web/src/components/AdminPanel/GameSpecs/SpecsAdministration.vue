@@ -1,18 +1,16 @@
 <template>
-  <section class="specs-administration">
+  <article class="specs-administration">
     <h3>Paramètres des jeux</h3>
-    <article class="specs-administration_content">
-      <div class="specs-administration_content_table-container">
-        <TableDisplay :headers="headers" :elements="games" :row-click="onGameClicked" />
-      </div>
-    </article>
+    <div class="specs-administration_content_table-container">
+      <TableDisplay :headers="headers" :elements="games" :row-click="onGameClicked" />
+    </div>
     <EditSpecsModal
       v-if="editGameModal && gameToEdit"
       :game="gameToEdit"
       @close="editGameModal = false"
       @confirm="fetchGames"
     />
-  </section>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -31,7 +29,7 @@ const headers = [
   { title: 'Description', key: 'description' },
   { title: 'Règles', key: 'rules' },
   { title: 'Illustration', key: 'illustration' },
-  { title: 'Durée de tour', key: 'defaultRoundDuration' },
+  { title: 'Durée du tour', key: 'defaultRoundDuration' },
   { title: 'Différence de points', key: 'pointStep' },
   { title: 'Points maximum', key: 'pointsMax' },
 ]
@@ -59,7 +57,10 @@ async function fetchGames(): Promise<void> {
     })
 
     if (response.data) {
-      games.value = response.data
+      games.value = response.data.map((game: GameSpecs) => {
+        game.defaultRoundDuration = game.defaultRoundDuration / 1000
+        return game
+      })
     }
   } catch (err) {
     if (err instanceof AxiosError) {

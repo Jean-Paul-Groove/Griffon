@@ -2,14 +2,10 @@
   font-family: 'Brush-king';
   src: url('./fonts/brush_king.otf') format('opentype');
 }
-@font-face {
-  font-family: 'Manuscript';
-  src: url('./fonts/MANUSCRIPT.otf') format('opentype');
-}
 
 @font-face {
   font-family: 'RandomWednesday';
-  src: url('./fonts/Random_Wednesday.ttf') ;
+  src: url('./fonts/random_wednesday.ttf') ;
 }
 * {
   box-sizing: border-box;
@@ -47,7 +43,7 @@ button {
   color: $main-color;
   border: none;
   border-radius: 0.3rem;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.432);
+  box-shadow: $light-shadow;
   &:hover {
     background-color: $main-color;
     color: $second-color;

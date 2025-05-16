@@ -336,8 +336,16 @@ export class PlayerService {
       )
       newEntity.avatar = avatarUrl
     }
-    const editedPlayer = await this.playerRepository.save(newEntity)
-    return editedPlayer
+    try {
+      const editedPlayer = await this.playerRepository.save(newEntity)
+      return editedPlayer
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new HttpException('Email already used', HttpStatus.BAD_REQUEST)
+      } else {
+        throw new BadRequestException(error)
+      }
+    }
   }
   async deletePlayer(playerId: string): Promise<void> {
     const player = await this.playerRepository.findBy({ id: playerId })

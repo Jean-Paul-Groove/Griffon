@@ -44,6 +44,12 @@ export class RoomService {
   private readonly logger = new Logger(RoomService.name, { timestamp: true })
   private emptyRoomTime = 300000
   // Private methods
+
+  /**
+   * Create a room with said options
+   * @param {RoomOptions} options? The options for the room creation
+   * @returns {Promise<Room> } Return the created room
+   */
   private async create(options?: RoomOptions): Promise<Room> {
     // Room is historized if at least one player has an account
     let historized = false
@@ -59,14 +65,21 @@ export class RoomService {
     const room = await this.roomRepository.save(roomEntity)
     return room
   }
+
+  /**
+   * Deletes a room
+   * @param {string} id The Id of the room to delete
+   * @returns {Promise<void>}
+   */
   private async deleteRoom(id: string): Promise<void> {
     const room = new Room()
     room.id = id
     await this.roomRepository.remove(room)
   }
+
   /**
    * Get a room by id
-   * @param {string} id:string The id of the room
+   * @param {string} id The id of the room
    * @returns {Room} Returns a Room entity with admin, an array of players, an array of chatMessages(with senders), an array of scores(with players), currentGame (with specs), currentGame.rounds(with artists and word)
    * The currentGame.rounds array contains only onGoing rounds and should only hold 1 element
    */
@@ -94,12 +107,26 @@ export class RoomService {
       throw new RoomNotFoundWsException()
     }
   }
+
+  /**
+   * Check if a room has a player in it.
+   * @param {Room} room The Room
+   * @param {string} playerId The ID of the player
+   * @returns {boolean}
+   */
   hasPlayer(room: Room, playerId: string): boolean {
     if (!room.players) {
       return false
     }
     return room.players.map((player) => player.id).includes(playerId)
   }
+
+  /**
+   * Add a player to a Room
+   * @param {string} roomId The Id of the Room
+   * @param {Player} player The Player to add
+   * @returns {Promise<Player>}
+   */
   private async addPlayerToRoom(roomId: string, player: Player): Promise<Player> {
     const room = await this.get(roomId)
     if (!room) {
@@ -142,11 +169,12 @@ export class RoomService {
     }
     return player
   }
+
   /**
    * Removes a player from a room. If he was the admin, sets a new admin. Disconnect player's socket from room events.
    * If room is empty, sets a timer to delete it, default 5mn.
-   * @param {Room} room:Room The room from which to remove the player
-   * @param {string} playerId:string The id of the player to be removed
+   * @param {Room} room The room from which to remove the player
+   * @param {string} playerId The id of the player to be removed
    * @returns {Promise<Room>}
    */
   private async removePlayerFromRoom(room: Room, playerId: string): Promise<Room> {
@@ -183,6 +211,11 @@ export class RoomService {
     return room
   }
 
+  /**
+   * Get the scores of a room
+   * @param {Room} room The room from which we retrieve the scoes.
+   * @returns {Promise<ScoreDto[]>}
+   */
   private async getRoomScores(room: Room): Promise<ScoreDto[]> {
     try {
       const scores: ScoreDto[] = await this.scoreRepository
@@ -201,6 +234,12 @@ export class RoomService {
       this.logger.debug(err)
     }
   }
+
+  /**
+   * Send the scores of a room to its player
+   * @param {Room} room:Room - The room to chich we send the scores.
+   * @returns {Promise<void> }
+   */
   async sendScore(room: Room): Promise<void> {
     try {
       const roomScores = await this.getRoomScores(room)
@@ -215,7 +254,15 @@ export class RoomService {
       this.logger.error(error)
     }
   }
+
   // Handlers
+
+  /**
+   * Attempt to create a Room for a Player, remove it's former Room if any
+   * @param {Player} player The player initiating the creation, future admin of the Room
+   * @param {Socket} client The socket of the player initiating the request.
+   * @returns {Promise<WsResponse<PlayerJoinedRoomSuccessDto['arguments']>>} Return the PlayerJoinedRoomSuccess event and Room info
+   */
   async onCreateRoom(
     player: Player,
     client: Socket,
@@ -237,6 +284,14 @@ export class RoomService {
       client.emit(WSE.FAIL_CREATE_ROOM, { reson: error.message ?? 'An error occured' })
     }
   }
+
+  /**
+   * Attempt to put a player in a Room
+   * @param {Player} player The player to join
+   * @param {string} roomId The Id of the room to join
+   * @param {Socket} client The socket of the player
+   * @returns {Promise<void>}
+   */
   async onPlayerJoinRoom(player: Player, roomId: string, client: Socket): Promise<void> {
     try {
       // Check if room exists
@@ -271,6 +326,12 @@ export class RoomService {
       this.logger.error(exception)
     }
   }
+
+  /**
+   * Handle the disconnection of a socket, removes the player from its room
+   * @param {Socket} client The client socket who disconnected
+   * @returns { Promise<void>}
+   */
   async onDisconnectedClient(client: Socket): Promise<void> {
     const player = await this.playerService.getPlayerFromSocket(client)
     if (!player) {
@@ -286,6 +347,13 @@ export class RoomService {
       this.sendRoomState(updtatedRoom)
     }
   }
+
+  /**
+   * Handle a player leaving a room
+   * @param {Socket} client The client socket of the player
+   * @param {string} roomId The Id of the room
+   * @returns {Promise<void>}
+   */
   async onPlayerLeaveRoom(client: Socket, roomId: string): Promise<void> {
     try {
       const { playerId } = client.data
@@ -296,6 +364,13 @@ export class RoomService {
       this.logger.error(error)
     }
   }
+
+  /**
+   * Attempt to exclude a player from a Room
+   * @param {string} playerId The Id of the player to exclude
+   * @param {string} roomId The Id of the room
+   * @returns {Promise<void>}
+   */
   async onExcludePlayer(playerId: string, roomId: string): Promise<void> {
     try {
       const room = await this.get(roomId)
@@ -313,7 +388,14 @@ export class RoomService {
       this.logger.error(error)
     }
   }
+
   // Services
+
+  /**
+   * Return the RoomDto from a Room
+   * @param {Room} room The room
+   * @returns { Promise<RoomInfoDto>}
+   */
   async generateRoomInfoDto(room: Room): Promise<RoomInfoDto> {
     let round = null
     if (room.currentGame != null) {
@@ -346,6 +428,13 @@ export class RoomService {
       scores,
     })
   }
+
+  /**
+   * Send the current state of a room to its players.
+   * @param {Room} room The Room
+   * @param {Player} player? An optional Player to sent the information on top of it
+   * @returns {Promise<void>}
+   */
   async sendRoomState(room: Room, player?: Player): Promise<void> {
     try {
       const data: RoomStateDto = {
@@ -360,6 +449,12 @@ export class RoomService {
       this.logger.error(error)
     }
   }
+
+  /**
+   * Retrieve the Room of a Player if any
+   * @param {Player} player The player entity
+   * @returns { Promise<Room | undefined>}
+   */
   async getRoomFromPlayer(player: Player): Promise<Room | undefined> {
     if (player.room) {
       return await this.get(player.room.id)

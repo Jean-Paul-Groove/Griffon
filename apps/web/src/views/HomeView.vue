@@ -25,12 +25,6 @@
             :selected="view === 'messages'"
             @click="view = 'messages'"
           />
-          <!-- <ButtonIcon
-          icon="clock"
-          text="Historique"
-          :selected="view === 'history'"
-          @click="view = 'history'"
-        /> -->
           <ButtonIcon
             icon="user-gear"
             text="Profile"
@@ -78,7 +72,7 @@ const { user } = storeToRefs(authStore)
 const $router = useRouter()
 
 // Refs
-const view = ref<'room' | 'friends' | 'messages' | 'history' | 'profile' | 'administration'>('room')
+const view = ref<'room' | 'friends' | 'messages' | 'profile' | 'administration'>('room')
 const conversationContact = ref<PlayerInfoDto>()
 // Watchers
 watch(

@@ -192,7 +192,7 @@ async function editPlayer(e: Event): Promise<void> {
         withCredentials: true,
       })
       if (response.data) {
-        setPlayerInfo(response.data)
+        setPlayerInfo(response.data, true)
       }
 
       $toast.success('Votre profil a été modifié')

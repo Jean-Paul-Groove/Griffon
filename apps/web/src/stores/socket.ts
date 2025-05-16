@@ -21,6 +21,7 @@ import {
   TimeLimitDto,
   UpdateFriendsInfoDto,
   UserRole,
+  WordSolutionDto,
   WordToDrawDto,
   WSE,
   type PlayerInfoDto,
@@ -60,7 +61,6 @@ export const useSocketStore = defineStore('socket', () => {
     },
     [WSE.DISCONNECTION]: (reason) => {
       // If server initialized disconnexion, disconnect and reset refs
-      console.log(reason)
       if (reason === 'io server disconnect') {
         disconnectSocket()
       }
@@ -102,6 +102,11 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.WORD_TO_DRAW]: (data: WordToDrawDto['arguments']): void => {
       if (data) {
         setWordToDraw(data.word)
+      }
+    },
+    [WSE.WORD_SOLUTION]: (data: WordSolutionDto['arguments']): void => {
+      if (data) {
+        systemMessage(`Le mot à deviné était ${data.word}`)
       }
     },
     [WSE.USER_JOINED_ROOM]: (data: PlayerJoinedRoomDto['arguments']): void => {
@@ -180,7 +185,8 @@ export const useSocketStore = defineStore('socket', () => {
   }
   // Refs
   const room = ref<RoomInfoDto | null>(null)
-  const chatMessages = ref<Array<ChatMessageDto>>([])
+  const roomMessages = ref<Array<ChatMessageDto>>([])
+  const systemMessages = ref<Array<ChatMessageDto>>([])
   const wordToDraw = ref<string>('')
   const socket = ref<Socket | null>(null)
   const timeLimit = ref<number | null>(null)
@@ -203,6 +209,11 @@ export const useSocketStore = defineStore('socket', () => {
 
     return false
   })
+
+  const chatMessages = computed<Array<ChatMessageDto>>(() => {
+    return [...roomMessages.value, ...systemMessages.value]
+  })
+
   // Watchers
   watch(
     () => socket.value?.connected,
@@ -280,7 +291,7 @@ export const useSocketStore = defineStore('socket', () => {
   }
   function setRoomInfo(newRoom: RoomInfoDto): void {
     room.value = JSON.parse(JSON.stringify(newRoom))
-    chatMessages.value = [...newRoom.chatMessages]
+    roomMessages.value = [...newRoom.chatMessages]
   }
   function addMessage(message: ChatMessageDto): void {
     if (room.value) {
@@ -292,7 +303,7 @@ export const useSocketStore = defineStore('socket', () => {
     if (!room.value) {
       return
     }
-    addMessage({
+    systemMessages.value.push({
       content,
       sender: SYSTEM,
       sentAt: new Date(),
@@ -385,7 +396,8 @@ export const useSocketStore = defineStore('socket', () => {
       if (user.value) {
         setPlayerInfo({ ...user.value, room: undefined })
       }
-      chatMessages.value = []
+      roomMessages.value = []
+      systemMessages.value = []
       wordToDraw.value = ''
       setRequestedRoom(null)
     } catch (error) {
@@ -422,7 +434,8 @@ export const useSocketStore = defineStore('socket', () => {
     autoReconnect.value = false
     friends.value = []
     room.value = null
-    chatMessages.value = []
+    roomMessages.value = []
+    systemMessages.value = []
     wordToDraw.value = ''
     countDown.value = null
     timeLimit.value = null

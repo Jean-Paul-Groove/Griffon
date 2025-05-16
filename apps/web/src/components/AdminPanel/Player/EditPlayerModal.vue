@@ -13,7 +13,7 @@
           :selected="false"
           @click="deleteModal = true"
         />
-        <form class="edit-player-form">
+        <form ref="adminPlayerForm" class="edit-player-form">
           <FormInput
             v-model="editedPlayer.name"
             input-id="edit-player-name"
@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { emailPattern, strongPasswordPattern, UserRole, type DetailedPlayerDto } from 'shared'
 import { apiUrl } from '../../../helpers'
 import FormInput from '../../form/FormInput.vue'
@@ -133,6 +133,7 @@ const confirmPassword = ref<string>('')
 const file = ref<File | null>(null)
 const editedPlayer = ref<DetailedPlayerDto>({ ...props.player })
 const deleteModal = ref<boolean>(false)
+const adminPlayerForm = ref<HTMLFormElement>()
 // Computeds
 const errors = computed<SignInErrors>(() => {
   const errorObject: SignInErrors = {
@@ -178,6 +179,13 @@ const fileUrl = computed<string | null>(() => {
     return getImageUrl(editedPlayer.value.avatar)
   }
   return URL.createObjectURL(file.value)
+})
+
+// Hooks
+onMounted(() => {
+  if (adminPlayerForm.value) {
+    adminPlayerForm.value.focus()
+  }
 })
 
 // Functions
@@ -257,6 +265,7 @@ async function handleConfirm(e: Event): Promise<void> {
     if (err instanceof AxiosError) {
       if (err.response?.data?.message && err.response?.data?.message === 'Email already used') {
         $toast.error('Cet email est déjà utilisé')
+        return
       }
     }
     $toast.error("L'opération a échoué")
@@ -285,20 +294,19 @@ async function handleDelete(): Promise<void> {
     inset: 0;
     background-color: rgba(0, 0, 0, 0.377);
     display: flex;
-    justify-content: center;
     z-index: 10;
     padding: 1rem;
-    padding-top: 15%;
+    justify-content: center;
   }
   &_content {
     @include white-card;
-    height: fit-content;
     min-width: 15rem;
     flex-direction: column;
-    justify-content: space-between;
     gap: 1rem;
-    max-height: 80%;
+    max-height: 90vh;
     overflow-y: auto;
+    max-width: 50rem;
+    width: fit-content;
     &_delete {
       @include danger-button;
       width: fit-content;

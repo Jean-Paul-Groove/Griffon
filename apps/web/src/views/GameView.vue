@@ -51,6 +51,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding-bottom: 2rem;
+  padding-top: 1rem;
   ._countdown {
     height: 2rem;
   }

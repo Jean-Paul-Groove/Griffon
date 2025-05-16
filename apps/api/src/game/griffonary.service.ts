@@ -30,6 +30,12 @@ export class GriffonaryService {
   }
   public io: Server
   private readonly logger = new Logger(GriffonaryService.name, { timestamp: true })
+
+  /**
+   * Start a Round of Griffonary
+   * @param {string} roomId The Id of the Room
+   * @returns {Promise<void>}
+   */
   async executeRound(roomId: string): Promise<void> {
     try {
       const room = await this.roomService.get(roomId)
@@ -46,6 +52,10 @@ export class GriffonaryService {
       }
       const drawingTime =
         room.currentGame.roundDuration ?? room.currentGame.specs.defaultRoundDuration
+
+      const timeOutName = `${room.id}::endOfRound`
+      const timeOut = setTimeout(() => this.endRound(roomId), drawingTime)
+
       // ? GET A PLAYER WHO HAS NOT BEEN AN ARTIST YET
       const formerArtists = this.playerRepository
         .createQueryBuilder('player')
@@ -64,9 +74,9 @@ export class GriffonaryService {
         this.gameService.endGame(room)
         if (
           this.schedulerRegistry?.doesExist !== undefined &&
-          this.schedulerRegistry.doesExist('timeout', `${room.id}::endOfRound`)
+          this.schedulerRegistry.doesExist('timeout', timeOutName)
         ) {
-          this.schedulerRegistry.deleteTimeout(`${room.id}::endOfRound`)
+          this.schedulerRegistry.deleteTimeout(timeOutName)
         }
 
         return
@@ -83,14 +93,14 @@ export class GriffonaryService {
         timeLimit: new Date(timeLimit),
       })
       await this.roundRepository.save(round)
-      const timeOutName = `${room.id}::endOfRound`
+
       if (
         this.schedulerRegistry?.doesExist !== undefined &&
         this.schedulerRegistry?.doesExist('timeout', timeOutName)
       ) {
         this.schedulerRegistry.deleteTimeout(timeOutName)
       }
-      const timeOut = setTimeout(() => this.endRound(roomId), drawingTime)
+
       this.schedulerRegistry.addTimeout(timeOutName, timeOut)
 
       this.gameService.sendWordToDraw(artist, newWord)
@@ -101,16 +111,33 @@ export class GriffonaryService {
       this.endRound(roomId)
     }
   }
+
+  /**
+   * End a Round of Griffonary
+   * Send the answer to the word and start a new round
+   * @param {string} roomId The Id of the Room
+   * @returns { Promise<void>}
+   */
   async endRound(roomId: string): Promise<void> {
     try {
       const room = await this.roomService.get(roomId)
+      const timeOutName = `${room.id}::startOfRound`
+      const timeOut = setTimeout(() => this.executeRound(roomId), 2000)
       const currentRound = await this.gameService.getLastOngoingORound(room)
       if (currentRound) {
+        const word = await this.gameService.getWordFromRound(currentRound)
+        this.gameService.sendWordSolution(roomId, word)
         currentRound.onGoing = false
         await this.roundRepository.save(currentRound)
       }
+      if (
+        this.schedulerRegistry?.doesExist !== undefined &&
+        this.schedulerRegistry.doesExist('timeout', timeOutName)
+      ) {
+        this.schedulerRegistry.deleteTimeout(timeOutName)
+      }
+      this.schedulerRegistry.addTimeout(timeOutName, timeOut)
       this.roomService.sendRoomState(room)
-      this.executeRound(roomId)
     } catch (error) {
       this.logger.error(error)
     }

@@ -26,6 +26,13 @@ export class ChatService {
   public io: Server
   private readonly logger = new Logger(ChatService.name, { timestamp: true })
 
+  // Handlers
+  /**
+   * Handle a new message posted in a room chat
+   * @param {string} message The message
+   * @param {Socket} client The client socket who sent the message
+   * @returns {Promise<void>}
+   */
   async onNewChatMessage(message: string, client: Socket): Promise<void> {
     const player = await this.playerService.get(client.data.playerId)
     const room = await this.roomService.getRoomFromPlayer(player)
@@ -48,6 +55,12 @@ export class ChatService {
     this.commonService.emitToRoom(room.id, data)
   }
 
+  // Service
+  /**
+   * Generate the ChatMessageDto from a chat entity
+   * @param {Chat} chat The chat entity
+   * @returns {ChatMessageDto}
+   */
   generateChatMessageDto(chat: Chat): ChatMessageDto {
     const { id, content, sentAt, sender } = chat
     return new ChatMessageDto({

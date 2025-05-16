@@ -1,5 +1,5 @@
 <template>
-  <div class="form-input">
+  <label :for="inputId" class="form-input">
     <input
       :id="inputId"
       v-model="model"
@@ -8,8 +8,8 @@
       :type="type"
       placeholder="   "
     />
-    <label :for="inputId" class="form-input_label">{{ label }} </label>
-  </div>
+    <span class="form-input_label">{{ label }} </span>
+  </label>
 </template>
 
 <script setup lang="ts">

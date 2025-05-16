@@ -1,7 +1,7 @@
 <template>
-  <section class="player-administration">
+  <article class="player-administration">
     <h3>Joueurs</h3>
-    <article class="player-administration_content">
+    <div class="player-administration_content">
       <div class="player-administration_content_table-container">
         <TableDisplay :headers="headers" :elements="players" :row-click="onPlayerClicked" />
       </div>
@@ -22,7 +22,7 @@
         :selected="false"
         @click="handleNewPlayer"
       />
-    </article>
+    </div>
     <EditPlayerModal
       v-if="playerToEdit && editModal"
       :edit-style="editStyle"
@@ -30,7 +30,7 @@
       @close="editModal = false"
       @confirm="fetchPlayers"
     />
-  </section>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -45,7 +45,7 @@ import ButtonIcon from '../../ButtonIcon/ButtonIcon.vue'
 import { useToast } from '../../../composables/useToast'
 // Constants
 const headers = [
-  { title: 'Name', key: 'name' },
+  { title: 'Nom', key: 'name' },
   { title: 'Email', key: 'email' },
   { title: 'Avatar', key: 'avatar' },
   { title: 'Role', key: 'role' },

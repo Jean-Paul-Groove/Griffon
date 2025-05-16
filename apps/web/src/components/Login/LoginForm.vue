@@ -1,48 +1,79 @@
 <template>
   <div class="login-form">
-    <div class="login-form_tabs">
-      <div
+    <div class="login-form_tabs" role="tablist">
+      <button
+        id="tab-1"
         :class="{ active: activeTab === 'guest' }"
+        role="tab"
+        :aria-selected="activeTab === 'guest'"
+        tabindex="0"
+        aria-controls="panel-guest"
         class="login-form_tabs_tab"
         @click="activeTab = 'guest'"
       >
         Invité
-      </div>
-      <div
+      </button>
+      <button
+        id="tab-2"
         :class="{ active: activeTab === 'connexion' }"
         class="login-form_tabs_tab"
+        role="tab"
+        :aria-selected="activeTab === 'connexion'"
+        tabindex="1"
+        aria-controls="panel-connetion"
         @click="activeTab = 'connexion'"
       >
         Connexion
-      </div>
+      </button>
     </div>
-    <form v-if="activeTab === 'guest'" class="login-form_guest">
-      <FormInput
-        v-model="guestName"
-        input-id="guest-name"
-        label="Pseudo"
-        :error="guestNameErrors != null"
-      />
-      <button class="login-form_button" @click="signIn">Continuer comme invité</button>
-      <p v-if="guestNameErrors && !user">{{ guestNameErrors }}</p>
-    </form>
-    <form v-else class="login-form_user">
-      <FormInput v-model="email" input-id="user-email" :error="emailError != null" label="Email" />
-      <FormInput
-        v-model="password"
-        input-id="user-password"
-        type="password"
-        :error="passwordError != null"
-        label="Mot de passe"
-      />
-      <button class="login-form_button" @click="login">Connexion</button>
-      <div class="login-form_errors">
-        <p v-if="emailError && !user">{{ emailError }}</p>
-        <p v-if="passwordError && !user">{{ passwordError }}</p>
-      </div>
+    <div
+      id="panel-guest"
+      aria-labelledby="tab-1"
+      role="tabpanel"
+      :class="{ visible: activeTab === 'guest' }"
+      class="login-form_panel"
+    >
+      <form class="login-form_guest">
+        <FormInput
+          v-model="guestName"
+          input-id="guest-name"
+          label="Pseudo"
+          :error="guestNameErrors != null"
+        />
+        <button class="login-form_button" @click="signIn">Continuer comme invité</button>
+        <p v-if="guestNameErrors && !user">{{ guestNameErrors }}</p>
+      </form>
+    </div>
+    <div
+      id="panel-connetion"
+      aria-labelledby="tab-2"
+      role="tabpanel"
+      :class="{ visible: activeTab === 'connexion' }"
+      class="login-form_panel"
+    >
+      <form class="login-form_user">
+        <FormInput
+          v-model="email"
+          input-id="user-email"
+          :error="emailError != null"
+          label="Email"
+        />
+        <FormInput
+          v-model="password"
+          input-id="user-password"
+          type="password"
+          :error="passwordError != null"
+          label="Mot de passe"
+        />
+        <button class="login-form_button" @click="login">Connexion</button>
+        <div class="login-form_errors">
+          <p v-if="emailError && !user">{{ emailError }}</p>
+          <p v-if="passwordError && !user">{{ passwordError }}</p>
+        </div>
 
-      <RouterLink class="login-form_link" to="/register">Pas de compte ? S'inscrire !</RouterLink>
-    </form>
+        <RouterLink class="login-form_link" to="/register">Pas de compte ? S'inscrire !</RouterLink>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -114,7 +145,7 @@ async function signIn(e: Event): Promise<void> {
     }
   } catch (error) {
     if (error instanceof AxiosError) {
-      if (error.code == '400') {
+      if (error.code == '401') {
         $toast.error('Ces identifiants sont invalides')
         email.value = ''
         password.value = ''
@@ -182,19 +213,26 @@ async function login(e: Event): Promise<void> {
       align-items: center;
       justify-content: center;
       padding: 0 0.3rem;
-      border-top-left-radius: 0.5rem;
-      border-top-right-radius: 0.5rem;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
       border: 0.05rem solid rgba(211, 211, 211, 0);
       border-bottom: none;
       color: $main-color;
       background-color: rgb(245, 245, 240);
       width: 100%;
       cursor: pointer;
+      box-shadow: none;
       &:hover,
       &.active {
         border-color: lightgray;
         background-color: white;
       }
+    }
+  }
+  &_panel {
+    display: none;
+    &.visible {
+      display: contents;
     }
   }
   & form {

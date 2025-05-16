@@ -1,6 +1,6 @@
 <template>
   <form v-if="user" class="room-manager_form" @submit="(e) => e.preventDefault()">
-    <h2 class="room-manager_form_title">Rejoindre un salon</h2>
+    <h3 class="room-manager_form_title">Rejoindre un salon</h3>
 
     <FormInput
       v-model="roomId"

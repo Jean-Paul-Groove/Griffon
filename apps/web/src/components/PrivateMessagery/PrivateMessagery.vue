@@ -1,7 +1,7 @@
 <template>
   <section v-if="contact" class="private-messagery">
     <div class="private-messagery_head">
-      <h2>Conversation avec {{ contact.name }}</h2>
+      <h3>Conversation avec {{ contact.name }}</h3>
       <img :src="getImageUrl(contact.avatar)" :alt="contact.name" />
       <ButtonIcon
         class="private-messagery_head_leave"
@@ -40,7 +40,10 @@ const messages = ref<MessageDto[]>([])
 
 // Computeds
 const sortedMessages = computed<MessageDto[]>(() => {
-  return [...messages.value].sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime())
+  console.log(messages.value)
+  return [...messages.value].sort(
+    (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
+  )
 })
 
 // Watchers

@@ -1,14 +1,13 @@
 <template>
-  <article class="friend-card" :class="{ disconnected: !friend.online }">
-    <div class="friend-card_info">
-      <img class="friend-card_img" :src="getImageUrl(friend.avatar)" :alt="friend.name" />
+  <figure class="friend-card" :class="{ disconnected: !friend.online }">
+    <figcaption class="friend-card_info">
+      <img
+        class="friend-card_img"
+        :src="getImageUrl(friend.avatar)"
+        :alt="friend.name + ' ' + friend.online ? 'Connecté' : 'Déconnecté'"
+      />
       <p class="friend-card_name">{{ friend.name }}</p>
-      <p v-if="friend.room && friend.online" class="friend-card_status connected">Dans un salon</p>
-      <template v-else>
-        <p v-if="friend.online" class="friend-card_status connected">Connecté</p>
-        <p v-else class="friend-card_status">Hors ligne</p>
-      </template>
-    </div>
+    </figcaption>
     <div v-if="withActions" class="friend-card_actions">
       <ButtonIcon
         v-if="friend.room && friend.online"
@@ -24,7 +23,7 @@
         @click="emit('message', friend.id)"
       />
     </div>
-  </article>
+  </figure>
 </template>
 
 <script setup lang="ts">
@@ -48,24 +47,25 @@ const emit = defineEmits<{
 <style lang="scss" scoped>
 .friend-card {
   @include player-card;
+  width: fit-content;
+  min-width: 7rem;
   &_info {
     height: 100%;
     display: flex;
-    gap: 1rem;
-    margin-right: 1rem;
+    gap: 0.5rem;
     align-items: center;
     justify-content: space-between;
-    width: 50%;
+    min-width: fit-content;
   }
   &_img {
     @include avatar;
+    margin-right: 0;
+    border-color: green;
   }
-  &_status {
-    margin-left: auto;
-    color: #5c5c5c;
-    &.connected {
-      color: green;
-    }
+  &_name {
+    max-width: 3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   &_actions {
     margin-left: auto;

@@ -22,6 +22,11 @@ export class WordToDrawDto extends SocketDto {
     arguments: {word:string}
 }
 
+export class WordSolutionDto extends SocketDto {
+    event: WSE.WORD_SOLUTION
+    arguments: {word:string}
+}
+
 export class UploadDrawingDto extends SocketDto {
     event: WSE.UPLOAD_DRAWING
     arguments: {drawing:Buffer | Blob, player:PlayerInfoDto}

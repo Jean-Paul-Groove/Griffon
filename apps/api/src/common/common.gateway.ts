@@ -54,6 +54,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   @WebSocketServer()
   io: Server
 
+  // Initialization of the gateway
   afterInit(): void {
     this.playerService.resetPlayerRooms()
     this.gameService.resetGames()
@@ -61,6 +62,8 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     this.io.disconnectSockets()
     this.logger.log('Room gateway initialized')
   }
+
+  // Handler for socket connection
   async handleConnection(client: Socket): Promise<void> {
     try {
       // Chek that player is known
@@ -86,6 +89,8 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       client.disconnect()
     }
   }
+
+  // Handler for socket disconnection
   async handleDisconnect(client: Socket): Promise<void> {
     try {
       // Retrieve player associated with socket
@@ -110,6 +115,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       this.logger.error('HANDLE DISCONNECT', err)
     }
   }
+
   // ROOM HANDLERS
   @SubscribeMessage(WSE.ASK_CREATE_ROOM)
   async handleCreateRoom(@ConnectedSocket() client: Socket): Promise<WsResponse> {
@@ -158,6 +164,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   ): Promise<void> {
     await this.chatService.onNewChatMessage(message, client)
   }
+
   // MESSAGE HANDLERS
   @UseGuards(RegisteredGuard)
   @SubscribeMessage(WSE.NEW_PRIVATE_MESSAGE)
@@ -168,6 +175,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   ): Promise<void> {
     await this.messageService.onNewMessage(message, client, receiver)
   }
+
   // GAME HANDLERS
   @UseGuards(RoomGuard)
   @UseGuards(DrawingGuard)
@@ -202,7 +210,6 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     @MessageBody('playerId') playerId: Player['id'],
   ): Promise<void> {
     const player = await this.playerService.getPlayerFromSocket(client, true)
-
     await this.playerService.requestFriend(player, playerId)
   }
 

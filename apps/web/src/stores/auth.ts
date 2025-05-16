@@ -2,6 +2,7 @@ import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import type { PlayerInfoDto } from 'shared'
+import { getImageUrl } from '../helpers/avatars'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<PlayerInfoDto | null>(null)
@@ -20,9 +21,12 @@ export const useAuthStore = defineStore('auth', () => {
   function resetUser(): void {
     user.value = null
   }
-  function setPlayerInfo(playerInfo: PlayerInfoDto): void {
+  async function setPlayerInfo(playerInfo: PlayerInfoDto, refreshAvatar?: boolean): Promise<void> {
     if (playerInfo != null) {
       user.value = playerInfo
+    }
+    if (refreshAvatar && user.value?.avatar) {
+      await caches.delete(getImageUrl(user.value?.avatar))
     }
   }
   function setRequestedRoom(value: string | null): void {

@@ -27,6 +27,7 @@ export declare enum WSE {
     STOP_GUESS = "stop-guess",
     PLAYER_SCORED = "player-scored",
     SCORE_LIST = "score-list",
+    WORD_SOLUTION = "word-solution",
     NEW_CHAT_MESSAGE = "new-chat-message",
     NEW_PRIVATE_MESSAGE = "new-private-message",
     ASK_ADD_FRIEND = "ask-add-friend",

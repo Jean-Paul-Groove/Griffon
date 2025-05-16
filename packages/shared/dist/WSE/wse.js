@@ -31,6 +31,7 @@ var WSE;
     WSE["STOP_GUESS"] = "stop-guess";
     WSE["PLAYER_SCORED"] = "player-scored";
     WSE["SCORE_LIST"] = "score-list";
+    WSE["WORD_SOLUTION"] = "word-solution";
     WSE["NEW_CHAT_MESSAGE"] = "new-chat-message";
     WSE["NEW_PRIVATE_MESSAGE"] = "new-private-message";
     WSE["ASK_ADD_FRIEND"] = "ask-add-friend";

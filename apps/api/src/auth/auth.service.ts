@@ -33,6 +33,13 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
   private readonly logger = new Logger(AuthService.name)
+
+  /**
+   * Check that a client socket carries a valid cookie with a JWT
+   * If so, add the PlayerId to the data of the socket for later requests.
+   * @param {Socket} client The client socket to check
+   * @returns {boolean}
+   */
   validateWsConnexion(client: Socket): boolean {
     const cookies = fastifyCookie.parse(client.handshake.headers.cookie || '')
 
@@ -49,6 +56,12 @@ export class AuthService {
     }
     return true
   }
+
+  /**
+   * Retrieve the Id of a player from the cookie of an HTTP request
+   * @param {FastifyRequest} request The request
+   * @returns {string} The Id of the player
+   */
   getPlayerIdFromRequest(request: FastifyRequest): string {
     const cookies = fastifyCookie.parse(request.headers.cookie || '')
 
@@ -62,6 +75,12 @@ export class AuthService {
       return payload.id
     }
   }
+
+  /**
+   * Handle connection of a guest
+   * @param {string} name The name of the player
+   * @returns {Promise<Token>} Returns a token to be sent with cookies
+   */
   async signUpAsGuest(name: string): Promise<Token> {
     const guest: CreateGuestDto = { name: name, role: UserRole.GUEST }
     const player = await this.playerService.createGuest(guest)
@@ -71,8 +90,14 @@ export class AuthService {
     }
   }
 
-  async registerUser(userInfo: RegisterDto, avatar?: MemoryStorageFile): Promise<Token> {
-    const { username, email, password: toBeHashed } = userInfo
+  /**
+   * Handle the subscription of a player
+   * @param {RegisterDto} playerInfo The info necessary for the creation of the player
+   * @param {MemoryStorageFile} avatar? The image file for the avatar of the player
+   * @returns {Promise<Token>} Returns a token to be sent with cookies
+   */
+  async registerUser(playerInfo: RegisterDto, avatar?: MemoryStorageFile): Promise<Token> {
+    const { username, email, password: toBeHashed } = playerInfo
     if (!this.checkEmailValidity(email)) {
       throw new BadRequestException('Incorrect email')
     }
@@ -97,6 +122,11 @@ export class AuthService {
     }
   }
 
+  /**
+   * Handle the connexion of a player
+   * @param {LoginDto} loginDto The credentials of the player
+   * @returns {Promise<Token>} Returns a token to be sent with cookies
+   */
   async login(loginDto: LoginDto): Promise<Token> {
     const player = await this.playerService.getPlayerCredentials(loginDto.email)
     if (!player) {
@@ -112,12 +142,30 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     }
   }
+
+  /**
+   * Hash a password with bcrypt
+   * @param {string} toBeHashed:The password to be hashed
+   * @returns { Promise<string>} Returns the hash
+   */
   async hashPassword(toBeHashed: string): Promise<string> {
     return await bcrypt.hash(toBeHashed, 14)
   }
+
+  /**
+   * Check if the provided email is valid
+   * @param {string} email The email to test
+   * @returns {boolean}
+   */
   checkEmailValidity(email: string): boolean {
     return emailPattern.test(email)
   }
+
+  /**
+   * Check if the provided password is strong enough
+   * @param {string} password The password to test
+   * @returns {boolean}
+   */
   checkPasswordStrength(password: string): boolean {
     return strongPasswordPattern.test(password)
   }

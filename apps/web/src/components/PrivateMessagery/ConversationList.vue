@@ -1,6 +1,6 @@
 <template>
   <section class="conversations">
-    <h2>Conversations</h2>
+    <h3>Conversations</h3>
     <p v-if="conversations.length === 0" class="conversations_none">
       Vous n'avez aucune conversation en cours pour le moment ...
     </p>
@@ -101,7 +101,9 @@ function handleOpenConversation(conversation: MessageDto): void {
     height: 100%;
     overflow-y: auto;
     &_item {
+      @include white-card;
       width: 100%;
+      scale: 0.95;
       &_friend-card {
         max-width: 15rem;
         text-wrap: wrap;
@@ -111,7 +113,6 @@ function handleOpenConversation(conversation: MessageDto): void {
       &_link {
         font-size: large;
         cursor: pointer;
-        @include chat-container;
         width: 90%;
         margin: auto;
         display: flex;
@@ -119,10 +120,10 @@ function handleOpenConversation(conversation: MessageDto): void {
         gap: 0.5rem;
         align-items: center;
         padding: 0.2rem 0.5rem;
-        &:hover {
-          box-shadow: $light-shadow;
-          transform: scale(1.01);
-        }
+      }
+      &:hover {
+        box-shadow: $light-shadow;
+        transform: scale(1.01);
       }
     }
   }

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ScoreListDto = exports.FailStartGame = exports.StartGameDto = exports.PlayerListDto = exports.StopDrawDto = exports.UploadDrawingDto = exports.WordToDrawDto = exports.TimeLimitDto = exports.RoomStateDto = exports.PlayerScoredDto = void 0;
+exports.ScoreListDto = exports.FailStartGame = exports.StartGameDto = exports.PlayerListDto = exports.StopDrawDto = exports.UploadDrawingDto = exports.WordSolutionDto = exports.WordToDrawDto = exports.TimeLimitDto = exports.RoomStateDto = exports.PlayerScoredDto = void 0;
 const common_1 = require("./common");
 class PlayerScoredDto extends common_1.SocketDto {
 }
@@ -14,6 +14,9 @@ exports.TimeLimitDto = TimeLimitDto;
 class WordToDrawDto extends common_1.SocketDto {
 }
 exports.WordToDrawDto = WordToDrawDto;
+class WordSolutionDto extends common_1.SocketDto {
+}
+exports.WordSolutionDto = WordSolutionDto;
 class UploadDrawingDto extends common_1.SocketDto {
 }
 exports.UploadDrawingDto = UploadDrawingDto;
