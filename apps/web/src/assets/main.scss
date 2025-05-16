@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: 'RandomWednesday';
-  src: url('./fonts/random_wednesday.ttf') ;
+  src: url('./fonts/random_wednesday.ttf') format('truetype') ;
 }
 * {
   box-sizing: border-box;
