@@ -2,7 +2,11 @@
   <section class="profile">
     <h2>Profile</h2>
     <figure class="profile_card">
-      <img class="profile_card_avatar" :src="getImageUrl(user?.avatar)" :alt="user?.name" />
+      <img
+        class="profile_card_avatar"
+        :src="getImageUrl(user?.avatar, defaultAvatar)"
+        :alt="user?.name"
+      />
       <p class="profile_card_name">{{ user?.name }}</p>
     </figure>
 
@@ -47,7 +51,7 @@
         >
           <FontAwesomeIcon icon="xmark" />
         </button>
-        <div class="profile_edit-form_avatar_preview_container">
+        <div v-if="fileUrl" class="profile_edit-form_avatar_preview_container">
           <img class="profile_edit-form_avatar_preview" :src="fileUrl" alt="avatar" />
         </div>
       </label>
@@ -89,7 +93,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
 import { strongPasswordPattern } from 'shared'
-
+import defaultAvatar from '@/assets/avatar/default-avatar.webp'
 // Stores
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -146,7 +150,7 @@ const errors = computed<SignInErrors>(() => {
 })
 const fileUrl = computed<string>(() => {
   if (file.value === null) {
-    return getImageUrl(user.value?.avatar)
+    return getImageUrl(user.value?.avatar, defaultAvatar)
   }
   return URL.createObjectURL(file.value)
 })

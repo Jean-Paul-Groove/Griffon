@@ -69,6 +69,16 @@ export class CommonService {
     }
   }
 
+  /**
+   * Creates the needed directory on init
+   * if they don't exist
+   * @returns {void}
+   */
+  initFileDirectories(): void {
+    this.createDirectoryIfNotExist('uploads')
+    this.createDirectoryIfNotExist(path.join('uploads', 'public'))
+    this.createDirectoryIfNotExist(path.join('uploads', 'private'))
+  }
   // Socket
 
   /**

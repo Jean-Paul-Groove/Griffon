@@ -79,7 +79,7 @@ const router = createRouter({
       ],
     },
     {
-      path: '/:roomId',
+      path: '/room/:roomId',
       name: 'Room',
       component: RoomLayout,
       redirect: {

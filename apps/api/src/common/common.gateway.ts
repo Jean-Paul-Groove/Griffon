@@ -58,6 +58,7 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   afterInit(): void {
     this.playerService.resetPlayerRooms()
     this.gameService.resetGames()
+    this.commonService.initFileDirectories()
     this.commonService.io = this.io
     this.io.disconnectSockets()
     this.logger.log('Room gateway initialized')

@@ -53,9 +53,6 @@ export class GriffonaryService {
       const drawingTime =
         room.currentGame.roundDuration ?? room.currentGame.specs.defaultRoundDuration
 
-      const timeOutName = `${room.id}::endOfRound`
-      const timeOut = setTimeout(() => this.endRound(roomId), drawingTime)
-
       // ? GET A PLAYER WHO HAS NOT BEEN AN ARTIST YET
       const formerArtists = this.playerRepository
         .createQueryBuilder('player')
@@ -70,15 +67,9 @@ export class GriffonaryService {
         .where({ room })
         .andWhere('player.id NOT IN (' + formerArtists.getSql() + ')')
         .getMany()
+
       if (potentialArtist.length === 0) {
         this.gameService.endGame(room)
-        if (
-          this.schedulerRegistry?.doesExist !== undefined &&
-          this.schedulerRegistry.doesExist('timeout', timeOutName)
-        ) {
-          this.schedulerRegistry.deleteTimeout(timeOutName)
-        }
-
         return
       }
       const artist = sample(potentialArtist)
@@ -94,14 +85,7 @@ export class GriffonaryService {
       })
       await this.roundRepository.save(round)
 
-      if (
-        this.schedulerRegistry?.doesExist !== undefined &&
-        this.schedulerRegistry?.doesExist('timeout', timeOutName)
-      ) {
-        this.schedulerRegistry.deleteTimeout(timeOutName)
-      }
-
-      this.schedulerRegistry.addTimeout(timeOutName, timeOut)
+      this.handleRoundTimeout(drawingTime, roomId, 'end')
 
       this.gameService.sendWordToDraw(artist, newWord)
       this.gameService.sendPlayerList(round, room)
@@ -120,26 +104,42 @@ export class GriffonaryService {
    */
   async endRound(roomId: string): Promise<void> {
     try {
+      console.log('EEEND OF ROUND')
       const room = await this.roomService.get(roomId)
-      const timeOutName = `${room.id}::startOfRound`
-      const timeOut = setTimeout(() => this.executeRound(roomId), 2000)
       const currentRound = await this.gameService.getLastOngoingORound(room)
-      if (currentRound) {
+      if (currentRound.onGoing) {
         const word = await this.gameService.getWordFromRound(currentRound)
         this.gameService.sendWordSolution(roomId, word)
         currentRound.onGoing = false
         await this.roundRepository.save(currentRound)
+        this.handleRoundTimeout(2000, roomId, 'start')
+        this.roomService.sendRoomState(room)
       }
-      if (
-        this.schedulerRegistry?.doesExist !== undefined &&
-        this.schedulerRegistry.doesExist('timeout', timeOutName)
-      ) {
-        this.schedulerRegistry.deleteTimeout(timeOutName)
-      }
-      this.schedulerRegistry.addTimeout(timeOutName, timeOut)
-      this.roomService.sendRoomState(room)
     } catch (error) {
       this.logger.error(error)
     }
+  }
+
+  /**
+   * Set a timeout to execute or end a round
+   * @param {number} time The timeout delay
+   * @param {string} roomId The Id of the room of the game
+   * @param {'start'|'end'} action The type of action on the round
+   * @returns {void}
+   */
+  handleRoundTimeout(time: number, roomId: string, action: 'start' | 'end'): void {
+    const timeOutName = `${roomId}::${action}OfRound`
+    const timeOut = setTimeout(
+      () => (action === 'start' ? this.executeRound(roomId) : this.endRound(roomId)),
+      time,
+    )
+    if (
+      this.schedulerRegistry?.doesExist !== undefined &&
+      this.schedulerRegistry?.doesExist('timeout', timeOutName)
+    ) {
+      this.schedulerRegistry.deleteTimeout(timeOutName)
+    }
+
+    this.schedulerRegistry.addTimeout(timeOutName, timeOut)
   }
 }

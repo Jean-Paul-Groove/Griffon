@@ -50,7 +50,12 @@
       </label>
       <button class="sign-in-form_button" @click="registerUser">Inscription</button>
       <DividerText color="$main-color" text-color="$main-color" text="Aperçu" />
-      <PlayerCard :player="playerInfo" :is-admin="false" :is-current-player="true" />
+      <PlayerCard
+        :alternative-picture="fileUrl"
+        :player="playerInfo"
+        :is-admin="false"
+        :is-current-player="true"
+      />
       <div class="sign-in-form_errors">
         <p
           v-for="(error, index) of errors"
@@ -133,16 +138,15 @@ const errors = computed<SignInErrors>(() => {
 
   return errorObject
 })
-const fileUrl = computed<string | null>(() => {
+const fileUrl = computed<string | undefined>(() => {
   if (file.value === null) {
-    return null
+    return
   }
   return URL.createObjectURL(file.value)
 })
 const playerInfo = computed<PlayerInfoDto>(() => {
   return new PlayerInfoDto({
     id: 'preview',
-    avatar: fileUrl.value || '',
     isArtist: false,
     role: UserRole.REGISTERED_USER,
     name: username.value,
@@ -186,7 +190,7 @@ async function registerUser(e: Event): Promise<void> {
         withCredentials: true,
       })
       allowReconnect()
-      $router.push('Accueil')
+      $router.push({ name: 'Accueil' })
       $toast.success('Bienvenue chez les Griffoneurs !')
     }
   } catch (err: unknown) {

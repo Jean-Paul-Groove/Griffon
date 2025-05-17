@@ -1,6 +1,6 @@
 <template>
   <article class="player-card" @click="handleClick">
-    <img class="player-card_avatar" :src="getImageUrl(player.avatar)" alt="avatar" />
+    <img class="player-card_avatar" :src="getImageUrl(player.avatar, defaultAvatar)" alt="avatar" />
     <div class="player-card_info">
       <span class="player-card_info_name">
         <FontAwesomeIcon v-if="isAdmin" icon="crown" />
@@ -55,11 +55,12 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import ConfirmModal from '../ConfirmModal/ConfirmModal.vue'
 import { getImageUrl } from '../../helpers/avatars'
-
+import defaultAvatar from '../../assets/avatar/default-avatar.webp'
 interface PlayerCardProp {
   player: PlayerInfoDto
   isAdmin: boolean
   isCurrentPlayer: boolean
+  alternativePicture?: string
 }
 const { getUserPoints, excludePlayer, addFriend } = useSocketStore()
 const { isAdmin: currentPlayerAdmin } = storeToRefs(useSocketStore())
@@ -77,6 +78,15 @@ const isFriend = computed<boolean>(() => {
 
 const canAddAsFriend = computed<boolean>(() => {
   return !isFriend.value && props.player.role !== UserRole.GUEST && !props.isCurrentPlayer
+})
+
+// Computeds
+const avatar = computed<string>(() => {
+  const fallBack = props.alternativePicture ?? defaultAvatar
+  console.log(fallBack)
+  const url = getImageUrl(props.player.avatar, fallBack)
+  console.log(url)
+  return url
 })
 // Functions
 function handleClick(): void {
