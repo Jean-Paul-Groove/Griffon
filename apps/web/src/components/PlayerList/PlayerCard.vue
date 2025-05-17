@@ -80,14 +80,6 @@ const canAddAsFriend = computed<boolean>(() => {
   return !isFriend.value && props.player.role !== UserRole.GUEST && !props.isCurrentPlayer
 })
 
-// Computeds
-const avatar = computed<string>(() => {
-  const fallBack = props.alternativePicture ?? defaultAvatar
-  console.log(fallBack)
-  const url = getImageUrl(props.player.avatar, fallBack)
-  console.log(url)
-  return url
-})
 // Functions
 function handleClick(): void {
   if (user.value?.role !== UserRole.GUEST) {

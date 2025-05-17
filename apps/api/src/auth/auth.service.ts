@@ -3,7 +3,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common'
 import { PlayerService } from '../player/player.service'
@@ -16,7 +15,6 @@ import {
   strongPasswordPattern,
   UserRole,
 } from 'shared'
-import { InvalidCredentialsWsException } from '../common/ws/exceptions/invalidCredentials'
 import { RegisterDto } from './validation/Register.dto'
 import { Token } from './types/Token'
 import * as bcrypt from 'bcrypt'
@@ -25,14 +23,16 @@ import { LoginDto } from './validation/Login.dto'
 import { FastifyRequest } from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import { UnauthorizedWsException } from '../common/ws/exceptions/unauthorized'
+import { CommonService } from '../common/common.service'
+import { ConcurrentConnectionsWsException } from '../common/ws/exceptions/concurrentConnection'
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(forwardRef(() => PlayerService))
     private playerService: PlayerService,
+    private commonService: CommonService,
     private jwtService: JwtService,
   ) {}
-  private readonly logger = new Logger(AuthService.name)
 
   /**
    * Check that a client socket carries a valid cookie with a JWT
@@ -50,9 +50,14 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
     })
     if (payload.id.trim() !== '') {
+      // Check if the player is already connected with a socket
+      const concurrentSocket = this.commonService.getSocketFromPlayer(payload.id)
+      if (concurrentSocket && concurrentSocket.id != client.id) {
+        throw new ConcurrentConnectionsWsException()
+      }
       client.data.playerId = payload.id
     } else {
-      throw new InvalidCredentialsWsException()
+      throw new UnauthorizedWsException()
     }
     return true
   }

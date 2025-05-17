@@ -8,6 +8,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
   WsResponse,
 } from '@nestjs/websockets'
 
@@ -29,6 +30,7 @@ import { RoomService } from '../room/room.service'
 import { Player } from '../player/entities/player.entity'
 import { RegisteredGuard } from '../auth/guards/registered.guard'
 import { MessageService } from '../message/message.service'
+import { PlayerNotFoundWsException } from './ws/exceptions/playerNotFound'
 
 @UseFilters(new WsFilter())
 @UseGuards(AuthGuard)
@@ -69,6 +71,10 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
     try {
       // Chek that player is known
       const player = await this.playerService.getPlayerFromSocket(client, true)
+      if (!player) {
+        throw new PlayerNotFoundWsException()
+      }
+      // Check if a socket is already connected
       // If player was to be removed for iddleness, cancel the timeout
       const timeOutName = `${player.id}::toBeRemoved`
       if (
@@ -85,9 +91,11 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
       }
       client.emit(data.event, data.arguments)
     } catch (error) {
+      if (error instanceof WsException) {
+        client.emit(error.message)
+      }
       this.logger.error(error)
-      client.emit(WSE.INVALID_TOKEN)
-      client.disconnect()
+      client.disconnect(true)
     }
   }
 

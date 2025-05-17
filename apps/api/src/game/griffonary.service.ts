@@ -104,7 +104,6 @@ export class GriffonaryService {
    */
   async endRound(roomId: string): Promise<void> {
     try {
-      console.log('EEEND OF ROUND')
       const room = await this.roomService.get(roomId)
       const currentRound = await this.gameService.getLastOngoingORound(room)
       if (currentRound.onGoing) {

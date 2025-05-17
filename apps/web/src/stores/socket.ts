@@ -65,11 +65,7 @@ export const useSocketStore = defineStore('socket', () => {
         disconnectSocket()
       }
     },
-    [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
-      if (data) {
-        addMessage(data.chatMessage)
-      }
-    },
+
     [WSE.USER_JOINED_ROOM_SUCCESS]: (data: PlayerJoinedRoomSuccessDto['arguments']): void => {
       if (data) {
         if (room.value === null) {
@@ -176,6 +172,15 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.UNAUTHORIZED]: (): void => {
       $toast.error("Vous n'êtes pas authorisé à faire ça...")
     },
+    [WSE.USER_ALREADY_CONNECTED]: (): void => {
+      $toast.error('Vous êtes déjà connecté ailleurs ...')
+    },
+    // CHAT
+    [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
+      if (data) {
+        addMessage(data.chatMessage)
+      }
+    },
     // FRIENDS
     [WSE.UPDATE_FRIENDS_INFO]: (data: UpdateFriendsInfoDto['arguments']): void => {
       if (data.friends) {
@@ -255,8 +260,8 @@ export const useSocketStore = defineStore('socket', () => {
   // Functions
   function handleConnection(): void {
     if (autoReconnect.value) {
-      connectSocket()
       setListeners(socketListeners)
+      connectSocket()
     }
   }
   function connectSocket(): void {

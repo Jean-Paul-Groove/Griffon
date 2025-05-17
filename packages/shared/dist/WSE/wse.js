@@ -15,6 +15,7 @@ var WSE;
     WSE["DISCONNECTION"] = "disconnect";
     WSE["USER_DISCONNECTED"] = "user-disconnected";
     WSE["USER_RECONNECTED"] = "user-reconnected";
+    WSE["USER_ALREADY_CONNECTED"] = "user-already-connected";
     WSE["ASK_START_GAME"] = "ask-start-game";
     WSE["START_GAME"] = "start-game";
     WSE["ASK_PLAYER_LIST"] = "ask-player-list";

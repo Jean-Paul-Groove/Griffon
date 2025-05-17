@@ -12,6 +12,7 @@ export enum WSE {
   DISCONNECTION = 'disconnect',
   USER_DISCONNECTED = 'user-disconnected',
   USER_RECONNECTED = 'user-reconnected',
+  USER_ALREADY_CONNECTED='user-already-connected',
   // GAME
   ASK_START_GAME = 'ask-start-game',
   START_GAME = 'start-game',
