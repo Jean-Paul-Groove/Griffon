@@ -47,7 +47,7 @@ ALTER TABLE public.game_specs OWNER TO admin;
 --
 
 COPY public.game_specs (id, title, description, illustration, rules, "defaultRoundDuration", "pointStep", "pointsMax", "withGuesses", "createdAt", "updatedAt") FROM stdin;
-0993d837-182b-47a2-a6bb-0b0a97f709e7	Griffonary	Dessinez et gagnez des points en faisant deviner des mots à vos amis !\r\nPour un max de fun ! 	uploads\\public\\game-0993d837-182b-47a2-a6bb-0b0a97f709e7.webp	A tour de rôle, tous les joueurs devront faire deviner un mot tiré au hasard en dessinant. \r\nL'artiste marque des points pour chaque personne reconnaissant son talent.\r\nLes autres joueurs marquent également des points lorqu'ils trouvent le mot, mais il faut être rapide: l'ordre de réussite impact le nombre de points marqués...	5000	47	404	t	2025-04-10 17:54:05.972259	2025-05-16 17:20:00.692294
+0993d837-182b-47a2-a6bb-0b0a97f709e7	Griffonary	Dessinez et gagnez des points en faisant deviner des mots à vos amis !\r\nPour un max de fun ! 	uploads\\public\\game-0993d837-182b-47a2-a6bb-0b0a97f709e7.webp	A tour de rôle, tous les joueurs devront faire deviner un mot tiré au hasard en dessinant. \r\nL'artiste marque des points pour chaque personne reconnaissant son talent.\r\nLes autres joueurs marquent également des points lorqu'ils trouvent le mot, mais il faut être rapide: l'ordre de réussite impact le nombre de points marqués...	90000	47	404	t	2025-04-10 17:54:05.972259	2025-05-16 17:20:00.692294
 \.
 
 

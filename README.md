@@ -2,6 +2,9 @@
 
 **Griffon** est une application web collaborative permettant de jouer à des jeux de dessin en ligne avec vos amis. Dessinez, devinez et amusez-vous en temps réel dans une interface moderne et intuitive.
 
+
+[🔗 Voir la version en ligne du projet](https://griffon.jp-groove.eu/)
+
 ## ⭐ Fonctionnalités
 
 * 🎮 Jeux de dessin multijoueurs en ligne
