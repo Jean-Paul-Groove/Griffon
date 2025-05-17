@@ -2,7 +2,7 @@ import { MemoryStorageFile } from '@blazity/nest-file-fastify'
 import { Injectable, Logger } from '@nestjs/common'
 import * as path from 'path'
 import * as sharp from 'sharp'
-import fs from 'fs'
+import * as fs from 'fs'
 import { Server, Socket } from 'socket.io'
 import { SocketDto } from 'shared'
 import { Player } from '../player/entities/player.entity'
@@ -23,7 +23,7 @@ export class CommonService {
    * @param {string} id The id of the image (either playerId of avatar of GameId for game illustration)
    * @param {boolean} shared If the image is public
    * @param {string} filePrefix The prefix of the image, ie 'avatar'
-   * @param {number} pictureSize? The size in pixel of the final image, default 800
+   * @param {number} pictureSize? The size in pixel of the final image width, default 800
    * @returns {string} Returns the location of the image for the url.
    */
   async uploadImage(
