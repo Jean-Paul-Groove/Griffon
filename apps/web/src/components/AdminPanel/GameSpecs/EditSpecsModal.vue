@@ -277,6 +277,10 @@ async function handleConfirm(e: Event): Promise<void> {
     display: flex;
     flex-direction: column;
     width: 100%;
+    & input {
+      width: 100%;
+      overflow: hidden;
+    }
     & textarea {
       min-height: 5rem;
     }

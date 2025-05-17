@@ -53,6 +53,7 @@
               Avatar:
               <input
                 id="avatar-input"
+                class="edit-player-form_avatar_input"
                 type="file"
                 accept="image/jpg,image/jpeg, image/png,image/webp"
                 capture
@@ -354,6 +355,12 @@ async function handleDelete(): Promise<void> {
     }
   }
   &_avatar {
+    width: 100%;
+    display: flex;
+    &_input {
+      width: 100%;
+      overflow: hidden;
+    }
     &_remove {
       @include danger-button;
     }

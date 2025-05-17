@@ -169,9 +169,6 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.ROUND_NOT_FOUND]: (): void => {
       $toast.error('La manche est introuvable...')
     },
-    [WSE.UNAUTHORIZED]: (): void => {
-      $toast.error("Vous n'êtes pas authorisé à faire ça...")
-    },
     [WSE.USER_ALREADY_CONNECTED]: (): void => {
       $toast.error('Vous êtes déjà connecté ailleurs ...')
     },

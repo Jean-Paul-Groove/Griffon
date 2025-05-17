@@ -8,6 +8,7 @@
       />
       <p class="friend-card_name">{{ friend.name }}</p>
     </figcaption>
+    <slot></slot>
     <div v-if="withActions" class="friend-card_actions">
       <ButtonIcon
         v-if="friend.room && friend.online"
@@ -49,6 +50,9 @@ const emit = defineEmits<{
   @include player-card;
   width: fit-content;
   min-width: 7rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
   &_info {
     height: 100%;
     display: flex;

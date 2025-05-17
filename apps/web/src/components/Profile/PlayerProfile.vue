@@ -56,6 +56,13 @@
         </div>
       </label>
       <button class="profile_edit-form_button" @click="editPlayer">Modifier</button>
+      <ButtonIcon
+        class="profile_delete"
+        icon="trash"
+        text="Supprimer votre compte"
+        :selected="false"
+        @click.prevent="deleteModal = true"
+      />
       <div class="profile_edit-form_errors">
         <p
           v-for="(error, index) of errors"
@@ -66,13 +73,7 @@
         </p>
       </div>
     </form>
-    <ButtonIcon
-      class="profile_delete"
-      icon="trash"
-      text="Supprimer votre compte"
-      :selected="false"
-      @click="deleteModal = true"
-    />
+
     <ConfirmModal v-if="deleteModal" @close="deleteModal = false" @confirm="handleDelete"
       >Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est définitive
       ...</ConfirmModal

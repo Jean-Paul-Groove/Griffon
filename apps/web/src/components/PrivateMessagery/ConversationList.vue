@@ -20,8 +20,9 @@
             class="conversations_list_item_friend-card"
             :friend="getConversationContact(conversation)"
             :with-actions="false"
-          />
-          <ChatMessage :message="conversation" />
+          >
+            <ChatMessage :message="conversation" />
+          </FriendCard>
         </a>
       </li>
     </ul>
@@ -82,48 +83,43 @@ function handleOpenConversation(conversation: MessageDto): void {
 <style scoped lang="scss">
 .conversations {
   display: flex;
+  width: 100%;
+  max-width: 600px;
   height: 100%;
   flex-direction: column;
-  width: 100%;
   align-items: center;
   &_none {
-    @include white-card;
     width: 100%;
     max-width: 600px;
   }
   &_list {
+    @include white-card;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
     max-height: 100%;
-    height: 100%;
     overflow-y: auto;
     &_item {
-      @include white-card;
       width: 100%;
-      scale: 0.95;
       &_friend-card {
-        max-width: 15rem;
+        width: 100%;
         text-wrap: wrap;
         text-overflow: ellipsis;
         overflow: hidden;
+        &:hover {
+          box-shadow: none;
+        }
       }
       &_link {
         font-size: large;
         cursor: pointer;
-        width: 90%;
-        margin: auto;
+        width: 100%;
         display: flex;
         flex-direction: row;
         gap: 0.5rem;
         align-items: center;
-        padding: 0.2rem 0.5rem;
-      }
-      &:hover {
-        box-shadow: $light-shadow;
-        transform: scale(1.01);
       }
     }
   }

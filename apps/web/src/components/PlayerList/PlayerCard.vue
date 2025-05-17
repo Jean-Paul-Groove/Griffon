@@ -34,13 +34,13 @@
     <ConfirmModal
       v-if="excludeModal"
       @close="excludeModal = false"
-      @confirm="excludePlayer(player.id)"
+      @confirm="confirmExcludePlayer(player.id)"
       >Voulez-vous vraiment exclure ce joueur ?
     </ConfirmModal>
     <ConfirmModal
       v-if="addFriendModal"
       @close="addFriendModal = false"
-      @confirm="addFriend(player.id)"
+      @confirm="confirmAddFriend(player.id)"
       >Voulez-vous ajouter {{ player.name }} comme ami ?
     </ConfirmModal>
   </article>
@@ -93,6 +93,14 @@ function handleExclude(e: Event): void {
 function handleAddFriend(e: Event): void {
   e.stopPropagation()
   addFriendModal.value = true
+}
+function confirmExcludePlayer(playerId: string): void {
+  excludePlayer(playerId)
+  excludeModal.value = false
+}
+function confirmAddFriend(playerId: string): void {
+  addFriend(playerId)
+  addFriendModal.value = false
 }
 </script>
 
