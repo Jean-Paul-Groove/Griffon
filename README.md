@@ -63,7 +63,6 @@ yarn packages
 ```
 
 Le paquet sera build et mis à jour dans les node_modules des deux parties de l'application
-Rendez-vous sur : [http://localhost:5173](http://localhost:5173)
 
 
 
@@ -153,8 +152,8 @@ Pour initialiser les tables `word` et `game_specs` avec les fichiers fourni dans
 Utilisez cette commande :
 
 ```bash
-docker exec -i db psql -U $POSTGRES_USER $POSTGRES_DB < dump/word.sql
-docker exec -i <db> psql -U $POSTGRES_USER $POSTGRES_DB < dump/specs.sql
+docker exec -i <CONTAINER> psql -U $POSTGRES_USER $POSTGRES_DB < dump/word.sql
+docker exec -i <CONTAINER> psql -U $POSTGRES_USER $POSTGRES_DB < dump/specs.sql
 ```
 
 ---
