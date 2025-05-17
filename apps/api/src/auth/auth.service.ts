@@ -133,7 +133,7 @@ export class AuthService {
    * @returns {Promise<Token>} Returns a token to be sent with cookies
    */
   async login(loginDto: LoginDto): Promise<Token> {
-    const player = await this.playerService.getPlayerCredentials(loginDto.email)
+    const player = await this.playerService.getPlayerPassword(loginDto.email)
     if (!player) {
       throw new UnauthorizedException()
     }

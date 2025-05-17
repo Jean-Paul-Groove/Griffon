@@ -41,15 +41,12 @@ export class PlayerService {
     private commonService: CommonService,
   ) {}
   private logger = new Logger(PlayerService.name)
-  async onAskFriendsInfo(player: Player): Promise<void> {
-    const friends = await this.getFriendsOnlineStatus(player.friends)
-    const data: UpdateFriendsInfoDto = {
-      event: WSE.UPDATE_FRIENDS_INFO,
-      arguments: { friends },
-    }
-    this.commonService.emitToPlayer(player.id, data)
-  }
 
+  /**
+   * Creates a guest Player
+   * @param {CreateGuestDto} createGuestDto The data containing its name and role
+   * @returns {any}
+   */
   async createGuest(createGuestDto: CreateGuestDto): Promise<Player> {
     if (createGuestDto.name.trim() != '') {
       const userEntity = this.playerRepository.create({
@@ -60,6 +57,13 @@ export class PlayerService {
       return user
     }
   }
+
+  /**
+   * Creates a PLayer
+   * @param {Partial<Player>} createPlayer The Player informations
+   * @param {MemoryStorageFile} avatar? The Avatar of the Player
+   * @returns {Promise<Player>}
+   */
   async createPlayer(createPlayer: Partial<Player>, avatar?: MemoryStorageFile): Promise<Player> {
     let player: Player
     try {
@@ -95,6 +99,12 @@ export class PlayerService {
     return player
   }
 
+  /**
+   * Retrieve a Player
+   * @param {string} playerId The Id of the Player
+   * @param {boolean=false} includeFriends If the Player's friends should be included
+   * @returns {Promise<Player | undefined>}
+   */
   async get(playerId: string, includeFriends: boolean = false): Promise<Player | undefined> {
     try {
       const player = await this.playerRepository.findOne({
@@ -128,11 +138,26 @@ export class PlayerService {
       throw new PlayerNotFoundWsException()
     }
   }
+
+  /**
+   * Retrieve a Player from a socket connection
+   * @param {Socket} client The client socket
+   * @param {boolean} includeFriends? If the Player's friends should be included
+   * @returns {Promise<Player | undefined>}
+   */
   async getPlayerFromSocket(client: Socket, includeFriends?: boolean): Promise<Player | undefined> {
     this.authService.validateWsConnexion(client)
     const player = await this.get(client.data.playerId, includeFriends)
     return player
   }
+
+  /**
+   * Generate the PlayerInfoDto from a Player entity
+   * @param {Player} player The Player entity
+   * @param {string[]} artists The Id of the Players who were artists in the round if any
+   * @param {boolean=false} includeFriends If the friends of the Player should be included
+   * @returns {PlayerInfoDto}
+   */
   generatePlayerInfoDto(
     player: Player,
     artists: string[],
@@ -148,6 +173,11 @@ export class PlayerService {
       friends: includeFriends ? player.friends.map((friend) => friend.id) : undefined,
     })
   }
+
+  /**
+   * Remove the rooms of every Player
+   * @returns {Promise<void>}
+   */
   async resetPlayerRooms(): Promise<void> {
     try {
       await this.playerRepository.update({}, { room: null })
@@ -155,13 +185,25 @@ export class PlayerService {
       this.logger.error(error)
     }
   }
-  async getPlayerCredentials(email: string): Promise<Pick<Player, 'id' | 'password'>> {
+
+  /**
+   * Retrieve the password of a Player
+   * @param {string} email The email of the Player
+   * @returns {Promise<Pick<Player, 'id' | 'password'>>}
+   */
+  async getPlayerPassword(email: string): Promise<Pick<Player, 'id' | 'password'>> {
     const player = await this.playerRepository.findOne({
       where: { email },
       select: { password: true, id: true },
     })
     return player
   }
+
+  /**
+   * Retrieve the email of a Player
+   * @param {string} id The Id of the Player
+   * @returns { Promise<Pick<Player, 'id' | 'email'>>}
+   */
   async getPlayerEmail(id: string): Promise<Pick<Player, 'id' | 'email'>> {
     const player = await this.playerRepository.findOne({
       where: { id },
@@ -169,17 +211,43 @@ export class PlayerService {
     })
     return player
   }
-  async getFriendsOnlineStatus(
-    friends: Player['friends'],
+
+  /**
+   * Retrieve the connection status of an array of Players
+   * @param {Player[]} players The Players
+   * @returns {Promise<Array<PlayerInfoDto & { online: boolean }>> }
+   */
+  async getPlayersOnlineStatus(
+    players: Player['friends'],
   ): Promise<Array<PlayerInfoDto & { online: boolean }>> {
-    if (!friends) {
+    if (!players) {
       return []
     }
-    return friends.map((friend) => ({
+    return players.map((friend) => ({
       ...this.generatePlayerInfoDto(friend, []),
       online: this.commonService.getSocketFromPlayer(friend.id)?.connected ?? false,
     }))
   }
+  /**
+   * Sends the friends informations to a Player
+   * @param {Player} player The Player sending the request
+   * @returns {Promise<void>}
+   */
+  async sendFriendsInfo(player: Player): Promise<void> {
+    const friends = await this.getPlayersOnlineStatus(player.friends)
+    const data: UpdateFriendsInfoDto = {
+      event: WSE.UPDATE_FRIENDS_INFO,
+      arguments: { friends },
+    }
+    this.commonService.emitToPlayer(player.id, data)
+  }
+
+  /**
+   * Create a friend request
+   * @param {Player} player The player sending the request
+   * @param {string} newFriendId The Id of the player receiving the request
+   * @returns {Promise<void> }
+   */
   async requestFriend(player: Player, newFriendId: Player['id']): Promise<void> {
     try {
       const newFriend = await this.get(newFriendId)
@@ -216,6 +284,13 @@ export class PlayerService {
       throw new BadRequestException()
     }
   }
+
+  /**
+   * Accepts a friend request and create the friend relation
+   * @param {Player} player The Player accepting
+   * @param {string} requestId The Id of the request
+   * @returns {Promise<void>}
+   */
   async acceptFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
     try {
       const request = await this.friendRequestRepository.findOne({
@@ -242,12 +317,19 @@ export class PlayerService {
       }
       player.friends.push(request.sender)
       await this.playerRepository.save(player)
-      await this.onAskFriendsInfo(player)
+      await this.sendFriendsInfo(player)
     } catch (err) {
       this.logger.error(err)
       throw new Error(err)
     }
   }
+
+  /**
+   * Set a Friend request accepted=false
+   * @param {Player} player The Player
+   * @param {string} requestId The Id of the request
+   * @returns {Promise<void>}
+   */
   async refuseFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
     try {
       const request = await this.friendRequestRepository.findOneBy({ id: requestId })
@@ -264,6 +346,12 @@ export class PlayerService {
       this.logger.error(err)
     }
   }
+
+  /**
+   * Get the unanswered friend request of a Player
+   * @param {Player} player The Player
+   * @returns {Promise<FriendRequest[]> }
+   */
   async getPendingRequest(player: Player): Promise<FriendRequest[]> {
     const pendingRequests = await this.friendRequestRepository.find({
       where: { receiver: player, accepted: false, answered: false },
@@ -271,6 +359,13 @@ export class PlayerService {
     })
     return pendingRequests
   }
+
+  /**
+   * Get an array of players
+   * @param {number} offset Number of players to skip
+   * @param {number} size Size of the array
+   * @returns {any}
+   */
   async getPlayers(
     offset: number = 0,
     size: number = 50,
@@ -294,6 +389,13 @@ export class PlayerService {
     }))
     return [players, result[1]]
   }
+
+  /**
+   * Edit a Player and/or its avatar
+   * @param {Partial<Player>} editBody The informations to edit
+   * @param {MemoryStorageFile} avatar? The new avatar
+   * @returns {Promise<Player>}
+   */
   async editPlayer(editBody: Partial<Player>, avatar?: MemoryStorageFile): Promise<Player> {
     const formerPlayer = await this.playerRepository.findOneBy({ id: editBody.id })
     // VALIDATION
@@ -347,6 +449,12 @@ export class PlayerService {
       }
     }
   }
+
+  /**
+   * Deletes a player, its relations and messages
+   * @param {string} playerId The Id of the Player
+   * @returns {Promise<void>}
+   */
   async deletePlayer(playerId: string): Promise<void> {
     const player = await this.playerRepository.findBy({ id: playerId })
     if (!player) {

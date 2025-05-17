@@ -23,6 +23,13 @@ export class MessageService {
   public io: Server
   private readonly logger = new Logger(MessageService.name, { timestamp: true })
 
+  /**
+   * Handles the reception of a new Message
+   * @param {string} message The content
+   * @param {Socket} client The client socket emitting the message
+   * @param {string} receiver The Id of the receiver
+   * @returns {Promise<void>}
+   */
   async onNewMessage(message: string, client: Socket, receiver: Player['id']): Promise<void> {
     const player = await this.playerService.getPlayerFromSocket(client)
     const receiverEntity = this.playerRepository.create({ id: receiver })
@@ -42,6 +49,11 @@ export class MessageService {
     this.commonService.emitToPlayer(receiver, data)
     this.commonService.emitToPlayer(player.id, data)
   }
+  /**
+   * Generate the messageDto from a Message entity
+   * @param {Message} message The message entity
+   * @returns {MessageDto}
+   */
   generateMessageDto(message: Message): MessageDto {
     const { id, content, sentAt, sender, receiver, seen } = message
     return new MessageDto({
@@ -58,6 +70,11 @@ export class MessageService {
       seen,
     })
   }
+  /**
+   * Retrieve the last message of every conversation of a Player
+   * @param {Player} player The Player
+   * @returns { Promise<MessageDto[]>}
+   */
   async getPlayerConversations(player: Player): Promise<MessageDto[]> {
     const messages = await this.messageRepository.query(
       `
@@ -105,6 +122,13 @@ export class MessageService {
       return this.generateMessageDto(conv)
     })
   }
+  /**
+   * Retrieve the messages of 2 Players
+   * @param {Player} player The first Player, sending the request
+   * @param {Player} friend The second Player
+   * @param {number=0} offset The number of messages to skip
+   * @returns {Promise<MessageDto[]>}
+   */
   async getMessages(player: Player, friend: Player, offset: number = 0): Promise<MessageDto[]> {
     const messages = await this.messageRepository
       .createQueryBuilder('messages')

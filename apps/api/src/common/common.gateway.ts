@@ -226,6 +226,6 @@ export class CommonGateway implements OnGatewayInit, OnGatewayConnection, OnGate
   @SubscribeMessage(WSE.ASK_FRIENDS_INFO)
   async getFriendsInfo(@ConnectedSocket() client: Socket): Promise<void> {
     const player = await this.playerService.getPlayerFromSocket(client, true)
-    await this.playerService.onAskFriendsInfo(player)
+    await this.playerService.sendFriendsInfo(player)
   }
 }
