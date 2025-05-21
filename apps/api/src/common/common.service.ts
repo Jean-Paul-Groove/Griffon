@@ -42,11 +42,11 @@ export class CommonService {
     if (shared) {
       location = path.join('uploads', 'public', filename)
     } else {
-      this.createDirectoryIfNotExist(path.join(__dirname, '..', 'uploads', 'private', id))
+      this.createDirectoryIfNotExist(path.join(__dirname, '..', '..', 'uploads', 'private', id))
       location = path.join('uploads', 'private', id, filename)
     }
     const img = sharp(image.buffer).resize(size).webp()
-    await img.toFile(path.join(__dirname, '..', location))
+    await img.toFile(path.join(__dirname, '..', '..', location))
 
     return location
   }
@@ -75,9 +75,9 @@ export class CommonService {
    * @returns {void}
    */
   initFileDirectories(): void {
-    this.createDirectoryIfNotExist(path.join(__dirname, '..', 'uploads'))
-    this.createDirectoryIfNotExist(path.join(__dirname, '..', 'uploads', 'public'))
-    this.createDirectoryIfNotExist(path.join(__dirname, '..', 'uploads', 'private'))
+    this.createDirectoryIfNotExist(path.join(__dirname, '..', '..', 'uploads'))
+    this.createDirectoryIfNotExist(path.join(__dirname, '..', '..', 'uploads', 'public'))
+    this.createDirectoryIfNotExist(path.join(__dirname, '..', '..', 'uploads', 'private'))
   }
   // Socket
 

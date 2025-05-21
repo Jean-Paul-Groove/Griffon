@@ -45,13 +45,6 @@ import { FriendRequest } from './player/entities/friend.request.entity'
         { name: 'medium', ttl: 10000, limit: 12 },
       ],
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, 'uploads', 'public'),
-      serveRoot: '/uploads/public',
-      serveStaticOptions: {
-        extensions: ['webp'],
-      },
-    }),
     ScheduleModule.forRoot(),
     GameModule,
     CommonModule,
