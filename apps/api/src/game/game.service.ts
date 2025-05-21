@@ -372,23 +372,16 @@ export class GameService {
     if (!room) {
       throw new RoomNotFoundWsException()
     }
-    const round = new Round()
-    const [roundResult] = await this.roundRepository
-      .createQueryBuilder('round')
-      .innerJoin('round.game', 'game')
-      .innerJoin('game.room', 'room')
-      .where('room.id =:roomId', { roomId: room.id })
-      .andWhere('round.onGoing = true')
-      .orderBy('round."createdAt"', 'DESC')
-      .take(1)
-      .execute()
-    if (roundResult) {
-      round.id = roundResult.round_id
-      round.onGoing = roundResult.round_onGoing
-      round.timeLimit = new Date(roundResult.round_timeLimit)
-      round.game = { ...round.game, id: roundResult.round_gameId }
-      round.word = { ...round.word, id: roundResult.round_wordId }
-    }
+    const round = await this.roundRepository.findOne({
+      where: { game: { room: { id: room.id }, onGoing: true }, onGoing: true },
+      relations: {
+        word: true,
+        haveGuessed: true,
+        artists: true,
+      },
+      order: { createdAt: 'DESC' },
+    })
+
     return round
   }
 
@@ -402,21 +395,21 @@ export class GameService {
   async guessWord(word: string, player: Player, room: Room): Promise<boolean> {
     try {
       const currentRound = await this.getLastOngoingORound(room)
-
       // Can not guess if no round Ongoing or player has guessed or player is the artist
       if (!currentRound) {
         return true
       }
+      console.log(currentRound.haveGuessed)
       if (
         currentRound.haveGuessed.map((player) => player.id).includes(player.id) ||
         currentRound.artists.map((artist) => artist.id).includes(player.id)
       ) {
         return false
       }
+      const wordToguess = await this.wordRepository.findOneBy({ id: currentRound.word.id })
       // Check if guess is correct
-      if (word.toLowerCase() === currentRound.word.value.toLowerCase()) {
+      if (word.toLowerCase() === wordToguess.value.toLowerCase()) {
         // Set points for the player and the artist
-
         const { pointsMax, pointStep } = room.currentGame.specs
         await this.scorePlayerPoints(
           player,

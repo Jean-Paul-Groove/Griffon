@@ -11,7 +11,7 @@
         {{ player.name }}
       </span>
       <span class="player-card_info_points">{{
-        `${getUserPoints(player.id)?.points ?? 0} points`
+        `${getPlayerPoints(player.id)?.points ?? 0} points`
       }}</span>
     </div>
     <p class="player-card_tag">
@@ -65,7 +65,7 @@ interface PlayerCardProp {
   isCurrentPlayer: boolean
   alternativePicture: string
 }
-const { getUserPoints, excludePlayer, addFriend } = useSocketStore()
+const { getPlayerPoints, excludePlayer, addFriend } = useSocketStore()
 const { isAdmin: currentPlayerAdmin } = storeToRefs(useSocketStore())
 const { user } = storeToRefs(useAuthStore())
 const props = defineProps<PlayerCardProp>()

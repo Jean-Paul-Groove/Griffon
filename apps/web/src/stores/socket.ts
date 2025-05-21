@@ -175,7 +175,9 @@ export const useSocketStore = defineStore('socket', () => {
     // CHAT
     [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
+        console.log(data.chatMessage)
         addMessage(data.chatMessage)
+        console.log(roomMessages.value)
       }
     },
     // FRIENDS
@@ -298,7 +300,7 @@ export const useSocketStore = defineStore('socket', () => {
   function addMessage(message: ChatMessageDto): void {
     if (room.value) {
       room.value.chatMessages.push(message)
-      chatMessages.value.push(message)
+      roomMessages.value.push(message)
     }
   }
   function systemMessage(content: string): void {
@@ -338,10 +340,10 @@ export const useSocketStore = defineStore('socket', () => {
     }
     const score = room.value.scores.find((score) => score.player === partialScore.player.id)
     if (score) {
-      score.points += partialScore.points
+      score.points = Number(score.points) + Number(partialScore.points)
     } else {
       room.value.scores.push({
-        points: partialScore.points,
+        points: +partialScore.points,
         player: partialScore.player.id,
       })
     }
@@ -383,7 +385,7 @@ export const useSocketStore = defineStore('socket', () => {
     }, 1000)
     countDownInterval.value = id
   }
-  function getUserPoints(id: string): ScoreDto | undefined {
+  function getPlayerPoints(id: string): ScoreDto | undefined {
     if (room.value) {
       return room.value.scores.find((score) => score.player === id)
     }
@@ -470,7 +472,7 @@ export const useSocketStore = defineStore('socket', () => {
     currentPlayer,
     friends,
     handleConnection,
-    getUserPoints,
+    getPlayerPoints,
     leaveRoom,
     excludePlayer,
     addFriend,

@@ -1,6 +1,6 @@
 <template>
   <ul v-if="room && room.players" class="player-list">
-    <li v-for="player in room.players" :key="player.id">
+    <li v-for="player in sortedPlayers" :key="player.id">
       <PlayerCard
         :player="player"
         :is-admin="player.id === room.admin"
@@ -18,11 +18,21 @@ import { storeToRefs } from 'pinia'
 import PlayerCard from './PlayerCard.vue'
 import InvitePlayer from './InvitePlayer.vue'
 import defaultAvatar from '../../assets/avatar/default-avatar.webp'
+import { PlayerInfoDto } from 'shared'
+import { computed } from 'vue'
 
 // Refs
 const { room, currentPlayer } = storeToRefs(useSocketStore())
-
-// Watchers
+const { getPlayerPoints } = useSocketStore()
+// Computeds
+const sortedPlayers = computed<PlayerInfoDto[]>(() => {
+  if (!room.value) {
+    return []
+  }
+  return [...room.value.players].sort(
+    (pa, pb) => (getPlayerPoints(pb.id)?.points ?? 0) - (getPlayerPoints(pa.id)?.points ?? 0),
+  )
+})
 
 // Functions
 </script>
