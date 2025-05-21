@@ -402,8 +402,8 @@ export const useSocketStore = defineStore('socket', () => {
       systemMessages.value = []
       wordToDraw.value = ''
       setRequestedRoom(null)
-    } catch (error) {
-      console.log(error)
+    } catch {
+      $toast.error('Une erreur est survenue ...')
     }
   }
   function excludePlayer(playerId: string): void {
@@ -412,8 +412,8 @@ export const useSocketStore = defineStore('socket', () => {
         return
       }
       socket.value.emit(WSE.ASK_EXCLUDE_PLAYER, { playerId })
-    } catch (error) {
-      console.log(error)
+    } catch {
+      $toast.error('Une erreur est survenue ...')
     }
   }
   function addFriend(playerId: string): void {
@@ -423,8 +423,8 @@ export const useSocketStore = defineStore('socket', () => {
       }
 
       socket.value.emit(WSE.ASK_ADD_FRIEND, { playerId })
-    } catch (error) {
-      console.log(error)
+    } catch {
+      $toast.error('Une erreur est survenue ...')
     }
   }
   function askFriendsInfo(): void {
@@ -454,8 +454,8 @@ export const useSocketStore = defineStore('socket', () => {
       await axios.delete(apiUrl + '/auth/logout', { withCredentials: true })
       disconnectSocket()
       $router.push('Connexion')
-    } catch (err) {
-      console.log(err)
+    } catch {
+      $toast.error('Une erreur est survenue ...')
     }
   }
   return {

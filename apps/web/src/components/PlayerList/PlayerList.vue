@@ -5,6 +5,7 @@
         :player="player"
         :is-admin="player.id === room.admin"
         :is-current-player="player.id === currentPlayer?.id"
+        :alternative-picture="defaultAvatar"
       />
     </li>
     <li><InvitePlayer v-if="!room.currentGame && room.players.length < room.limit" /></li>
@@ -16,6 +17,8 @@ import { useSocketStore } from '../../stores'
 import { storeToRefs } from 'pinia'
 import PlayerCard from './PlayerCard.vue'
 import InvitePlayer from './InvitePlayer.vue'
+import defaultAvatar from '../../assets/avatar/default-avatar.webp'
+
 // Refs
 const { room, currentPlayer } = storeToRefs(useSocketStore())
 

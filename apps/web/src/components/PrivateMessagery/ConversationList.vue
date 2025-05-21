@@ -1,30 +1,32 @@
 <template>
   <section class="conversations">
     <h3>Conversations</h3>
-    <p v-if="conversations.length === 0" class="conversations_none">
-      Vous n'avez aucune conversation en cours pour le moment ...
-    </p>
-    <ul v-else class="conversations_list">
-      <li
-        v-for="conversation in conversations"
-        :key="conversation.id"
-        class="conversations_list_item"
-      >
-        <a
-          class="conversations_list_item_link"
-          aria-label="Ouvrir la conversation"
-          @click="handleOpenConversation(conversation)"
-        >
-          <FriendCard
-            v-if="getConversationContact(conversation)"
-            class="conversations_list_item_friend-card"
-            :friend="getConversationContact(conversation)"
-            :with-actions="false"
-          >
-            <ChatMessage :message="conversation" />
-          </FriendCard>
-        </a>
+    <ul class="conversations_list">
+      <li v-if="conversations.length === 0" class="conversations_none">
+        Vous n'avez aucune conversation en cours pour le moment ...
       </li>
+      <template v-else>
+        <li
+          v-for="conversation in conversations"
+          :key="conversation.id"
+          class="conversations_list_item"
+        >
+          <a
+            class="conversations_list_item_link"
+            aria-label="Ouvrir la conversation"
+            @click="handleOpenConversation(conversation)"
+          >
+            <FriendCard
+              v-if="getConversationContact(conversation)"
+              class="conversations_list_item_friend-card"
+              :friend="getConversationContact(conversation) as FriendWithStatus"
+              :with-actions="false"
+            >
+              <ChatMessage :message="conversation" />
+            </FriendCard>
+          </a>
+        </li>
+      </template>
     </ul>
   </section>
 </template>
@@ -38,10 +40,19 @@ import { useAuthStore, useSocketStore } from '../../stores'
 import type { MessageDto, PlayerInfoDto } from 'shared'
 import ChatMessage from '../ChatThread/ChatMessage.vue'
 import FriendCard from '../FriendList/FriendCard.vue'
+import { useToast } from '../../composables/useToast'
 const emit = defineEmits<{ (e: 'conversation', friend: PlayerInfoDto): void }>()
+// Types
+type FriendWithStatus = Omit<PlayerInfoDto, 'isArtist'> & {
+  online: boolean
+}
+
 // Stores
 const { user } = storeToRefs(useAuthStore())
 const { friends } = storeToRefs(useSocketStore())
+
+// Composables
+const $toast = useToast()
 
 // Refs
 const conversations = ref<MessageDto[]>([])
@@ -60,8 +71,8 @@ async function fetchConversations(): Promise<void> {
     if (response.data) {
       conversations.value = response.data
     }
-  } catch (err) {
-    console.log(err)
+  } catch {
+    $toast.error("Nous n'avons pas pu récupérer vos conversations...")
   }
 }
 function getConversationContact(

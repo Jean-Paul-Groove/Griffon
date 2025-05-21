@@ -85,6 +85,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DividerText from '../components/Divider/DividerText.vue'
 import { apiUrl } from '../helpers'
 import { useSocketStore } from '../stores'
+import defaultAvatar from '../assets/avatar/default-avatar.webp'
+
 // Types
 interface SignInErrors {
   username: null | string
@@ -138,9 +140,9 @@ const errors = computed<SignInErrors>(() => {
 
   return errorObject
 })
-const fileUrl = computed<string | undefined>(() => {
+const fileUrl = computed<string>(() => {
   if (file.value === null) {
-    return
+    return defaultAvatar
   }
   return URL.createObjectURL(file.value)
 })

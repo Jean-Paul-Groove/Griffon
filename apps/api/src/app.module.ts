@@ -19,8 +19,6 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { ChatModule } from './chat/chat.module'
 import { Chat } from './chat/entities/chat.entity'
 import { ThrottlerModule } from '@nestjs/throttler'
-import { join } from 'path'
-import { ServeStaticModule } from '@nestjs/serve-static'
 import { MessageModule } from './message/message.module'
 import { FriendRequest } from './player/entities/friend.request.entity'
 
