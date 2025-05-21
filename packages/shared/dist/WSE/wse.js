@@ -27,6 +27,7 @@ var WSE;
     WSE["UPLOAD_DRAWING"] = "upload-drawing";
     WSE["NEW_ARTIST"] = "new-artist";
     WSE["NEW_ROUND"] = "new-round";
+    WSE["END_OF_ROUND"] = "end-of-round";
     WSE["WORD_TO_DRAW"] = "word-to-draw";
     WSE["GUESS_WORD"] = "guess-word";
     WSE["STOP_GUESS"] = "stop-guess";

@@ -26,15 +26,11 @@ watch(
   () => {
     if (socket.value != null) {
       socket.value.on(WSE.UPLOAD_DRAWING, (body: UploadDrawingDto['arguments']) => {
-        try {
-          artist.value = body.player.name
-          const buffer = body.drawing
-          if (buffer instanceof ArrayBuffer) {
-            const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-            image.value = 'data:image/jpeg;base64,' + base64String
-          }
-        } catch (error) {
-          console.error(error)
+        artist.value = body.player.name
+        const buffer = body.drawing
+        if (buffer instanceof ArrayBuffer) {
+          const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+          image.value = 'data:image/jpeg;base64,' + base64String
         }
       })
     }

@@ -39,17 +39,15 @@ async function getAvailableGames(): Promise<void> {
   try {
     const response = await axios.get(apiUrl + '/game')
     games.value = response.data
-  } catch (err) {
-    console.log(err)
-
+  } catch {
     $toast.error('Impossible de récupérer les infos sur les jeux')
   }
 }
 async function requestGame(id: string): Promise<void> {
   try {
     socket.value?.emit(WSE.ASK_START_GAME, { game: id })
-  } catch (error) {
-    console.log(error)
+  } catch {
+    $toast.error("Nous n'avons pas pu lancer la partie...")
   }
 }
 </script>

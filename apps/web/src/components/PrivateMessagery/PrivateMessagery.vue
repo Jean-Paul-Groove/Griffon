@@ -29,9 +29,14 @@ import ChatThread from '../ChatThread/ChatThread.vue'
 import ConversationList from './ConversationList.vue'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
 import { getImageUrl } from '../../helpers/avatars'
+import { useToast } from '../../composables/useToast'
 
 // Stores
 const { socket } = storeToRefs(useSocketStore())
+
+// Composables
+const $toast = useToast()
+
 // Models
 const contact = defineModel<PlayerInfoDto>()
 
@@ -40,7 +45,6 @@ const messages = ref<MessageDto[]>([])
 
 // Computeds
 const sortedMessages = computed<MessageDto[]>(() => {
-  console.log(messages.value)
   return [...messages.value].sort(
     (a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime(),
   )
@@ -73,8 +77,8 @@ async function fetchLastMessages(offset: number = 0): Promise<void> {
     if (response.data) {
       messages.value = response.data
     }
-  } catch (error) {
-    console.log(error)
+  } catch {
+    $toast.error('Une erreur est survenue...')
   }
 }
 function listenToNewMessages(): void {

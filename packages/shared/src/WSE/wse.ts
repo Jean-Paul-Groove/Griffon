@@ -25,6 +25,7 @@ export enum WSE {
   UPLOAD_DRAWING = 'upload-drawing',
   NEW_ARTIST = 'new-artist', // ? 
   NEW_ROUND = 'new-round',
+  END_OF_ROUND='end-of-round',
   WORD_TO_DRAW = 'word-to-draw',
   GUESS_WORD = 'guess-word', //
   STOP_GUESS = 'stop-guess',//

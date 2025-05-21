@@ -84,8 +84,8 @@ async function fetchPendingRequest(): Promise<void> {
     if (response.data) {
       friendRequests.value = response.data
     }
-  } catch (err) {
-    console.log(err)
+  } catch {
+    $toast.error("Une erreur est survenue lors de la récupération de vos demandes d'amis")
   }
 }
 async function acceptRequest(request: PendingRequestDto): Promise<void> {
@@ -101,8 +101,8 @@ async function acceptRequest(request: PendingRequestDto): Promise<void> {
       friendRequests.value = response.data
     }
     $toast.success('Vous êtes maintenant ami avec ' + request.sender.name)
-  } catch (err) {
-    console.log(err)
+  } catch {
+    $toast.error("La demande d'ami n'a pu être acceptée")
   }
 }
 
@@ -119,8 +119,8 @@ async function rejectRequest(request: PendingRequestDto): Promise<void> {
       friendRequests.value = response.data
     }
     $toast.info('Demande rejetée')
-  } catch (err) {
-    console.log(err)
+  } catch {
+    $toast.error('Une erreur est survenue...')
   }
 }
 </script>

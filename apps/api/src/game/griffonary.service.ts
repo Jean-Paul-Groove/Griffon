@@ -11,6 +11,7 @@ import { Player } from '../player/entities/player.entity'
 import { RoomNotFoundWsException } from '../common/ws/exceptions/roomNotFound'
 import { GameNotFoundWsException } from '../common/ws/exceptions/gameNotFound'
 import { CommonService } from '../common/common.service'
+import { WSE } from 'shared'
 
 @Injectable()
 export class GriffonaryService {
@@ -109,9 +110,10 @@ export class GriffonaryService {
       if (currentRound.onGoing) {
         const word = await this.gameService.getWordFromRound(currentRound)
         this.gameService.sendWordSolution(roomId, word)
+        this.commonService.emitToRoom(roomId, { event: WSE.END_OF_ROUND, arguments: undefined })
         currentRound.onGoing = false
         await this.roundRepository.save(currentRound)
-        this.handleRoundTimeout(2000, roomId, 'start')
+        this.handleRoundTimeout(500, roomId, 'start')
         this.roomService.sendRoomState(room)
       }
     } catch (error) {

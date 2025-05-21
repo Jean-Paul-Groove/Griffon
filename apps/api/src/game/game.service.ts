@@ -399,7 +399,6 @@ export class GameService {
       if (!currentRound) {
         return true
       }
-      console.log(currentRound.haveGuessed)
       if (
         currentRound.haveGuessed.map((player) => player.id).includes(player.id) ||
         currentRound.artists.map((artist) => artist.id).includes(player.id)
@@ -429,6 +428,18 @@ export class GameService {
         // add player to guesser list
         currentRound.haveGuessed.push(player)
         await this.roundRepository.save(currentRound)
+        if (
+          room.players
+            .map((player) => player.id)
+            .every((id) =>
+              [
+                ...currentRound.haveGuessed.map((p) => p.id),
+                ...currentRound.artists.map((a) => a.id),
+              ].includes(id),
+            )
+        ) {
+          this.griffonary.endRound(room.id)
+        }
         return false
       }
       return true

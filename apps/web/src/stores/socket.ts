@@ -151,13 +151,14 @@ export const useSocketStore = defineStore('socket', () => {
         updatePartialScores(data)
       }
     },
-    [WSE.ROOM_NOT_FOUND]: (): void => {
-      $toast.error("Ce salon n'existe pas...")
-    },
     [WSE.TIME_LIMIT]: (data: TimeLimitDto['arguments']): void => {
       if (data) {
         initCountdown(data.time)
       }
+    },
+    [WSE.END_OF_ROUND]: (): void => {
+      room.value?.players.forEach((player) => (player.isArtist = false))
+      countDown.value = null
     },
     // ERROR MANAGEMENT
     [WSE.PLAYER_NOT_FOUND]: (): void => {
@@ -169,15 +170,16 @@ export const useSocketStore = defineStore('socket', () => {
     [WSE.ROUND_NOT_FOUND]: (): void => {
       $toast.error('La manche est introuvable...')
     },
+    [WSE.ROOM_NOT_FOUND]: (): void => {
+      $toast.error("Ce salon n'existe pas...")
+    },
     [WSE.USER_ALREADY_CONNECTED]: (): void => {
       $toast.error('Vous êtes déjà connecté ailleurs ...')
     },
     // CHAT
     [WSE.NEW_CHAT_MESSAGE]: (data: NewChatMessageDto['arguments']): void => {
       if (data) {
-        console.log(data.chatMessage)
         addMessage(data.chatMessage)
-        console.log(roomMessages.value)
       }
     },
     // FRIENDS
