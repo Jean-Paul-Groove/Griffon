@@ -47,7 +47,7 @@ import { FriendRequest } from './player/entities/friend.request.entity'
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'uploads', 'public'),
-      serveRoot: '/uploads/public/',
+      serveRoot: '/uploads/public',
       serveStaticOptions: {
         extensions: ['webp'],
       },
