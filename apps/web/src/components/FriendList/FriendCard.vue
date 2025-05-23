@@ -3,7 +3,7 @@
     <figcaption class="friend-card_info">
       <img
         class="friend-card_img"
-        :src="getImageUrl(friend.avatar)"
+        :src="getImageUrl(friend.avatar, defaultAvatar)"
         :alt="friend.name + ' ' + friend.online ? 'Connecté' : 'Déconnecté'"
       />
       <p class="friend-card_name">{{ friend.name }}</p>
@@ -31,7 +31,7 @@
 import type { PlayerInfoDto } from 'shared'
 import ButtonIcon from '../ButtonIcon/ButtonIcon.vue'
 import { getImageUrl } from '../../helpers/avatars'
-
+import defaultAvatar from '@/assets/avatar/default-avatar.webp'
 withDefaults(
   defineProps<{
     friend: Omit<PlayerInfoDto, 'isArtist'> & { online: boolean }

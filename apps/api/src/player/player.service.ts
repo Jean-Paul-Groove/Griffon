@@ -259,8 +259,9 @@ export class PlayerService {
       }
       // Check if there is a pending request that current player hasn't accepted yet
       const existingReceivedRequest = await this.friendRequestRepository.findOne({
-        where: { receiver: player, accepted: false },
+        where: { receiver: { id: player.id }, accepted: false, sender: { id: newFriendId } },
       })
+      console.log(existingReceivedRequest)
       if (existingReceivedRequest != undefined) {
         this.acceptFriendRequest(player, existingReceivedRequest.id)
         return
@@ -293,12 +294,14 @@ export class PlayerService {
    */
   async acceptFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
     try {
+      console.log('accepting request')
       const request = await this.friendRequestRepository.findOne({
         where: {
           id: requestId,
         },
         relations: { receiver: true, sender: true },
       })
+      console.log(request)
       if (!request) {
         return
       }
@@ -332,7 +335,10 @@ export class PlayerService {
    */
   async refuseFriendRequest(player: Player, requestId: FriendRequest['id']): Promise<void> {
     try {
-      const request = await this.friendRequestRepository.findOneBy({ id: requestId })
+      const request = await this.friendRequestRepository.findOne({
+        where: { id: requestId },
+        relations: { sender: true, receiver: true },
+      })
       if (!request) {
         return
       }
