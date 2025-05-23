@@ -40,7 +40,7 @@
           label="Pseudo"
           :error="guestNameErrors != null"
         />
-        <button class="login-form_button" @click="signIn">Continuer comme invité</button>
+        <button class="login-form_button" @click="connectAsGuest">Continuer comme invité</button>
         <p v-if="guestNameErrors && !user">{{ guestNameErrors }}</p>
       </form>
     </div>
@@ -130,7 +130,7 @@ watch(
 )
 
 // Functions
-async function signIn(e: Event): Promise<void> {
+async function connectAsGuest(e: Event): Promise<void> {
   try {
     e.preventDefault()
     checkForErrors.value = true
@@ -143,16 +143,7 @@ async function signIn(e: Event): Promise<void> {
       checkForErrors.value = false
       allowReconnect()
     }
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.code == '401') {
-        $toast.error('Ces identifiants sont invalides')
-        email.value = ''
-        password.value = ''
-        checkForErrors.value = false
-        return
-      }
-    }
+  } catch {
     $toast.error('Connexion impossible...')
   }
 }
@@ -172,7 +163,16 @@ async function login(e: Event): Promise<void> {
 
       allowReconnect()
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.status == 401) {
+        $toast.error('Ces identifiants sont invalides')
+        email.value = ''
+        password.value = ''
+        checkForErrors.value = false
+        return
+      }
+    }
     $toast.error('Connexion impossible')
   }
 }

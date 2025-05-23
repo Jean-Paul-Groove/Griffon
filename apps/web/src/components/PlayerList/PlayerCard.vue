@@ -98,10 +98,12 @@ function handleAddFriend(e: Event): void {
   addFriendModal.value = true
 }
 function confirmExcludePlayer(playerId: string): void {
+  optionDisplayed.value = false
   excludePlayer(playerId)
   excludeModal.value = false
 }
 function confirmAddFriend(playerId: string): void {
+  optionDisplayed.value = false
   addFriend(playerId)
   addFriendModal.value = false
 }

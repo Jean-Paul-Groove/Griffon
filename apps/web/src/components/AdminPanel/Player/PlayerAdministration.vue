@@ -102,7 +102,7 @@ async function fetchPlayers(): Promise<void> {
     }
   } catch (err) {
     if (err instanceof AxiosError) {
-      if (err.code && err.code === '401') {
+      if (err.code && err.status === 401) {
         $toast.error("Vous n'avez pas les droits requis")
         handleDisconnect()
       }
