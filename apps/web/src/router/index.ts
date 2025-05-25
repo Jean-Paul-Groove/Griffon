@@ -24,10 +24,10 @@ const router = createRouter({
             const { room } = useSocketStore()
             if (user !== null) {
               if (room?.id != null) {
-                return { name: 'Lobby', params: { roomId: room.id } }
+                return { name: 'Salon', params: { roomId: room.id } }
               }
               if (requestedRoom != null) {
-                return { name: 'Lobby', params: { roomId: requestedRoom } }
+                return { name: 'Salon', params: { roomId: requestedRoom } }
               }
             } else {
               return { name: 'Connexion' }
@@ -47,10 +47,10 @@ const router = createRouter({
             const { user, requestedRoom } = useAuthStore()
             const { room } = useSocketStore()
             if (user !== null && room?.id) {
-              return { name: 'Lobby', params: { roomId: room.id } }
+              return { name: 'Salon', params: { roomId: room.id } }
             }
             if (requestedRoom != null) {
-              return { name: 'Lobby', params: { roomId: requestedRoom } }
+              return { name: 'Salon', params: { roomId: requestedRoom } }
             }
           },
         },
@@ -67,10 +67,10 @@ const router = createRouter({
             }
             if (user !== null) {
               if (room?.id != null) {
-                return { name: 'Lobby', params: { roomId: room.id } }
+                return { name: 'Salon', params: { roomId: room.id } }
               }
               if (requestedRoom != null) {
-                return { name: 'Lobby', params: { roomId: requestedRoom } }
+                return { name: 'Salon', params: { roomId: requestedRoom } }
               }
               return { name: 'Accueil' }
             }
@@ -83,18 +83,18 @@ const router = createRouter({
       name: 'Room',
       component: RoomLayout,
       redirect: {
-        name: 'Lobby',
+        name: 'Salon',
       },
       children: [
         {
-          path: 'lobby',
-          name: 'Lobby',
+          path: 'Salon',
+          name: 'Salon',
           component: LobbyView,
         },
         {
           name: 'Game',
           path: 'game',
-          redirect: { name: 'Lobby' },
+          redirect: { name: 'Salon' },
           children: [
             {
               name: 'Griffonary',

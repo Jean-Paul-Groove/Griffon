@@ -25,20 +25,20 @@
       </div>
     </div>
     <div class="toolbox_tools">
-      <a class="toolbox_action toolbox_action_tool" @click="setTool('pen')">
+      <button class="toolbox_action toolbox_action_tool" @click="setTool('pen')">
         <img :src="pen" alt="pen" />
-      </a>
-      <a class="toolbox_action toolbox_action_tool" @click="setTool('eraser')">
+      </button>
+      <button class="toolbox_action toolbox_action_tool" @click="setTool('eraser')">
         <img :src="eraser" alt="eraser" />
-      </a>
+      </button>
     </div>
     <div class="toolbox_history">
-      <a :disabled="!canUndo" class="toolbox_action" @click="emit('undo')">
+      <button :disabled="!canUndo" class="toolbox_action" @click="emit('undo')">
         <img class="toolbox_action_svg" :src="undo" alt="undo" />
-      </a>
-      <a :disabled="!canRedo" class="toolbox_action" @click="emit('redo')">
+      </button>
+      <button :disabled="!canRedo" class="toolbox_action" @click="emit('redo')">
         <img class="toolbox_action_svg" :src="redo" alt="redo" />
-      </a>
+      </button>
     </div>
   </div>
 </template>
@@ -168,6 +168,8 @@ function setTool(newTool: DrawingTool): void {
     border: none;
     cursor: pointer;
     transform: scale(0.99);
+    box-shadow: none;
+    padding: 0;
     &:hover {
       transform: scale(1.1);
       -webkit-text-stroke-color: $main-color;

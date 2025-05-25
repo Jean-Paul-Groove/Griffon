@@ -8,9 +8,9 @@
             Description
             <textarea id="edit-specs-description" v-model="editedGame.description"></textarea>
           </label>
-          <label for="edit-specs-description">
+          <label for="edit-specs-rules">
             Règles
-            <textarea id="edit-specs-description" v-model="editedGame.rules"></textarea>
+            <textarea id="edit-specs-rules" v-model="editedGame.rules"></textarea>
           </label>
           <FormInput
             v-model="editedGame.defaultRoundDuration"
@@ -39,19 +39,18 @@
               id="illustration-input"
               type="file"
               accept="image/jpg,image/jpeg, image/png,image/webp"
-              capture
               @change="onFileChanged"
             />
-            <button
-              v-if="file"
-              class="edit-specs-form_illustration_remove"
-              title="Supprimer le fichier"
-              aria-label="Supprimer le fichier"
-              @click="handleDeleteFile"
-            >
-              <FontAwesomeIcon icon="xmark" />
-            </button>
           </label>
+          <button
+            v-if="file"
+            class="edit-specs-form_illustration_remove"
+            title="Supprimer le fichier"
+            aria-label="Supprimer le fichier"
+            @click="handleDeleteFile"
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </button>
           <div class="edit-specs-form_errors">
             <p
               v-for="(error, index) of errors"
@@ -310,6 +309,7 @@ async function handleConfirm(e: Event): Promise<void> {
     &_remove {
       @include danger-button;
       width: fit-content;
+      margin-left: auto;
     }
     &_preview {
       @include avatar;

@@ -35,19 +35,18 @@
           id="avatar-input"
           type="file"
           accept="image/jpg,image/jpeg, image/png,image/webp"
-          capture
           @change="onFileChanged"
         />
-        <button
-          v-if="file"
-          class="sign-in-form_remove-file"
-          title="Supprimer le fichier"
-          aria-label="Supprimer le fichier"
-          @click="handleDeleteFile"
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </button>
       </label>
+      <button
+        v-if="file"
+        class="sign-in-form_remove-file"
+        title="Supprimer le fichier"
+        aria-label="Supprimer le fichier"
+        @click="handleDeleteFile"
+      >
+        <FontAwesomeIcon icon="xmark" />
+      </button>
       <button class="sign-in-form_button" @click="registerUser">Inscription</button>
       <DividerText color="$main-color" text-color="$main-color" text="Aperçu" />
       <PlayerCard
@@ -226,6 +225,7 @@ async function registerUser(e: Event): Promise<void> {
   }
   &_remove-file {
     @include danger-button;
+    margin-left: auto;
   }
   &_button {
     color: $second-color;

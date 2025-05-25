@@ -5,15 +5,16 @@
     </ConfirmModal>
     <template #header-end>
       <CountDown />
-      <button
-        v-if="room"
-        class="room-layout_disconnect"
-        title="Quitter le salon"
-        aria-label="Quitter le salon"
-        @click="exitModal = true"
-      >
-        <FontAwesomeIcon class="room-layout_disconnect_icon" :icon="['fas', 'door-open']" />
-      </button>
+      <nav>
+        <ButtonIcon
+          v-if="room"
+          class="room-layout_disconnect"
+          icon="door-open"
+          text="Quitter le salon"
+          :selected="true"
+          @click="exitModal = true"
+        ></ButtonIcon>
+      </nav>
     </template>
     <template #header-start>
       <div
@@ -31,7 +32,7 @@
       <RouterView class="room-layout_router" />
 
       <div class="room-layout_conbined-view">
-        <div class="room-layout_conbined-view_button-container">
+        <nav class="room-layout_conbined-view_button-container">
           <ButtonIcon
             icon="trophy"
             text="Joueurs"
@@ -44,7 +45,7 @@
             :selected="view === 'chat'"
             @click="view = 'chat'"
           />
-        </div>
+        </nav>
         <PlayerList v-if="view === 'players'" /> <RoomChat v-if="view === 'chat'" />
       </div>
     </div>
@@ -58,7 +59,6 @@ import { PlayerList } from '@/components'
 import { useLayoutStore, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal.vue'
 import CountDown from '../components/CountDown/CountDown.vue'
 import ButtonIcon from '../components/ButtonIcon/ButtonIcon.vue'
@@ -93,25 +93,16 @@ function handleLeaveRoom(): void {
     height: 100%;
     max-height: 100%;
     overflow: hidden;
-    border: solid 0.1rem $main-color;
-    border-left-width: 0px;
-    border-right-width: 0px;
+    border: solid 0 $main-color;
+    border-bottom-width: 0.1rem;
   }
   &_disconnect {
     @include danger-button;
     position: absolute;
     right: 5%;
-    top: 0.1rem;
-    padding: 0.3rem;
-    max-height: 3rem;
-    height: 70%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    &_icon {
-      height: 70%;
-    }
+    top: 0;
+    padding-top: $scrolls-height * 0.15;
+    max-height: $scrolls-height;
   }
   &_connexion-status {
     height: 60%;
@@ -155,6 +146,11 @@ function handleLeaveRoom(): void {
         color: $second-color;
       }
     }
+  }
+}
+@media screen and (min-width: 700px) {
+  .room-layout_disconnect {
+    max-height: $scrolls-height * 0.45;
   }
 }
 </style>

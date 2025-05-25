@@ -68,7 +68,7 @@ watch(
   () => room.value?.id,
   (roomId) => {
     if (roomId) {
-      $router.replace({ name: 'Lobby', params: { roomId } })
+      $router.replace({ name: 'Salon', params: { roomId } })
     }
   },
   { immediate: true },

@@ -56,19 +56,18 @@
                 class="edit-player-form_avatar_input"
                 type="file"
                 accept="image/jpg,image/jpeg, image/png,image/webp"
-                capture
                 @change="onFileChanged"
               />
-              <button
-                v-if="file"
-                class="edit-player-form_avatar_remove"
-                title="Supprimer le fichier"
-                aria-label="Supprimer le fichier"
-                @click="handleDeleteFile"
-              >
-                <FontAwesomeIcon icon="xmark" />
-              </button>
             </label>
+            <button
+              v-if="file"
+              class="edit-player-form_avatar_remove"
+              title="Supprimer le fichier"
+              aria-label="Supprimer le fichier"
+              @click="handleDeleteFile"
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </button>
             <img
               v-if="fileUrl"
               class="edit-player-form_avatar_preview"
@@ -363,6 +362,7 @@ async function handleDelete(): Promise<void> {
     }
     &_remove {
       @include danger-button;
+      margin-left: auto;
     }
     &_preview {
       @include avatar;

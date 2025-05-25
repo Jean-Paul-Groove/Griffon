@@ -4,15 +4,16 @@
       >Êtes vous sûr de vouloir vous déconnecter ?
     </ConfirmModal>
     <template #header-end>
-      <button
-        v-if="user"
-        class="user-layout_disconnect"
-        title="Déconnexion"
-        aria-label="Se déconnecter"
-        @click="disconnectModal = true"
-      >
-        <FontAwesomeIcon class="user-layout_disconnect_icon" :icon="['fas', 'user-xmark']" />
-      </button>
+      <nav>
+        <ButtonIcon
+          v-if="user"
+          class="user-layout_disconnect"
+          icon="user-xmark"
+          text="Déconnexion"
+          :selected="true"
+          @click="disconnectModal = true"
+        ></ButtonIcon>
+      </nav>
     </template>
 
     <RouterView class="user-layout_router" />
@@ -25,8 +26,8 @@ import { RouterView } from 'vue-router'
 import { useAuthStore, useSocketStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal.vue'
+import ButtonIcon from '../components/ButtonIcon/ButtonIcon.vue'
 
 // Composables
 const authStore = useAuthStore()
@@ -51,17 +52,17 @@ function onDisconnect(): void {
     overflow-y: auto;
   }
   &_disconnect {
+    @include danger-button;
     position: absolute;
     right: 5%;
-    top: 0.1rem;
-    padding: 0.3rem;
-    max-height: 3rem;
-    height: 70%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    @include danger-button;
+    top: 0;
+    padding-top: $scrolls-height * 0.15;
+    max-height: $scrolls-height;
+  }
+}
+@media screen and (min-width: 700px) {
+  .user-layout_disconnect {
+    max-height: $scrolls-height * 0.45;
   }
 }
 </style>

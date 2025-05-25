@@ -21,12 +21,9 @@ import FooterLayout from './FooterLayout.vue'
 </script>
 
 <style scoped lang="scss">
-$scrolls-height: calc(100vw / 20);
 .layout {
   height: 100vh;
   max-height: 100vh;
-  padding-top: calc($scrolls-height / 2);
-  padding-bottom: calc($scrolls-height * 0.2);
   background: url('../../assets/background/body-scroll.webp');
   background-size: 100vw 100vh;
   position: relative;
@@ -40,18 +37,23 @@ $scrolls-height: calc(100vw / 20);
   }
   &_footer {
     position: absolute;
-    bottom: calc(-1 * $scrolls-height/1.5);
+    bottom: calc(-1 * $scrolls-height/3);
     left: 0;
     right: 0;
   }
   &_main {
-    padding-top: calc($scrolls-height / 2);
-    padding-bottom: calc($scrolls-height * 0.2);
+    padding-top: calc($scrolls-height * 0.85);
+    padding-bottom: calc($scrolls-height * 0.1);
     padding-left: 4vw;
     padding-right: 4vw;
     max-height: 100%;
     height: 100%;
     width: 100%;
+  }
+}
+@media screen and (min-width: 700px) {
+  .layout_main {
+    padding-top: calc($scrolls-height / 2 * 0.7);
   }
 }
 </style>

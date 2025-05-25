@@ -234,8 +234,8 @@ export const useSocketStore = defineStore('socket', () => {
       // Redirect to Lobby if no current game
       if (!game) {
         if (room.value != null) {
-          if (currentRoute !== 'Lobby') {
-            $router.replace({ name: 'Lobby', params: { roomId: room.value.id } })
+          if (currentRoute !== 'Salon') {
+            $router.replace({ name: 'Salon', params: { roomId: room.value.id } })
           }
         }
         return

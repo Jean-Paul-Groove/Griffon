@@ -28,7 +28,7 @@ watch(
   () => room.value,
   () => {
     if (room.value && room.value.currentGame == null) {
-      $router.replace({ name: 'Lobby', params: { roomId: room.value.id } })
+      $router.replace({ name: 'Salon', params: { roomId: room.value.id } })
     }
   },
 )

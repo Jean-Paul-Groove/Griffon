@@ -39,22 +39,19 @@
           id="avatar-input"
           type="file"
           accept="image/jpg,image/jpeg, image/png,image/webp"
-          capture
           @change="onFileChanged"
         />
-        <button
-          v-if="file"
-          title="Supprimer le fichier"
-          aria-label="Supprimer le fichier"
-          class="profile_edit-form_avatar_remove"
-          @click="handleDeleteFile"
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </button>
-        <div v-if="fileUrl" class="profile_edit-form_avatar_preview_container">
-          <img class="profile_edit-form_avatar_preview" :src="fileUrl" alt="avatar" />
-        </div>
       </label>
+      <button
+        v-if="file"
+        title="Supprimer le fichier"
+        aria-label="Supprimer le fichier"
+        class="profile_edit-form_avatar_remove"
+        @click="handleDeleteFile"
+      >
+        <FontAwesomeIcon icon="xmark" />
+      </button>
+      <img v-if="fileUrl" class="profile_edit-form_avatar_preview" :src="fileUrl" alt="avatar" />
       <button class="profile_edit-form_button" @click="editPlayer">Modifier</button>
       <ButtonIcon
         class="profile_delete"
@@ -251,9 +248,11 @@ async function handleDelete(): Promise<void> {
     &_avatar {
       &_remove {
         @include danger-button;
+        margin-left: auto;
       }
       &_preview {
         @include avatar;
+        max-width: 5rem;
         &_container {
           display: flex;
           justify-content: center;

@@ -8,8 +8,8 @@
       />
       <figcaption class="game-card_text">
         <p class="game-card_text_title">{{ game.title }}</p>
+        <p class="game-card_tooltip">{{ game.description }}</p>
       </figcaption>
-      <p class="game-card_tooltip">{{ game.description }}</p>
     </figure>
   </a>
 </template>

@@ -1,53 +1,55 @@
 <template>
-  <article class="player-card" @click="handleClick">
+  <figure class="player-card" @click="handleClick">
     <img
       class="player-card_avatar"
       :src="getImageUrl(player.avatar, alternativePicture)"
       alt="avatar"
     />
-    <div class="player-card_info">
-      <span class="player-card_info_name">
-        <FontAwesomeIcon v-if="isAdmin" icon="crown" />
-        {{ player.name }}
-      </span>
-      <span class="player-card_info_points">{{
-        `${getPlayerPoints(player.id)?.points ?? 0} points`
-      }}</span>
-    </div>
-    <p class="player-card_tag">
-      <img v-if="player.isArtist" :src="pen" alt="artist-pen" />
-    </p>
-    <button
-      v-if="currentPlayerAdmin && optionDisplayed && !isAdmin"
-      :title="'Exclure ' + player.name"
-      class="player-card_exclude"
-      :aria-label="'Exclure ' + player.name"
-      @click="handleExclude"
-    >
-      <FontAwesomeIcon icon="user-xmark" />
-    </button>
-    <button
-      v-if="canAddAsFriend && optionDisplayed"
-      title="Ajouter en ami"
-      class="player-card_add"
-      :aria-label="'Ajouter ' + player.name + ' en ami'"
-      @click="handleAddFriend"
-    >
-      <FontAwesomeIcon icon="user-plus" />
-    </button>
-    <ConfirmModal
-      v-if="excludeModal"
-      @close="excludeModal = false"
-      @confirm="confirmExcludePlayer(player.id)"
-      >Voulez-vous vraiment exclure ce joueur ?
-    </ConfirmModal>
-    <ConfirmModal
-      v-if="addFriendModal"
-      @close="addFriendModal = false"
-      @confirm="confirmAddFriend(player.id)"
-      >Voulez-vous ajouter {{ player.name }} comme ami ?
-    </ConfirmModal>
-  </article>
+    <figcaption class="player-card_caption">
+      <div class="player-card_info">
+        <span class="player-card_info_name">
+          <FontAwesomeIcon v-if="isAdmin" icon="crown" />
+          {{ player.name }}
+        </span>
+        <span class="player-card_info_points">{{
+          `${getPlayerPoints(player.id)?.points ?? 0} points`
+        }}</span>
+      </div>
+      <p class="player-card_tag">
+        <img v-if="player.isArtist" :src="pen" alt="artist-pen" />
+      </p>
+      <button
+        v-if="currentPlayerAdmin && optionDisplayed && !isAdmin"
+        :title="'Exclure ' + player.name"
+        class="player-card_exclude"
+        :aria-label="'Exclure ' + player.name"
+        @click="handleExclude"
+      >
+        <FontAwesomeIcon icon="user-xmark" />
+      </button>
+      <button
+        v-if="canAddAsFriend && optionDisplayed"
+        title="Ajouter en ami"
+        class="player-card_add"
+        :aria-label="'Ajouter ' + player.name + ' en ami'"
+        @click="handleAddFriend"
+      >
+        <FontAwesomeIcon icon="user-plus" />
+      </button>
+      <ConfirmModal
+        v-if="excludeModal"
+        @close="excludeModal = false"
+        @confirm="confirmExcludePlayer(player.id)"
+        >Voulez-vous vraiment exclure ce joueur ?
+      </ConfirmModal>
+      <ConfirmModal
+        v-if="addFriendModal"
+        @close="addFriendModal = false"
+        @confirm="confirmAddFriend(player.id)"
+        >Voulez-vous ajouter {{ player.name }} comme ami ?
+      </ConfirmModal>
+    </figcaption>
+  </figure>
 </template>
 
 <script setup lang="ts">
@@ -115,6 +117,9 @@ function confirmAddFriend(playerId: string): void {
   transform: scale(0.99);
   max-width: 25rem;
   cursor: pointer;
+  &_caption {
+    display: flex;
+  }
   &_avatar {
     @include avatar;
   }
